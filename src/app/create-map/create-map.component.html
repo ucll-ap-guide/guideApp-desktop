@@ -1,4 +1,23 @@
-<main class="my-3">
-    <div class="text-white flex justify-center" id="demo"></div>
-    <button (click)="loadData(jsonData)" class="bg-gray-400 rounded-md py-2 px-3 m-2">Duplicate map</button>
+<main class="my-3 mx-2 md:mx-4">
+    <h2 class="text-white text-2xl">Floors</h2>
+    <div id="floors">
+        <app-create-floor *ngFor="let floor of jsonData.floors" [floor]="floor.floor"
+                          [jsonData]="jsonData"></app-create-floor>
+    </div>
+
+    <div class="m-4">
+        <h2 class="text-white text-xl">Add floor</h2>
+        <div class="max-w-md m-2">
+            <label class="text-white block" for="floorNumber">Floor number:</label>
+            <input class="rounded-md py-1 px-2" id="floorNumber" placeholder="Floor number" step="1"
+                   type="number" value="{{jsonData.floors.length}}">
+            <label class="text-white block" for="floorName">Floor name:</label>
+            <input class="rounded-md py-1 px-2" id="floorName" placeholder="Floor name"
+                   type="text" value="Verdieping {{jsonData.floors.length}}">
+            <label class="text-white block" for="floorHeight">Floor height:</label>
+            <input class="rounded-md py-1 px-2" id="floorHeight" min="0" placeholder="Floor height" type="number"
+                   value="2.5">
+            <button (click)="addFloor()" class="bg-gray-400 block rounded-md py-1 px-2 my-2">Add floor</button>
+        </div>
+    </div>
 </main>

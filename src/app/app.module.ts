@@ -4,11 +4,13 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {CreateMapComponent} from "./create-map/create-map.component";
+import {CreateFloorComponent} from './create-floor/create-floor.component';
 
 @NgModule({
     declarations: [
         AppComponent,
-        CreateMapComponent
+        CreateMapComponent,
+        CreateFloorComponent
     ],
     imports: [
         BrowserModule,

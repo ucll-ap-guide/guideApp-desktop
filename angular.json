@@ -54,9 +54,7 @@
             "styles": [
               "src/styles/styles.css"
             ],
-            "scripts": [
-              "src/app/create-map/sketch.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {

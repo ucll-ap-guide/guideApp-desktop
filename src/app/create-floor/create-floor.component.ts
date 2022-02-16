@@ -169,16 +169,12 @@ export class CreateFloorComponent implements AfterViewInit {
         let middleX = (poppedPoints[0][0] + poppedPoints[2][0]) / 2;
         let middleY = (poppedPoints[0][1] + poppedPoints[2][1]) / 2;
 
-        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, 10));
+        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, 15));
 
         let pointsString = resultArray.map(function(d) {
             return [d.x,d.y].join(",");
         }).join(" ");
 
         d3.select(this).attr("points", pointsString);
-     }
-
-     getAllDoors() {
-        console.log(document.getElementsByClassName("door")[0].getAttribute("points"))
      }
 }

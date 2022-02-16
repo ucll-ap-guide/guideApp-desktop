@@ -5,4 +5,8 @@
         <input class="text-white block" id="background" type="file">
     </form>
     <div class="text-white flex justify-center" id="demo{{floor}}"></div>
+    <button (click)="createPolygon(3)" class="bg-gray-400 rounded-md py-2 px-3 m-2">Triangle</button>
+    <button (click)="createPolygon(4)" class="bg-gray-400 rounded-md py-2 px-3 m-2">Square</button>
+    <button (click)="createPolygon(5)" class="bg-gray-400 rounded-md py-2 px-3 m-2">Pentagon</button>
+    <button (click)="createPolygon(null)" class="bg-gray-400 rounded-md py-2 px-3 m-2">Polygon</button>
 </div>

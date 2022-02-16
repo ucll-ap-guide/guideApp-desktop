@@ -89,4 +89,96 @@ export class CreateFloorComponent implements AfterViewInit {
         }
         this.jsonData.floors = newFloors;
     }
+
+    createDoor() {
+        let origin = {"x":25,"y":25};
+        let width = 50;
+        let height = 15;
+
+        let points = [
+            origin,
+            {"x":origin.x + width,"y":origin.y},
+            {"x":origin.x + width, "y":origin.y + height},
+            {"x":origin.x,"y":origin.y + height}];
+
+        let pointsString = points.map(function(d) {
+            return [d.x,d.y].join(",");
+        }).join(" ");
+
+        d3.select("#demo" + this.floor)
+            .select("svg")
+            .select(".map-layers")
+            .select(".overlays")
+            .select("g")
+            .append("polygon")
+            .attr("points", pointsString)
+            .attr("width", width)
+            .attr("height", height)
+            .attr("class", "door")
+            .on("contextmenu", this.rotateDoor)
+            .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
+    }
+
+    moveDoorCoordinates() {
+        if (d3.event.sourceEvent.which === 1) {
+            let door = d3.select(this);
+            let width = parseFloat(door.attr("width"));
+            let height = parseFloat(door.attr("height"));
+
+            let toBuildFrom = {"x": parseFloat(d3.event.x), "y": parseFloat(d3.event.y)};
+
+            let points = [
+                toBuildFrom,
+                {"x": toBuildFrom.x + width, "y": toBuildFrom.y},
+                {"x": toBuildFrom.x + width, "y": toBuildFrom.y + height},
+                {"x": toBuildFrom.x, "y": toBuildFrom.y + height}];
+
+            let pointsString = points.map(function (d: { "x": number, "y": number }) {
+                return [d.x, d.y].join(",");
+            }).join(" ");
+
+            door.attr("points", pointsString);
+        }
+     }
+
+    rotateDoor() {
+        d3.event.preventDefault();
+
+        function rotatePoint(pointX: number, pointY: number, originX: number, originY: number, angle: number) {
+            angle = angle * Math.PI / 180.0;
+            let result = {
+                x: Math.cos(angle) * (pointX-originX) - Math.sin(angle) * (pointY-originY) + originX,
+                y: Math.sin(angle) * (pointX-originX) + Math.cos(angle) * (pointY-originY) + originY
+            };
+
+            console.log(pointX, pointY, originX, originY, angle);
+
+            return result;
+        }
+
+        let previousPoints = d3.select(this).attr("points");
+        let splitUpPreviousPoints = previousPoints.split(" ");
+        let prevAngle = parseFloat(d3.select(this).attr("prevAngle"));
+        let poppedPoints = [];
+
+        while (splitUpPreviousPoints.length !== 0) {
+            let elems = splitUpPreviousPoints.pop().split(",");
+            poppedPoints.push([parseFloat(elems[0]), parseFloat(elems[1])]);
+        }
+
+        let middleX = (poppedPoints[0][0] + poppedPoints[2][0]) / 2;
+        let middleY = (poppedPoints[0][1] + poppedPoints[2][1]) / 2;
+
+        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, 10));
+
+        let pointsString = resultArray.map(function(d) {
+            return [d.x,d.y].join(",");
+        }).join(" ");
+
+        d3.select(this).attr("points", pointsString);
+     }
+
+     getAllDoors() {
+        console.log(document.getElementsByClassName("door")[0].getAttribute("points"))
+     }
 }

@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {MapService} from "../map.service";
 
 @Component({
     selector: 'create-map',
@@ -13,7 +14,7 @@ export class CreateMapComponent implements OnInit {
         "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
     };
 
-    constructor() {
+    constructor(private mapService: MapService) {
     }
 
     ngOnInit() {
@@ -23,7 +24,7 @@ export class CreateMapComponent implements OnInit {
         floor: number = parseInt((<HTMLInputElement>document.getElementById("floorNumber")).value),
         name: string = (<HTMLInputElement>document.getElementById("floorName")).value,
         height: number = parseFloat((<HTMLInputElement>document.getElementById("floorHeight")).value)
-    ) {
+    ): void {
         if (!isNaN(floor) && name !== "" && !isNaN(height)) {
             this.jsonData.floors.push({
                 "floor": floor,
@@ -36,4 +37,7 @@ export class CreateMapComponent implements OnInit {
         }
     }
 
+    saveMap(): void {
+        this.mapService.addMap(JSON.parse(JSON.stringify(this.jsonData))).subscribe();
+    }
 }

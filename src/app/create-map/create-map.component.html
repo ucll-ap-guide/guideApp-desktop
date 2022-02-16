@@ -1,19 +1,19 @@
 <main>
-    <div [hidden]="createMapForm.initializedMap" class="my-3 mx-2 md:mx-4">
+    <div [hidden]="initializedMap" class="my-3 mx-2 md:mx-4">
         <h1 class="text-white text-3xl">Create Map</h1>
         <div class="max-w-md m-2">
             <label class="text-white block mb-1" for="mapName">Name:</label>
-            <input class="rounded-md py-1 px-2 mb-2" id="mapName" placeholder="Name"
-                   type="text" [(ngModel)]="jsonData.name">
-            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3"
+            <input class="rounded-md py-1 px-2 mb-2" id="mapName" placeholder="Name" type="text"
+                   [(ngModel)]="jsonData.name">
+            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-2"
                     (click)="createMap()">
                 Create map
             </button>
         </div>
     </div>
-    <div [hidden]="!createMapForm.initializedMap">
+    <div [hidden]="!initializedMap">
         <div class="flex w-full">
-            <div class="text-white bg-gray-800 border-2 border-r-0 border-black flex p-3">
+            <div class="text-white bg-gray-800 border-2 border-r-0 border-black flex gap-y-2 gap-x-4 p-3">
                 <button class="flex gap-2 px-2">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 290 290"
                          xmlns="http://www.w3.org/2000/svg">
@@ -24,12 +24,22 @@
                     </svg>
                     Save file on PC
                 </button>
+                <label class="cursor-pointer">
+                    <input type="file" class="hidden"/>
+                    <span class="flex gap-2">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        <span>Get map from computer</span>
+                    </span>
+                </label>
                 <button class="flex gap-2 px-2" (click)="displayEditMapDialog(true)">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                          xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"/>
+                              stroke-linejoin="round" stroke-width="2"/>
                     </svg>
                     Get map from server
                 </button>
@@ -37,13 +47,12 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                          xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"/>
+                              stroke-linejoin="round" stroke-width="2"/>
                     </svg>
                     <span id="submitMap">Upload map</span>
                 </button>
             </div>
-            <div class="text-white bg-gray-800 border-2 border-black flex p-3">
+            <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
                 <button class="px-2">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                          xmlns="http://www.w3.org/2000/svg">
@@ -61,7 +70,7 @@
         </div>
         <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.name}}</h1>
         <div class="mx-4 md:mx-8">
-            <h2 class="text-white text-2xl">Floors</h2>
+            <h2 class="text-white text-2xl mt-2">Floors</h2>
             <div id="floors">
                 <app-create-floor *ngFor="let floor of jsonData.floors" [floor]="floor.floor"
                                   [jsonData]="jsonData"></app-create-floor>
@@ -78,8 +87,7 @@
                            type="text" [(ngModel)]="createFloorForm.name">
                     <label class="text-white block mb-1" for="floorHeight">Floor height:</label>
                     <input class="rounded-md py-1 px-2" id="floorHeight" min="0" placeholder="Floor height"
-                           type="number"
-                           [(ngModel)]="createFloorForm.height">
+                           type="number" [(ngModel)]="createFloorForm.height">
                     <button (click)="addFloor()"
                             class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
                         Add floor

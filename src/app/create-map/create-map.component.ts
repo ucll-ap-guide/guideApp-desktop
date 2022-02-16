@@ -14,10 +14,7 @@ export class CreateMapComponent implements OnInit {
         "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
     };
     mapNames: string[] = [];
-    createMapForm = {
-        initializedMap: false,
-        createMapType: "createNewMap"
-    };
+    initializedMap: boolean = false;
     createFloorForm = {
         floor: 0,
         name: "Verdieping 0",
@@ -32,7 +29,7 @@ export class CreateMapComponent implements OnInit {
 
     createMap() {
         if (this.jsonData.name !== "") {
-            this.createMapForm.initializedMap = true;
+            this.initializedMap = true;
         }
     }
 

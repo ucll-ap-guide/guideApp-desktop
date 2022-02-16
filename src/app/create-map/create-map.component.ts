@@ -39,12 +39,22 @@ export class CreateMapComponent implements OnInit {
         };
     }
 
+    /**
+     * Displays the map editor screen.
+     */
     createMap(): void {
         if (this.jsonData.name !== "") {
             this.initializedMap = true;
         }
     }
 
+    /**
+     * Adds a new floor to the existing map.
+     *
+     * @param floor The floor number this can be negative or positive
+     * @param name The name of the floor
+     * @param height The height of the floor
+     */
     addFloor(
         floor: number = this.createFloorForm.floor,
         name: string = this.createFloorForm.name,
@@ -64,26 +74,55 @@ export class CreateMapComponent implements OnInit {
         }
     }
 
-    async getMapNames(): Promise<any> {
+    /**
+     * Gets the names of all the maps and saves it in the variable mapNames.
+     */
+    getMapNames(): void {
         this.mapService.getAllMapNames().subscribe((mapNames: any) => {
             this.mapNames = mapNames;
         });
     }
 
-    saveMapRemotely(): void {
-        this.mapService.addMap(JSON.parse(JSON.stringify(this.jsonData))).subscribe();
+    saveMapLocally(): void {
+        let downloadLink = document.createElement("a");
+        let blob = new Blob([(JSON.stringify(this.jsonData))]);
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.target = '_blank';
+        downloadLink.download = this.jsonData.name + ".json";
+
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     }
 
+    /**
+     * Saves the map on the server
+     *
+     * @param map The JSON object to save on the server
+     */
+    saveMapRemotely(map: JSON = JSON.parse(JSON.stringify(this.jsonData))): void {
+        this.mapService.addMap(map).subscribe();
+    }
+
+    /**
+     * Displays the map get map from server dialog.
+     *
+     * @param display The dialog will be hidden if false and visible if true.
+     */
     displayEditMapDialog(display: boolean): void {
-        this.getMapNames().then(() => {
-            if (display) {
-                document.getElementById("editMapDialog")!.classList.replace("hidden", "flex");
-            } else {
-                document.getElementById("editMapDialog")!.classList.replace("flex", "hidden");
-            }
-        });
+        this.getMapNames();
+        if (display) {
+            document.getElementById("editMapDialog")!.classList.replace("hidden", "flex");
+        } else {
+            document.getElementById("editMapDialog")!.classList.replace("flex", "hidden");
+        }
     }
 
+    /**
+     * Loads the map from the server with the given name.
+     *
+     * @param name The name of the map on the server that needs to be loaded.
+     */
     editMap(name: string = (<HTMLSelectElement>document.getElementById("editMapSelect")).value): void {
         this.displayEditMapDialog(false);
         document.getElementById("submitMap")!.innerText = "Update map";
@@ -92,10 +131,10 @@ export class CreateMapComponent implements OnInit {
         });
     }
 
+    /**
+     * Removes all the floors from the current map.
+     */
     clearMap(): void {
-        this.jsonData = {
-            "name": "",
-            "floors": []
-        };
+        this.jsonData.floors = [];
     }
 }

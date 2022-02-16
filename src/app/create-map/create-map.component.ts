@@ -10,7 +10,7 @@ import {Component, OnInit} from '@angular/core';
 export class CreateMapComponent implements OnInit {
     jsonData = {
         "name": "",
-        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: [] } }[]
+        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
     };
 
     constructor() {

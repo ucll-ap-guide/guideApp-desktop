@@ -7,6 +7,7 @@ import {CreateMapComponent} from "./create-map/create-map.component";
 import {CreateFloorComponent} from './create-floor/create-floor.component';
 import {MapService} from "./map.service";
 import {HttpClientModule} from "@angular/common/http";
+import {FormsModule} from "@angular/forms";
 
 @NgModule({
     declarations: [
@@ -18,7 +19,8 @@ import {HttpClientModule} from "@angular/common/http";
         BrowserModule,
         AppRoutingModule,
         AppRoutingModule,
-        HttpClientModule
+        HttpClientModule,
+        FormsModule
     ],
     providers: [MapService],
     bootstrap: [AppComponent]

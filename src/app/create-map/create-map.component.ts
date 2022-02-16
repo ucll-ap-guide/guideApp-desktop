@@ -10,10 +10,19 @@ import {MapService} from "../map.service";
 })
 export class CreateMapComponent implements OnInit {
     jsonData = {
-        "name": "",
+        "name": "UCLL",
         "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
     };
-    mapNames: string[] = []
+    mapNames: string[] = [];
+    createMapForm = {
+        initializedMap: false,
+        createMapType: "createNewMap"
+    };
+    createFloorForm = {
+        floor: 0,
+        name: "Verdieping 0",
+        height: 2.5
+    };
 
     constructor(private mapService: MapService) {
     }
@@ -21,10 +30,16 @@ export class CreateMapComponent implements OnInit {
     ngOnInit() {
     }
 
+    createMap() {
+        if (this.jsonData.name !== "") {
+            this.createMapForm.initializedMap = true;
+        }
+    }
+
     addFloor(
-        floor: number = parseInt((<HTMLInputElement>document.getElementById("floorNumber")).value),
-        name: string = (<HTMLInputElement>document.getElementById("floorName")).value,
-        height: number = parseFloat((<HTMLInputElement>document.getElementById("floorHeight")).value)
+        floor: number = this.createFloorForm.floor,
+        name: string = this.createFloorForm.name,
+        height: number = this.createFloorForm.height
     ): void {
         if (!isNaN(floor) && name !== "" && !isNaN(height)) {
             this.jsonData.floors.push({
@@ -35,6 +50,8 @@ export class CreateMapComponent implements OnInit {
                     "polygons": []
                 }
             });
+            this.createFloorForm.floor++;
+            this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor
         }
     }
 
@@ -44,7 +61,7 @@ export class CreateMapComponent implements OnInit {
         });
     }
 
-    saveMap(): void {
+    saveMapRemotely(): void {
         this.mapService.addMap(JSON.parse(JSON.stringify(this.jsonData))).subscribe();
     }
 

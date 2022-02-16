@@ -5,6 +5,8 @@ import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {CreateMapComponent} from "./create-map/create-map.component";
 import {CreateFloorComponent} from './create-floor/create-floor.component';
+import {MapService} from "./map.service";
+import {HttpClientModule} from "@angular/common/http";
 
 @NgModule({
     declarations: [
@@ -15,9 +17,10 @@ import {CreateFloorComponent} from './create-floor/create-floor.component';
     imports: [
         BrowserModule,
         AppRoutingModule,
-        AppRoutingModule
+        AppRoutingModule,
+        HttpClientModule
     ],
-    providers: [],
+    providers: [MapService],
     bootstrap: [AppComponent]
 })
 export class AppModule {

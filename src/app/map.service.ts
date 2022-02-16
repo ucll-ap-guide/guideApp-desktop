@@ -20,4 +20,12 @@ export class MapService {
     addMap(map: JSON): Observable<any> {
         return this.http.post(this.apiUrl, {headers: this.headers, params: map});
     }
+
+    getAllMapNames(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/maps`, {headers: this.headers});
+    }
+
+    getMap(name: String): Observable<any> {
+        return this.http.get(`${this.apiUrl}/map?map=${name}`, {headers: this.headers});
+    }
 }

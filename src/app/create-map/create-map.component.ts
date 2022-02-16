@@ -25,9 +25,21 @@ export class CreateMapComponent implements OnInit {
     }
 
     ngOnInit() {
+        const self = this;
+        document.getElementById("uploadedMapFromComputer")!.onchange = function (event) {
+            const reader = new FileReader();
+            reader.onload = function (event: ProgressEvent<FileReader>) {
+                let tempName = self.jsonData.name;
+                self.jsonData = JSON.parse(<string>event.target!.result);
+                self.jsonData.name = tempName;
+            }
+            if ((event.target as HTMLInputElement)!.files!.length > 0) {
+                reader.readAsText((event.target as HTMLInputElement)!.files![0]);
+            }
+        };
     }
 
-    createMap() {
+    createMap(): void {
         if (this.jsonData.name !== "") {
             this.initializedMap = true;
         }
@@ -38,7 +50,7 @@ export class CreateMapComponent implements OnInit {
         name: string = this.createFloorForm.name,
         height: number = this.createFloorForm.height
     ): void {
-        if (!isNaN(floor) && name !== "" && !isNaN(height)) {
+        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: any) => f.floor === floor)) {
             this.jsonData.floors.push({
                 "floor": floor,
                 "name": name,
@@ -62,7 +74,7 @@ export class CreateMapComponent implements OnInit {
         this.mapService.addMap(JSON.parse(JSON.stringify(this.jsonData))).subscribe();
     }
 
-    displayEditMapDialog(display: boolean) {
+    displayEditMapDialog(display: boolean): void {
         this.getMapNames().then(() => {
             if (display) {
                 document.getElementById("editMapDialog")!.classList.replace("hidden", "flex");
@@ -72,18 +84,18 @@ export class CreateMapComponent implements OnInit {
         });
     }
 
-    editMap(name: string = (<HTMLSelectElement>document.getElementById("editMapSelect")).value) {
+    editMap(name: string = (<HTMLSelectElement>document.getElementById("editMapSelect")).value): void {
         this.displayEditMapDialog(false);
         document.getElementById("submitMap")!.innerText = "Update map";
         this.mapService.getMap(name).subscribe((v) => {
             this.jsonData = v;
-        })
+        });
     }
 
-    clearMap() {
+    clearMap(): void {
         this.jsonData = {
             "name": "",
             "floors": []
-        }
+        };
     }
 }

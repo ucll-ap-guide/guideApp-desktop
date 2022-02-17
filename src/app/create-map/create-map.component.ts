@@ -10,9 +10,13 @@ import {MapService} from "../map.service";
 })
 export class CreateMapComponent implements OnInit {
     jsonData = {
-        "name": "UCLL",
-        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
+        "mapJSON": {
+            "name": "UCLL",
+            "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
+        },
+        "nodeJSON": [] as { id: number, name: string, point: {x: number, y: number}, displayPoints: {x: number, y: number}[], neighbors: [], type: string}[]
     };
+
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = {
@@ -29,9 +33,9 @@ export class CreateMapComponent implements OnInit {
         document.getElementById("uploadedMapFromComputer")!.onchange = function (event) {
             const reader = new FileReader();
             reader.onload = function (event: ProgressEvent<FileReader>) {
-                let tempName = self.jsonData.name;
+                let tempName = self.jsonData.mapJSON.name;
                 self.jsonData = JSON.parse(<string>event.target!.result);
-                self.jsonData.name = tempName;
+                self.jsonData.mapJSON.name = tempName;
             }
             if ((event.target as HTMLInputElement)!.files!.length > 0) {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
@@ -48,7 +52,7 @@ export class CreateMapComponent implements OnInit {
      * Displays the map editor screen.
      */
     createMap(): void {
-        if (this.jsonData.name !== "") {
+        if (this.jsonData.mapJSON.name !== "") {
             this.initializedMap = true;
         }
     }
@@ -65,8 +69,8 @@ export class CreateMapComponent implements OnInit {
         name: string = this.createFloorForm.name,
         height: number = this.createFloorForm.height
     ): void {
-        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: any) => f.floor === floor)) {
-            this.jsonData.floors.push({
+        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.mapJSON.floors.find((f: any) => f.floor === floor)) {
+            this.jsonData.mapJSON.floors.push({
                 "floor": floor,
                 "name": name,
                 "height": height,
@@ -93,7 +97,7 @@ export class CreateMapComponent implements OnInit {
         let blob = new Blob([(JSON.stringify(this.jsonData))]);
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.target = '_blank';
-        downloadLink.download = this.jsonData.name + ".json";
+        downloadLink.download = this.jsonData.mapJSON.name + ".json";
 
         document.body.appendChild(downloadLink);
         downloadLink.click();
@@ -140,6 +144,6 @@ export class CreateMapComponent implements OnInit {
      * Removes all the floors from the current map.
      */
     clearMap(): void {
-        this.jsonData.floors = [];
+        this.jsonData.mapJSON.floors = [];
     }
 }

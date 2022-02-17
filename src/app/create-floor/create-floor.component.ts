@@ -34,11 +34,11 @@ export class CreateFloorComponent implements AfterViewInit {
         this.map.addLayer(this.imageLayer)
             .addLayer(this.overlays);
 
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+        this.loadData(this.jsonData["mapJSON"]["floors"].find((f: any) => f.floor === this.floor));
     }
 
     getFloorName(): string {
-        return this.jsonData["floors"].find((f: any) => f.floor === this.floor).name;
+        return this.jsonData["mapJSON"]["floors"].find((f: any) => f.floor === this.floor).name;
     }
 
     loadData(data: any) {
@@ -71,23 +71,23 @@ export class CreateFloorComponent implements AfterViewInit {
             "points": vertices
         };
 
-        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(temp);
+        this.jsonData["mapJSON"]["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(temp);
 
         this.lastId++;
 
         d3.select("#demo" + this.floor).selectAll("*").remove();
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+        this.loadData(this.jsonData["mapJSON"]["floors"].find((f: any) => f.floor === this.floor));
     }
 
     removeFloor(): void {
-        const newFloors = this.jsonData.floors.slice();
-        for (let i = 0; i < this.jsonData.floors.length; i++) {
+        const newFloors = this.jsonData.mapJSON.floors.slice();
+        for (let i = 0; i < this.jsonData.mapJSON.floors.length; i++) {
             if (this.floor === newFloors[i].floor) {
                 newFloors.splice(i, 1);
                 break;
             }
         }
-        this.jsonData.floors = newFloors;
+        this.jsonData.mapJSON.floors = newFloors;
     }
 
     createDoor() {

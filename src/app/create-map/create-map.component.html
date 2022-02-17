@@ -4,7 +4,7 @@
         <div class="max-w-md m-2">
             <label class="text-white block mb-1" for="mapName">Name:</label>
             <input class="rounded-md py-1 px-2 mb-2" id="mapName" placeholder="Name" type="text"
-                   [(ngModel)]="jsonData.name">
+                   [(ngModel)]="jsonData.mapJSON.name">
             <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-2"
                     (click)="createMap()">
                 Create map
@@ -68,11 +68,11 @@
                 </button>
             </div>
         </div>
-        <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.name}}</h1>
+        <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.mapJSON.name}}</h1>
         <div class="mx-4 md:mx-8">
             <h2 class="text-white text-2xl mt-2">Floors</h2>
             <div id="floors">
-                <app-create-floor *ngFor="let floor of jsonData.floors" [floor]="floor.floor"
+                <app-create-floor *ngFor="let floor of jsonData.mapJSON.floors" [floor]="floor.floor"
                                   [jsonData]="jsonData"></app-create-floor>
             </div>
 

@@ -11,8 +11,10 @@ import {MapService} from "../map.service";
 export class CreateMapComponent implements OnInit {
     jsonData = {
         "name": "UCLL",
-        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[]
+        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[],
+        "nodes": [] as { id: number, name: string, floor: number, point: {x: number, y: number}, displayPoints: {x: number, y: number}[], neighbors: number[], type: string}[]
     };
+
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = {
@@ -90,6 +92,7 @@ export class CreateMapComponent implements OnInit {
 
     saveMapLocally(): void {
         let downloadLink = document.createElement("a");
+        this.setAllNodes();
         let blob = new Blob([(JSON.stringify(this.jsonData))]);
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.target = '_blank';
@@ -105,7 +108,9 @@ export class CreateMapComponent implements OnInit {
      *
      * @param map The JSON object to save on the server
      */
-    saveMapRemotely(map: JSON = JSON.parse(JSON.stringify(this.jsonData))): void {
+    saveMapRemotely(): void {
+        this.setAllNodes()
+        let map = JSON.parse(JSON.stringify(this.jsonData))
         this.mapService.addMap(map).subscribe();
     }
 
@@ -141,5 +146,62 @@ export class CreateMapComponent implements OnInit {
      */
     clearMap(): void {
         this.jsonData.floors = [];
+    }
+
+    /**
+     * Gets all nodes and adds them to the JSON structure before saving
+     */
+    setAllNodes() {
+       this.jsonData.nodes = [];
+
+        let lastId = 0;
+
+        //Doors
+        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors(lastId));
+
+    }
+
+    getAllDoors(lastId: number) {
+        let doors = document.getElementsByClassName("door");
+        let handledDoors = [];
+
+        function getDoorCoords(previousPoints: string) {
+            let splitUpPreviousPoints = previousPoints.split(" ");
+            let poppedPoints = [];
+
+            while (splitUpPreviousPoints.length !== 0) {
+                // @ts-ignore
+                let elems = splitUpPreviousPoints.pop().split(",");
+                poppedPoints.push({"x": parseFloat(elems[0]), "y": parseFloat(elems[1])});
+            }
+
+            let middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
+            let middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
+
+            return {"displayPoints": poppedPoints, "middle": {"x": middleX, "y": middleY}};
+        }
+
+        for (let i = 0; i != doors.length; i++) {
+            let doorCoords = getDoorCoords(doors[i].getAttribute("points") + "");
+            let neighbors : number[] = [];
+
+            let handledDoor = {
+                id: lastId + 1,
+                name: doors[i].getAttribute("name") + "",
+                floor: parseInt(doors[i].getAttribute("floor") + ""),
+                point:
+                    {
+                        x: doorCoords.middle.x,
+                        y: doorCoords.middle.y
+                    },
+                displayPoints: doorCoords.displayPoints,
+                neighbors: neighbors,
+                type: "door"
+            }
+            handledDoors.push(handledDoor);
+            lastId++;
+        }
+
+        return handledDoors;
     }
 }

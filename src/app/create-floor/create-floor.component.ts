@@ -91,6 +91,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     createDoor() {
+        let doorName = window.prompt("Door's name: ")
         let origin = {"x":25,"y":25};
         let width = 50;
         let height = 15;
@@ -115,6 +116,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("width", width)
             .attr("height", height)
             .attr("class", "door")
+            .attr("name", doorName)
             .on("contextmenu", this.rotateDoor)
             .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
     }
@@ -158,7 +160,6 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let previousPoints = d3.select(this).attr("points");
         let splitUpPreviousPoints = previousPoints.split(" ");
-        let prevAngle = parseFloat(d3.select(this).attr("prevAngle"));
         let poppedPoints = [];
 
         while (splitUpPreviousPoints.length !== 0) {

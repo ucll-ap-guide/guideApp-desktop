@@ -32,9 +32,11 @@ export class CreateFloorComponent implements AfterViewInit {
         }];
 
         this.map.addLayer(this.imageLayer)
-            .addLayer(this.overlays);
+            .addLayer(this.overlays)
 
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
     }
 
     getFloorName(): string {
@@ -42,11 +44,18 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     loadData(data: any) {
+        let elementsToBeSaved = Array.from(document.querySelectorAll('.door'));
+        d3.select("#demo" + this.floor).selectAll("*").remove();
+
         this.mapData[this.overlays.id()] = data.overlays;
 
         d3.select("#demo" + this.floor).append("svg")
             .attr("height", 487).attr("width", 720)
             .datum(this.mapData).call(this.map);
+
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
+            .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
     }
 
     createPolygon(input: number | null) {
@@ -72,11 +81,11 @@ export class CreateFloorComponent implements AfterViewInit {
         };
 
         this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(temp);
-
         this.lastId++;
 
-        d3.select("#demo" + this.floor).selectAll("*").remove();
+
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+
     }
 
     removeFloor(): void {
@@ -90,33 +99,30 @@ export class CreateFloorComponent implements AfterViewInit {
         this.jsonData.floors = newFloors;
     }
 
-    createDoor() {
-        let doorName = window.prompt("Door's name: ")
-        let origin = {"x":25,"y":25};
+    createDoor(previousPoints: string | null = null, previousName: string | null = null) {
+        let doorName = previousName === null ? window.prompt("Door's name: ") : previousName;
+        let origin = {"x": 25, "y": 25};
         let width = 50;
         let height = 15;
 
         let points = [
             origin,
-            {"x":origin.x + width,"y":origin.y},
-            {"x":origin.x + width, "y":origin.y + height},
-            {"x":origin.x,"y":origin.y + height}];
+            {"x": origin.x + width, "y": origin.y},
+            {"x": origin.x + width, "y": origin.y + height},
+            {"x": origin.x, "y": origin.y + height}];
 
-        let pointsString = points.map(function(d) {
-            return [d.x,d.y].join(",");
+        let pointsString = points.map(function (d) {
+            return [d.x, d.y].join(",");
         }).join(" ");
 
-        d3.select("#demo" + this.floor)
-            .select("svg")
-            .select(".map-layers")
-            .select(".overlays")
-            .select("g")
+        d3.select("#doors" + this.floor)
             .append("polygon")
-            .attr("points", pointsString)
+            .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
             .attr("class", "door")
             .attr("name", doorName)
+            .attr("degreesRotated", 0)
             .on("contextmenu", this.rotateDoor)
             .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
     }
@@ -139,30 +145,40 @@ export class CreateFloorComponent implements AfterViewInit {
                 return [d.x, d.y].join(",");
             }).join(" ");
 
+            let degreesRotated = parseFloat(d3.select(this).attr("degreesRotated"));
+
+            if (degreesRotated !== 0) {
+                pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
+            }
+
             door.attr("points", pointsString);
         }
-     }
+    }
 
     rotateDoor() {
         d3.event.preventDefault();
 
+        let previousPoints = d3.select(this).attr("points");
+        let result = CreateFloorComponent.calculateNewCoordinatesForRotation(previousPoints, 15);
+        d3.select(this).attr("degreesRotated", parseFloat(d3.select(this).attr("degreesRotated")) + 15);
+
+        d3.select(this).attr("points", result);
+    }
+
+    static calculateNewCoordinatesForRotation(previousPoints: string, degreesRotated: number) {
         function rotatePoint(pointX: number, pointY: number, originX: number, originY: number, angle: number) {
             angle = angle * Math.PI / 180.0;
-            let result = {
-                x: Math.cos(angle) * (pointX-originX) - Math.sin(angle) * (pointY-originY) + originX,
-                y: Math.sin(angle) * (pointX-originX) + Math.cos(angle) * (pointY-originY) + originY
+            return {
+                x: Math.cos(angle) * (pointX - originX) - Math.sin(angle) * (pointY - originY) + originX,
+                y: Math.sin(angle) * (pointX - originX) + Math.cos(angle) * (pointY - originY) + originY
             };
-
-            console.log(pointX, pointY, originX, originY, angle);
-
-            return result;
         }
 
-        let previousPoints = d3.select(this).attr("points");
         let splitUpPreviousPoints = previousPoints.split(" ");
         let poppedPoints = [];
 
         while (splitUpPreviousPoints.length !== 0) {
+            // @ts-ignore
             let elems = splitUpPreviousPoints.pop().split(",");
             poppedPoints.push([parseFloat(elems[0]), parseFloat(elems[1])]);
         }
@@ -170,12 +186,10 @@ export class CreateFloorComponent implements AfterViewInit {
         let middleX = (poppedPoints[0][0] + poppedPoints[2][0]) / 2;
         let middleY = (poppedPoints[0][1] + poppedPoints[2][1]) / 2;
 
-        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, 15));
+        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, degreesRotated));
 
-        let pointsString = resultArray.map(function(d) {
-            return [d.x,d.y].join(",");
+        return resultArray.map(function (d) {
+            return [d.x, d.y].join(",");
         }).join(" ");
-
-        d3.select(this).attr("points", pointsString);
-     }
+    }
 }

@@ -109,11 +109,16 @@
                             </svg>
                         </button>
                     </div>
-                    <p class="mb-4 dark:text-white">Which of the following maps do you want to edit?</p>
-                    <select id="editMapSelect" class="bg-white rounded-md py-1.5 px-2 mb-4">
-                        <option *ngFor="let mapName of mapNames">{{mapName}}</option>
-                    </select>
-                    <div class="grid grid-cols-2">
+                    <div [hidden]="mapNames.length === 0">
+                        <p class="mb-4 dark:text-white">Which of the following maps do you want to edit?</p>
+                        <select id="editMapSelect" class="bg-white rounded-md py-1.5 px-2 mb-4">
+                            <option *ngFor="let mapName of mapNames">{{mapName}}</option>
+                        </select>
+                    </div>
+                    <p [hidden]="mapNames.length !== 0" class="text-white mb-4">
+                        There are currently no maps available.
+                    </p>
+                    <div [class]="mapNames.length === 0 ? 'hidden' : 'grid grid-cols-2'">
                         <button class="text-white bg-red-500 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 mr-1"
                                 (click)="displayEditMapDialog(false)">
                             Cancel

@@ -37,6 +37,11 @@ export class CreateMapComponent implements OnInit {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
             }
         };
+        document.getElementById("editMapDialog")!.addEventListener('click', e => {
+            if (e.target === e.currentTarget) {
+                this.displayEditMapDialog(false);
+            }
+        });
     }
 
     /**

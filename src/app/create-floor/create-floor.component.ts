@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, Input} from '@angular/core';
+import {AfterViewInit, Component, HostListener, Input} from '@angular/core';
 
 declare var d3: any;
 
@@ -12,9 +12,13 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData: any;
     @Input() floor: any;
     lastId = 1;
-    xScale = d3.scale.linear().domain([0, 50.0]).range([0, 720]);
-    yScale = d3.scale.linear().domain([0, 33.79]).range([0, 487]);
-    map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);
+    mapWidth = 720;
+    mapHeight = 487;
+    imageRatio = this.mapHeight / this.mapWidth;
+    imageUrl = '';
+    xScale: any;
+    yScale: any;
+    map: any;
     imageLayer = d3.floorplan.imagelayer();
     overlays = d3.floorplan.overlays().editMode(true);
     mapData: any = {};
@@ -23,18 +27,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.mapData[this.imageLayer.id()] = [{
-            url: 'https://dciarletta.github.io/d3-floorplan/Sample_Floorplan.jpg',
-            x: 0,
-            y: 0,
-            height: 33.79,
-            width: 50.0
-        }];
-
-        this.map.addLayer(this.imageLayer)
-            .addLayer(this.overlays);
-
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+        this.regenerateFloorMap();
 
         this.jsonData.nodes.filter((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => elem.floor === this.floor).map((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
             this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
@@ -45,17 +38,18 @@ export class CreateFloorComponent implements AfterViewInit {
         return this.jsonData["floors"].find((f: any) => f.floor === this.floor).name;
     }
 
-    loadData(data: any) {
+    loadData(data: any): void {
         let elementsToBeSaved = Array.from(document.querySelectorAll('.door'));
         d3.select("#demo" + this.floor).selectAll("*").remove();
 
         this.mapData[this.overlays.id()] = data.overlays;
 
         d3.select("#demo" + this.floor).append("svg")
-            .attr("height", 487).attr("width", 720)
+            .attr("height", this.mapHeight).attr("width", this.mapWidth)
             .datum(this.mapData).call(this.map);
 
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        // d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor).attr("transform", d3.select(".may-layers").attr("transform"));
 
         this.reloadAllNodes(elementsToBeSaved);
     }
@@ -64,7 +58,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * Reloads all elements stored in the nodes Array in jsonData
      * @param elementsToBeSaved
      */
-    reloadAllNodes(elementsToBeSaved: Element[]) : void {
+    reloadAllNodes(elementsToBeSaved: Element[]): void {
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
             .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
@@ -74,22 +68,21 @@ export class CreateFloorComponent implements AfterViewInit {
      * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
      * @param amountOfVertices
      */
-    createPolygon(amountOfVertices: number | null) {
+    createPolygon(amountOfVertices: number | null): void {
         let name = window.prompt("Enter the room's name: ") + "";
         let nVertices = amountOfVertices === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : amountOfVertices;
 
-        let radius = 2;
+        let radius = 30;
         let angle = Math.PI * 2 / nVertices;
         let vertices = [];
 
         for (let i = 0; i < nVertices; i++) {
-            const x = 5 + radius * Math.sin(i * angle);
-            const y = 5 + radius * Math.cos(i * angle);
+            const x = 75 + radius * Math.sin(i * angle);
+            const y = 75 + radius * Math.cos(i * angle);
             vertices[i] = {"x": x, "y": y};
         }
 
-        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(
-        {
+        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push({
             "id": this.lastId + 1,
             "name": name,
             "type": "room",
@@ -112,6 +105,49 @@ export class CreateFloorComponent implements AfterViewInit {
         this.jsonData.floors = newFloors;
     }
 
+    @HostListener('window:resize')
+    regenerateFloorMap(): void {
+        this.mapWidth = window.innerWidth - 0.2 * window.innerWidth;
+        this.mapHeight = this.mapWidth * this.imageRatio;
+
+        this.xScale = d3.scale.linear().domain([0, this.mapWidth]).range([0, this.mapWidth]);
+        this.yScale = d3.scale.linear().domain([0, this.mapHeight]).range([0, this.mapHeight]);
+
+        this.mapData[this.imageLayer.id()] = [{
+            url: this.imageUrl,
+            x: 0,
+            y: 0,
+            width: this.mapWidth,
+            height: this.mapHeight
+        }];
+
+        this.map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);
+        this.map.addLayer(this.imageLayer)
+            .addLayer(this.overlays);
+
+        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+    }
+
+    updateNewBackground(event: any): void {
+        if (event.target.files.length > 0) {
+            const reader = new FileReader();
+            reader.readAsDataURL(event.target.files[event.target.files.length - 1]);
+            const self = this;
+            reader.onload = function (e: any) {
+                const image = new Image();
+                image.src = e.target.result;
+                image.onload = function () {
+                    self.mapHeight = image.height;
+                    self.mapWidth = image.width;
+                    self.imageRatio = image.height / image.width;
+                    self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
+                    d3.select("#demo" + self.floor).selectAll("*").remove();
+                    self.regenerateFloorMap();
+                }
+            }
+        }
+    }
+
     createDoor(previousPoints: string | null = null, previousName: string | null = null): void {
         let doorName = previousName === null ? window.prompt("Door's name: ") : previousName;
         let origin = {"x": 25, "y": 25};
@@ -122,7 +158,8 @@ export class CreateFloorComponent implements AfterViewInit {
             origin,
             {"x": origin.x + width, "y": origin.y},
             {"x": origin.x + width, "y": origin.y + height},
-            {"x": origin.x, "y": origin.y + height}];
+            {"x": origin.x, "y": origin.y + height}
+        ];
 
         let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points)
 
@@ -138,7 +175,6 @@ export class CreateFloorComponent implements AfterViewInit {
             .on("contextmenu", this.rotateDoor)
             .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
     }
-
 
     /**
      * Moves the door according to drag, only executes on left click drag
@@ -204,7 +240,7 @@ export class CreateFloorComponent implements AfterViewInit {
         return this.pointStringFromArrayOfPoints(resultArray);
     }
 
-    static pointStringFromArrayOfPoints(array: {x: number, y: number}[]) : string {
+    static pointStringFromArrayOfPoints(array: { x: number, y: number }[]): string {
         return array.map(function (d) {
             return [d.x, d.y].join(",");
         }).join(" ");

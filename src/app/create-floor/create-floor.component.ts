@@ -32,11 +32,13 @@ export class CreateFloorComponent implements AfterViewInit {
         }];
 
         this.map.addLayer(this.imageLayer)
-            .addLayer(this.overlays)
+            .addLayer(this.overlays);
 
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
 
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        this.jsonData.nodes.filter((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => elem.floor === this.floor).map((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
+            this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
+        });
     }
 
     getFloorName(): string {
@@ -54,13 +56,27 @@ export class CreateFloorComponent implements AfterViewInit {
             .datum(this.mapData).call(this.map);
 
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+
+        this.reloadAllNodes(elementsToBeSaved);
+    }
+
+    /**
+     * Reloads all elements stored in the nodes Array in jsonData
+     * @param elementsToBeSaved
+     */
+    reloadAllNodes(elementsToBeSaved: Element[]) : void {
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
+            .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
     }
 
-    createPolygon(input: number | null) {
+    /**
+     * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
+     * @param amountOfVertices
+     */
+    createPolygon(amountOfVertices: number | null) {
         let name = window.prompt("Enter the room's name: ") + "";
-        let nVertices = input === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : input;
+        let nVertices = amountOfVertices === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : amountOfVertices;
 
         let radius = 2;
         let angle = Math.PI * 2 / nVertices;
@@ -72,20 +88,17 @@ export class CreateFloorComponent implements AfterViewInit {
             vertices[i] = {"x": x, "y": y};
         }
 
-        let temp = {
+        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(
+        {
             "id": this.lastId + 1,
             "name": name,
             "type": "room",
             "description": "iets",
             "points": vertices
-        };
+        });
 
-        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push(temp);
         this.lastId++;
-
-
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
-
     }
 
     removeFloor(): void {
@@ -99,7 +112,7 @@ export class CreateFloorComponent implements AfterViewInit {
         this.jsonData.floors = newFloors;
     }
 
-    createDoor(previousPoints: string | null = null, previousName: string | null = null) {
+    createDoor(previousPoints: string | null = null, previousName: string | null = null): void {
         let doorName = previousName === null ? window.prompt("Door's name: ") : previousName;
         let origin = {"x": 25, "y": 25};
         let width = 50;
@@ -111,9 +124,7 @@ export class CreateFloorComponent implements AfterViewInit {
             {"x": origin.x + width, "y": origin.y + height},
             {"x": origin.x, "y": origin.y + height}];
 
-        let pointsString = points.map(function (d) {
-            return [d.x, d.y].join(",");
-        }).join(" ");
+        let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points)
 
         d3.select("#doors" + this.floor)
             .append("polygon")
@@ -122,17 +133,23 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("height", height)
             .attr("class", "door")
             .attr("name", doorName)
+            .attr("floor", this.floor)
             .attr("degreesRotated", 0)
             .on("contextmenu", this.rotateDoor)
             .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
     }
 
-    moveDoorCoordinates() {
+
+    /**
+     * Moves the door according to drag, only executes on left click drag
+     */
+    moveDoorCoordinates(): void {
         if (d3.event.sourceEvent.which === 1) {
             let door = d3.select(this);
             let width = parseFloat(door.attr("width"));
             let height = parseFloat(door.attr("height"));
 
+            //Point used in reconstructing the polygon after dragging
             let toBuildFrom = {"x": parseFloat(d3.event.x), "y": parseFloat(d3.event.y)};
 
             let points = [
@@ -141,10 +158,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 {"x": toBuildFrom.x + width, "y": toBuildFrom.y + height},
                 {"x": toBuildFrom.x, "y": toBuildFrom.y + height}];
 
-            let pointsString = points.map(function (d: { "x": number, "y": number }) {
-                return [d.x, d.y].join(",");
-            }).join(" ");
-
+            let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points);
             let degreesRotated = parseFloat(d3.select(this).attr("degreesRotated"));
 
             if (degreesRotated !== 0) {
@@ -155,7 +169,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    rotateDoor() {
+    rotateDoor(): void {
         d3.event.preventDefault();
 
         let previousPoints = d3.select(this).attr("points");
@@ -165,7 +179,7 @@ export class CreateFloorComponent implements AfterViewInit {
         d3.select(this).attr("points", result);
     }
 
-    static calculateNewCoordinatesForRotation(previousPoints: string, degreesRotated: number) {
+    static calculateNewCoordinatesForRotation(previousPoints: string, degreesRotated: number): string {
         function rotatePoint(pointX: number, pointY: number, originX: number, originY: number, angle: number) {
             angle = angle * Math.PI / 180.0;
             return {
@@ -187,8 +201,11 @@ export class CreateFloorComponent implements AfterViewInit {
         let middleY = (poppedPoints[0][1] + poppedPoints[2][1]) / 2;
 
         let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, degreesRotated));
+        return this.pointStringFromArrayOfPoints(resultArray);
+    }
 
-        return resultArray.map(function (d) {
+    static pointStringFromArrayOfPoints(array: {x: number, y: number}[]) : string {
+        return array.map(function (d) {
             return [d.x, d.y].join(",");
         }).join(" ");
     }

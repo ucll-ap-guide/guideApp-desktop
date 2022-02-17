@@ -12,7 +12,7 @@ export class CreateMapComponent implements OnInit {
     jsonData = {
         "name": "UCLL",
         "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[],
-        "nodes": [] as { id: number, name: string, point: {x: number, y: number}, displayPoints: {x: number, y: number}[], neighbors: number[], type: string}[]
+        "nodes": [] as { id: number, name: string, floor: number, point: {x: number, y: number}, displayPoints: {x: number, y: number}[], neighbors: number[], type: string}[]
     };
 
     mapNames: string[] = [];
@@ -188,6 +188,7 @@ export class CreateMapComponent implements OnInit {
             let handledDoor = {
                 id: lastId + 1,
                 name: doors[i].getAttribute("name") + "",
+                floor: parseInt(doors[i].getAttribute("floor") + ""),
                 point:
                     {
                         x: doorCoords.middle.x,

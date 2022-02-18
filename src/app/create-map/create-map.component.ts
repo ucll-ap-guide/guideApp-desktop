@@ -11,10 +11,12 @@ import {MapService} from "../map.service";
 export class CreateMapComponent implements OnInit {
     jsonData = {
         "name": "UCLL",
+        "lastId": 0,
         "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[],
         "nodes": [] as { id: number, name: string, floor: number, point: { x: number, y: number }, displayPoints: { x: number, y: number }[], neighbors: number[], type: string }[]
     };
 
+    deleteMode = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = {

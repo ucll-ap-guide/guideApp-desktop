@@ -11,7 +11,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
     @Input() jsonData: any;
     @Input() floor: any;
-    lastId = 1;
+    @Input() deleteMode: boolean = false;
     mapWidth = 720;
     mapHeight = 487;
     imageRatio = this.mapHeight / this.mapWidth;
@@ -38,6 +38,10 @@ export class CreateFloorComponent implements AfterViewInit {
         return this.jsonData["floors"].find((f: any) => f.floor === this.floor).name;
     }
 
+    /**
+     * (Re)loads all elements displayed on the drawing area of the floor
+     * @param data
+     */
     loadData(data: any): void {
         let elementsToBeSaved = Array.from(document.querySelectorAll('.door'));
         d3.select("#demo" + this.floor).selectAll("*").remove();
@@ -48,10 +52,42 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("height", this.mapHeight).attr("width", this.mapWidth)
             .datum(this.mapData).call(this.map);
 
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
-        // d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor).attr("transform", d3.select(".may-layers").attr("transform"));
-
         this.reloadAllNodes(elementsToBeSaved);
+
+        document.querySelectorAll("[removable]").forEach(elem =>
+            elem.addEventListener("click", (e) => {
+                if (this.deleteMode)
+                    this.removeElement(e);
+            }));
+    }
+
+    /**
+     * Removes an element based upon its type, given the click event that triggered the remove function
+     * @param e
+     */
+    removeElement(e: Event) {
+        if (e.target) {
+            // @ts-ignore
+            let id = parseInt(e.target.getAttribute("id"));
+            // @ts-ignore
+            let type = e.target.getAttribute("type");
+            switch(type) {
+                case "room":
+                    let array = this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons;
+                    let index = array.map(function (x: any) { return x.id; }).indexOf(id);
+                    if (index > -1) {
+                        array.splice(index, 1);
+                    }
+                    break;
+
+                case "door":
+                    let door = document.getElementById(id + "");
+                    if (door)
+                        door.remove();
+                    break;
+            }
+        }
+        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
     }
 
     /**
@@ -59,6 +95,8 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param elementsToBeSaved
      */
     reloadAllNodes(elementsToBeSaved: Element[]): void {
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
             .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
@@ -83,14 +121,15 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push({
-            "id": this.lastId + 1,
+            "id": this.jsonData.lastId + 1,
             "name": name,
+            "floor": this.floor,
             "type": "room",
             "description": "iets",
             "points": vertices
         });
 
-        this.lastId++;
+        this.jsonData.lastId += 1;
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
     }
 
@@ -165,15 +204,24 @@ export class CreateFloorComponent implements AfterViewInit {
 
         d3.select("#doors" + this.floor)
             .append("polygon")
+            .attr("id", this.jsonData.lastId +1)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
+            .attr("type", "door")
             .attr("class", "door")
             .attr("name", doorName)
+            .attr("removable", "")
             .attr("floor", this.floor)
             .attr("degreesRotated", 0)
             .on("contextmenu", this.rotateDoor)
-            .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates));
+            .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates))
+            .node().addEventListener("click", (e: Event) => {
+                 if (this.deleteMode)
+                     this.removeElement(e);
+             });
+
+        this.jsonData.lastId += 1;
     }
 
     /**

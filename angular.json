@@ -54,7 +54,9 @@
             "styles": [
               "src/styles/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/js/floorplan.js"
+            ]
           },
           "configurations": {
             "production": {

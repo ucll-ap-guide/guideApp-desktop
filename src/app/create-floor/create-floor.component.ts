@@ -22,6 +22,7 @@ export class CreateFloorComponent implements AfterViewInit {
     imageLayer = d3.floorplan.imagelayer();
     overlays = d3.floorplan.overlays().editMode(true);
     mapData: any = {};
+    observer: MutationObserver | undefined;
 
     constructor() {
     }
@@ -96,10 +97,29 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     reloadAllNodes(elementsToBeSaved: Element[]): void {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        this.observer = new MutationObserver(this.setZoom);
+        this.observer.observe(document.getElementById("map-layers") as Node, { attributes: true })
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
             .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
+    }
+
+    /**
+     * Function used to zoom non floor plan objects to the same level as floor plan objects
+     * @param mutationsList
+     */
+    setZoom = (mutationsList: MutationRecord[]) => {
+        for (const mutation of mutationsList) {
+            if (
+                mutation.type !== "attributes" ||
+                mutation.attributeName !== "transform"
+            ) {
+                break;
+            }
+            // @ts-ignore
+            d3.select("#doors" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
+        }
     }
 
     /**

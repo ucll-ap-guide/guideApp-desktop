@@ -15,7 +15,7 @@ d3.floorplan = function () {
                     a.append("circle").attr("cx", 1.5).attr("cy", 1.5).attr("r", 1).attr("stroke", "none").attr("fill", "url(#metal-bump)")
                 });
                 var c = k.selectAll(".map-layers").data([0]), b = c.enter().append("g").attr("class",
-                    "map-layers"), g = d3.transition(c);
+                    "map-layers").attr("id", "map-layers"), g = d3.transition(c);
                 b.append("rect").attr("class", "canvas").attr("pointer-events", "all").style("opacity", 0);
                 g.attr("width", d).attr("height", n).attr("x", h.range()[0]).attr("y", l.range()[0]);
                 b = k.selectAll(".map-controls").data([0]);

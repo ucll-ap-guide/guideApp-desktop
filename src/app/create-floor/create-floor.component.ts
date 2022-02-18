@@ -134,27 +134,26 @@ export class CreateFloorComponent implements AfterViewInit {
      *
      * @param name The name of the polygon
      * @param amountOfVertices The amount of vertices each room has
+     * @param description The description of rooms purpose
      * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(name: string, amountOfVertices: number, self: any = this) {
-        let nVertices = amountOfVertices === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : amountOfVertices;
-
+    createPolygon(name: string, amountOfVertices: number, description: string, self: any = this) {
         let radius = 30;
-        let angle = Math.PI * 2 / nVertices;
+        let angle = Math.PI * 2 / amountOfVertices;
         let vertices = [];
 
-        for (let i = 0; i < nVertices; i++) {
+        for (let i = 0; i < amountOfVertices; i++) {
             const x = 75 + radius * Math.sin(i * angle);
             const y = 75 + radius * Math.cos(i * angle);
             vertices[i] = {"x": x, "y": y};
         }
 
-        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push({
+        self.jsonData["floors"].find((f: any) => f.floor === self.floor).overlays.polygons.push({
             "id": self.jsonData.lastId + 1,
             "name": name,
-            "floor": this.floor,
+            "floor": self.floor,
             "type": "room",
-            "description": "iets",
+            "description": description,
             "points": vertices
         });
 
@@ -231,7 +230,6 @@ export class CreateFloorComponent implements AfterViewInit {
 
         d3.select("#doors" + self.floor)
             .append("polygon")
-            .attr("id", this.jsonData.lastId +1)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)

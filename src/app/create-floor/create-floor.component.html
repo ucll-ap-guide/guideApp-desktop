@@ -23,24 +23,38 @@
     <div class="flex justify-center">
         <div class="text-white bg-white" id="demo{{floor}}"></div>
     </div>
-    <button (click)="displayDialogBox('createPolygon', {vertices: 3})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+
+    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
+            class="bg-gray-400 rounded-md py-2 px-3 m-2">
         Triangle
     </button>
-    <button (click)="displayDialogBox('createPolygon', {vertices: 4})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 4})"
+            class="bg-gray-400 rounded-md py-2 px-3 m-2">
         Square
     </button>
-    <button (click)="displayDialogBox('createPolygon', {vertices: 5})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 5})"
+            class="bg-gray-400 rounded-md py-2 px-3 m-2">
         Pentagon
     </button>
-    <button (click)="displayDialogBox('createPolygon', {vertices: null})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+    <button (click)="displayDialogBox('createPolygon', {vertices: null})"
+            class="bg-gray-400 rounded-md py-2 px-3 m-2">
         Polygon
     </button>
-    <button (click)="displayDialogBox('createDoor', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2">Door</button>
+    <button (click)="displayDialogBox('createDoor', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+        Door
+    </button>
 
-    <app-dialog-box action="createPolygon" title="Give name" confirmButtonText="OK" [confirmAction]="createPolygon"
-                    [params]="this.paramsToGiveToDialogBoxes" dialogText="Enter the room's name:">
+    <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
+                    [params]="this.paramsToGiveToDialogBoxes" action="createPolygonWithNVertices" confirmButtonText="OK"
+                    dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
-    <app-dialog-box action="createDoor" title="Give name" confirmButtonText="OK" [confirmAction]="createDoor"
-                    [params]="this.paramsToGiveToDialogBoxes" dialogText="Enter the door's name:">
+    <app-dialog-box [confirmAction]="createPolygon"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]"
+                    [params]="this.paramsToGiveToDialogBoxes" action="createPolygon" confirmButtonText="OK"
+                    dialogText="Please fill in the following form:" title="Create polygon">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}]"
+                    [params]="this.paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
+                    dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>
 </div>

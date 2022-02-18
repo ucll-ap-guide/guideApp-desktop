@@ -246,7 +246,7 @@ export class CreateFloorComponent implements AfterViewInit {
                      this.removeElement(e);
              });
 
-        this.jsonData.lastId += 1;
+        self.jsonData.lastId += 1;
     }
 
     /**

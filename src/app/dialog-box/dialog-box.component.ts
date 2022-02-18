@@ -39,7 +39,7 @@ export class DialogBoxComponent implements AfterViewInit {
             if (elem.nodeName === "INPUT") {
                 (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
                 elem.type = formElement.inputType ? formElement.inputType : "text";
-                if (formElement.inputType === "number" && elem.min) {
+                if (formElement.inputType === "number" && elem.min !== undefined) {
                     elem.min = formElement.min;
                 }
             }

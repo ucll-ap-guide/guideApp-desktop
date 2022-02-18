@@ -23,6 +23,7 @@ export class CreateFloorComponent implements AfterViewInit {
     overlays = d3.floorplan.overlays().editMode(true);
     mapData: any = {};
     observer: MutationObserver | undefined;
+    paramsToGiveToDialogBoxes: any = {};
 
     constructor() {
     }
@@ -105,6 +106,12 @@ export class CreateFloorComponent implements AfterViewInit {
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
     }
 
+    displayDialogBox(action: string, params: {}) {
+        this.paramsToGiveToDialogBoxes = params;
+        this.paramsToGiveToDialogBoxes.self = this;
+        document.getElementById(action + "DialogBox")!.classList.replace("hidden", "flex");
+    }
+
     /**
      * Function used to zoom non floor plan objects to the same level as floor plan objects
      * @param mutationsList
@@ -124,10 +131,12 @@ export class CreateFloorComponent implements AfterViewInit {
 
     /**
      * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
-     * @param amountOfVertices
+     *
+     * @param name The name of the polygon
+     * @param amountOfVertices The amount of vertices each room has
+     * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(amountOfVertices: number | null): void {
-        let name = window.prompt("Enter the room's name: ") + "";
+    createPolygon(name: string, amountOfVertices: number, self: any = this) {
         let nVertices = amountOfVertices === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : amountOfVertices;
 
         let radius = 30;
@@ -141,7 +150,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push({
-            "id": this.jsonData.lastId + 1,
+            "id": self.jsonData.lastId + 1,
             "name": name,
             "floor": this.floor,
             "type": "room",
@@ -149,8 +158,8 @@ export class CreateFloorComponent implements AfterViewInit {
             "points": vertices
         });
 
-        this.jsonData.lastId += 1;
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+        self.lastId++;
+        self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor));
     }
 
     removeFloor(): void {
@@ -200,15 +209,13 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.mapWidth = image.width;
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
-                    d3.select("#demo" + self.floor).selectAll("*").remove();
                     self.regenerateFloorMap();
                 }
             }
         }
     }
 
-    createDoor(previousPoints: string | null = null, previousName: string | null = null): void {
-        let doorName = previousName === null ? window.prompt("Door's name: ") : previousName;
+    createDoor(previousPoints: string | null = null, name: string | null = "", self: any = this): void {
         let origin = {"x": 25, "y": 25};
         let width = 50;
         let height = 15;
@@ -222,7 +229,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points)
 
-        d3.select("#doors" + this.floor)
+        d3.select("#doors" + self.floor)
             .append("polygon")
             .attr("id", this.jsonData.lastId +1)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
@@ -230,12 +237,12 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("height", height)
             .attr("type", "door")
             .attr("class", "door")
-            .attr("name", doorName)
+            .attr("name", name)
             .attr("removable", "")
-            .attr("floor", this.floor)
+            .attr("floor", self.floor)
             .attr("degreesRotated", 0)
-            .on("contextmenu", this.rotateDoor)
-            .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates))
+            .on("contextmenu", self.rotateDoor)
+            .call(d3.behavior.drag().on("drag", self.moveDoorCoordinates))
             .node().addEventListener("click", (e: Event) => {
                  if (this.deleteMode)
                      this.removeElement(e);

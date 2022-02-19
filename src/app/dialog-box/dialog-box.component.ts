@@ -2,12 +2,13 @@ import {AfterViewInit, Component, Input} from '@angular/core';
 
 @Component({
     selector: 'app-dialog-box',
-    templateUrl: 'dialog-box.components.html',
+    templateUrl: 'dialog-box.component.html',
     styles: []
 })
 export class DialogBoxComponent implements AfterViewInit {
 
     @Input() action!: string;
+    @Input() floor!: string;
     @Input() title!: string;
     @Input() dialogText!: string;
     @Input() confirmButtonText!: string;
@@ -19,7 +20,7 @@ export class DialogBoxComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        const inputsDiv = <HTMLDivElement>document.getElementById(this.action + "Inputs");
+        const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}`);
         for (const formElement of this.formElements) {
             const label = document.createElement("label");
             if (formElement.name) {
@@ -45,7 +46,7 @@ export class DialogBoxComponent implements AfterViewInit {
             }
             inputsDiv.appendChild(elem);
         }
-        document.getElementById(this.action + "DialogBox")!.addEventListener('click', e => {
+        document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', e => {
             if (e.target === e.currentTarget) {
                 this.hideDialog();
             }
@@ -53,11 +54,15 @@ export class DialogBoxComponent implements AfterViewInit {
     }
 
     hideDialog(): void {
-        document.getElementById(this.action + "DialogBox")!.classList.replace("flex", "hidden");
+        const inputFields = document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!;
+        inputFields.classList.replace("flex", "hidden");
+        inputFields.querySelectorAll("input")!.forEach((inputField: HTMLInputElement) => {
+            inputField.value = "";
+        });
     }
 
     successfullyCloseDialog(): void {
-        const inputFields = document.getElementById(this.action + "DialogBox")!.getElementsByTagName("input");
+        const inputFields = document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("input");
         this.hideDialog();
         switch (this.action) {
             case "createPolygonWithNVertices":

@@ -46,15 +46,15 @@
 
     <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createPolygonWithNVertices" confirmButtonText="OK"
-                    dialogText="Enter the room's name:" title="Create polygon">
+                    [floor]="floor" dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon"
                     [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createPolygon" confirmButtonText="OK"
-                    dialogText="Please fill in the following form:" title="Create polygon">
+                    [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
-                    dialogText="Enter the door's name:" title="Create door">
+                    [floor]="floor" dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>
 </div>

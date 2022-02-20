@@ -23,6 +23,7 @@ export class CreateFloorComponent implements AfterViewInit {
     overlays = d3.floorplan.overlays().editMode(true);
     mapData: any = {};
     observer: MutationObserver | undefined;
+    paramsToGiveToDialogBoxes: any = {};
 
     constructor() {
     }
@@ -72,10 +73,12 @@ export class CreateFloorComponent implements AfterViewInit {
             let id = parseInt(e.target.getAttribute("id"));
             // @ts-ignore
             let type = e.target.getAttribute("type");
-            switch(type) {
+            switch (type) {
                 case "room":
                     let array = this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons;
-                    let index = array.map(function (x: any) { return x.id; }).indexOf(id);
+                    let index = array.map(function (x: any) {
+                        return x.id;
+                    }).indexOf(id);
                     if (index > -1) {
                         array.splice(index, 1);
                     }
@@ -98,11 +101,17 @@ export class CreateFloorComponent implements AfterViewInit {
     reloadAllNodes(elementsToBeSaved: Element[]): void {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
         this.observer = new MutationObserver(this.setZoom);
-        this.observer.observe(document.getElementById("map-layers") as Node, { attributes: true })
+        this.observer.observe(document.getElementById("map-layers") as Node, {attributes: true})
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
             .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
+    }
+
+    displayDialogBox(action: string, params: {}) {
+        this.paramsToGiveToDialogBoxes = params;
+        this.paramsToGiveToDialogBoxes.self = this;
+        document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
     }
 
     /**
@@ -124,33 +133,34 @@ export class CreateFloorComponent implements AfterViewInit {
 
     /**
      * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
-     * @param amountOfVertices
+     *
+     * @param name The name of the polygon
+     * @param amountOfVertices The amount of vertices each room has
+     * @param description The description of rooms purpose
+     * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(amountOfVertices: number | null): void {
-        let name = window.prompt("Enter the room's name: ") + "";
-        let nVertices = amountOfVertices === null ? parseInt(window.prompt("Enter the number of vertices: ") + "") : amountOfVertices;
-
+    createPolygon(name: string, amountOfVertices: number, description: string, self: any = this) {
         let radius = 30;
-        let angle = Math.PI * 2 / nVertices;
+        let angle = Math.PI * 2 / amountOfVertices;
         let vertices = [];
 
-        for (let i = 0; i < nVertices; i++) {
+        for (let i = 0; i < amountOfVertices; i++) {
             const x = 75 + radius * Math.sin(i * angle);
             const y = 75 + radius * Math.cos(i * angle);
             vertices[i] = {"x": x, "y": y};
         }
 
-        this.jsonData["floors"].find((f: any) => f.floor === this.floor).overlays.polygons.push({
-            "id": this.jsonData.lastId + 1,
+        self.jsonData["floors"].find((f: any) => f.floor === self.floor).overlays.polygons.push({
+            "id": self.jsonData.lastId + 1,
             "name": name,
-            "floor": this.floor,
+            "floor": self.floor,
             "type": "room",
-            "description": "iets",
+            "description": description,
             "points": vertices
         });
 
-        this.jsonData.lastId += 1;
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
+        self.jsonData.lastId += 1;
+        self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor));
     }
 
     removeFloor(): void {
@@ -200,15 +210,13 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.mapWidth = image.width;
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
-                    d3.select("#demo" + self.floor).selectAll("*").remove();
                     self.regenerateFloorMap();
                 }
             }
         }
     }
 
-    createDoor(previousPoints: string | null = null, previousName: string | null = null): void {
-        let doorName = previousName === null ? window.prompt("Door's name: ") : previousName;
+    createDoor(previousPoints: string | null = null, name: string | null = "", self: any = this): void {
         let origin = {"x": 25, "y": 25};
         let width = 50;
         let height = 15;
@@ -222,26 +230,26 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points)
 
-        d3.select("#doors" + this.floor)
+        d3.select("#doors" + self.floor)
             .append("polygon")
-            .attr("id", this.jsonData.lastId +1)
+            .attr("id", self.jsonData.lastId + 1)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
             .attr("type", "door")
             .attr("class", "door")
-            .attr("name", doorName)
+            .attr("name", name)
             .attr("removable", "")
-            .attr("floor", this.floor)
+            .attr("floor", self.floor)
             .attr("degreesRotated", 0)
-            .on("contextmenu", this.rotateDoor)
-            .call(d3.behavior.drag().on("drag", this.moveDoorCoordinates))
+            .on("contextmenu", self.rotateDoor)
+            .call(d3.behavior.drag().on("drag", self.moveDoorCoordinates))
             .node().addEventListener("click", (e: Event) => {
-                 if (this.deleteMode)
-                     this.removeElement(e);
-             });
+            if (this.deleteMode)
+                this.removeElement(e);
+        });
 
-        this.jsonData.lastId += 1;
+        self.jsonData.lastId += 1;
     }
 
     /**
@@ -296,8 +304,7 @@ export class CreateFloorComponent implements AfterViewInit {
         let poppedPoints = [];
 
         while (splitUpPreviousPoints.length !== 0) {
-            // @ts-ignore
-            let elems = splitUpPreviousPoints.pop().split(",");
+            let elems = splitUpPreviousPoints.pop()!.split(",");
             poppedPoints.push([parseFloat(elems[0]), parseFloat(elems[1])]);
         }
 

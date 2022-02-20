@@ -1,0 +1,28 @@
+<div id="{{action}}DialogBoxFloor{{floor}}"
+     class="z-0 bg-black bg-opacity-50 min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 hidden justify-center items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover">
+    <div class="bg-gray-900 text-black p-4 rounded-md">
+        <div class="text-white grid grid-flow-col auto-cols-auto w-full mb-2">
+            <h2 class="font-bold">{{title}}</h2>
+            <button class="focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black dark:focus:ring-white rounded-md h-8 w-8 ml-auto mr-0"
+                    (click)="hideDialog()">
+                <svg aria-label="Close dialog" class="h-6 w-6 mx-auto" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="4"/>
+                </svg>
+            </button>
+        </div>
+        <p class="dark:text-white mb-2">{{dialogText}}</p>
+        <div class="flex flex-col mx-2 mb-2" id="{{action}}InputsFloor{{floor}}"></div>
+        <div class="grid grid-cols-2">
+            <button class="text-white bg-red-500 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 mr-1"
+                    (click)="hideDialog()">
+                Cancel
+            </button>
+            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 ml-1"
+                    (click)="successfullyCloseDialog()">
+                {{confirmButtonText}}
+            </button>
+        </div>
+    </div>
+</div>

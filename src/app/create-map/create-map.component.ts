@@ -30,7 +30,7 @@ export class CreateMapComponent implements OnInit {
 
     ngOnInit() {
         const self = this;
-        document.getElementById("uploadedMapFromComputer")!.onchange = function (event) {
+        document.getElementById("uploadedMapFromComputer")!.onchange = function (event: Event) {
             const reader = new FileReader();
             reader.onload = function (event: ProgressEvent<FileReader>) {
                 let tempName = self.jsonData.name;
@@ -169,8 +169,7 @@ export class CreateMapComponent implements OnInit {
             let poppedPoints = [];
 
             while (splitUpPreviousPoints.length !== 0) {
-                // @ts-ignore
-                let elems = splitUpPreviousPoints.pop().split(",");
+                let elems = splitUpPreviousPoints.pop()!.split(",");
                 poppedPoints.push({"x": parseFloat(elems[0]), "y": parseFloat(elems[1])});
             }
 

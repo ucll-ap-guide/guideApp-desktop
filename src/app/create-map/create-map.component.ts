@@ -1,5 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {MapService} from "../map.service";
+import {Floor} from "../model/floor";
+import {GuidoMap} from "../model/guido-map";
+import {Point} from "../model/point";
+import {GuidoNode} from "../model/guido-node";
 
 @Component({
     selector: 'create-map',
@@ -9,20 +13,16 @@ import {MapService} from "../map.service";
     `]
 })
 export class CreateMapComponent implements OnInit {
-    jsonData = {
-        "name": "UCLL",
-        "lastId": 0,
-        "floors": [] as { floor: number, name: string, height: number, overlays: { polygons: { name: string, points: { x: number, y: number }[] }[] } }[],
-        "nodes": [] as { id: number, name: string, floor: number, point: { x: number, y: number }, displayPoints: { x: number, y: number }[], neighbors: number[], type: string }[]
-    };
-
+    jsonData = new GuidoMap("UCLL");
     deleteMode = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = {
         floor: 0,
         name: "Verdieping 0",
-        height: 2.5
+        height: 2.5,
+        length: 100,
+        width: 50
     };
 
     constructor(private mapService: MapService) {
@@ -63,21 +63,18 @@ export class CreateMapComponent implements OnInit {
      * @param floor The floor number this can be negative or positive
      * @param name The name of the floor
      * @param height The height of the floor
+     * @param length The length of the floor (horizontal)
+     * @param width The width of the floor (vertical)
      */
     addFloor(
         floor: number = this.createFloorForm.floor,
         name: string = this.createFloorForm.name,
-        height: number = this.createFloorForm.height
+        height: number = this.createFloorForm.height,
+        length: number = this.createFloorForm.length,
+        width: number = this.createFloorForm.width
     ): void {
-        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: any) => f.floor === floor)) {
-            this.jsonData.floors.push({
-                "floor": floor,
-                "name": name,
-                "height": height,
-                "overlays": {
-                    "polygons": []
-                }
-            });
+        if (!isNaN(floor) && name !== "" && !isNaN(height) && !isNaN(length) && !isNaN(width) && !this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
+            this.jsonData.floors.push(new Floor(floor, name, height, length, width, {"polygons": []}));
             this.createFloorForm.floor++;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
         }
@@ -87,7 +84,7 @@ export class CreateMapComponent implements OnInit {
      * Gets the names of all the maps and saves it in the variable mapNames.
      */
     getMapNames(): void {
-        this.mapService.getAllMapNames().subscribe((mapNames: any) => {
+        this.mapService.getAllMapNames().subscribe((mapNames: string[]) => {
             this.mapNames = mapNames;
         });
     }
@@ -154,7 +151,6 @@ export class CreateMapComponent implements OnInit {
     setAllNodes() {
         this.jsonData.nodes = [];
 
-
         //Doors
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
@@ -194,39 +190,36 @@ export class CreateMapComponent implements OnInit {
 
     getAllDoors() {
         let doors = document.getElementsByClassName("door");
-        let handledDoors = [];
+        let handledDoors: GuidoNode[] = [];
 
         function getDoorCoords(previousPoints: string) {
             let splitUpPreviousPoints = previousPoints.split(" ");
-            let poppedPoints = [];
+            let poppedPoints: Point[] = [];
 
             while (splitUpPreviousPoints.length !== 0) {
                 let elems = splitUpPreviousPoints.pop()!.split(",");
-                poppedPoints.push({"x": parseFloat(elems[0]), "y": parseFloat(elems[1])});
+                poppedPoints.push(new Point(parseFloat(elems[0]), parseFloat(elems[1])));
             }
 
             let middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
             let middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
 
-            return {"displayPoints": poppedPoints, "middle": {"x": middleX, "y": middleY}};
+            return {"displayPoints": poppedPoints, "middle": new Point(middleX, middleY)};
         }
 
         for (let i = 0; i != doors.length; i++) {
-            let doorCoords = getDoorCoords(doors[i].getAttribute("points") + "");
+            let doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
             let neighbors: number[] = [];
 
-            let handledDoor = {
-                id: this.jsonData.lastId + 1,
-                name: doors[i].getAttribute("name") + "",
-                floor: parseInt(doors[i].getAttribute("floor") + ""),
-                point: {
-                    x: doorCoords.middle.x,
-                    y: doorCoords.middle.y
-                },
-                displayPoints: doorCoords.displayPoints,
-                neighbors: neighbors,
-                type: "door"
-            }
+            let handledDoor = new GuidoNode(
+                this.jsonData.lastId + 1,
+                String(doors[i].getAttribute("name")),
+                parseInt(String(doors[i].getAttribute("floor"))),
+                new Point(doorCoords.middle.x, doorCoords.middle.y),
+                doorCoords.displayPoints,
+                neighbors,
+                "door"
+            );
             handledDoors.push(handledDoor);
             this.jsonData.lastId++;
         }

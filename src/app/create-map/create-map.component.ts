@@ -154,13 +154,45 @@ export class CreateMapComponent implements OnInit {
     setAllNodes() {
         this.jsonData.nodes = [];
 
-        let lastId = 0;
 
         //Doors
-        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors(lastId));
+        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
+        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
+
     }
 
-    getAllDoors(lastId: number) {
+    getAllNodes() {
+        let nodes = document.getElementsByClassName("node");
+        let handledNodes = [];
+
+        for (let i = 0; i != nodes.length; i++) {
+            let cx = parseFloat(nodes[i].getAttribute("cx") + "");
+            let cy = parseFloat(nodes[i].getAttribute("cy") + "");
+            let r = parseFloat(nodes[i].getAttribute("r") + "");
+
+            let neighbors: number[] = [];
+
+
+            let handledDoor = {
+                id: this.jsonData.lastId + 1,
+                name: nodes[i].getAttribute("name") + "",
+                floor: parseInt(nodes[i].getAttribute("floor") + ""),
+                point: {
+                    x: cx,
+                    y: cy
+                },
+                displayPoints: [{"x": cx + r, "y": cy + r}],
+                neighbors: neighbors,
+                type: "node"
+            }
+            handledNodes.push(handledDoor);
+            this.jsonData.lastId++;
+        }
+
+        return handledNodes;
+    }
+
+    getAllDoors() {
         let doors = document.getElementsByClassName("door");
         let handledDoors = [];
 
@@ -184,7 +216,7 @@ export class CreateMapComponent implements OnInit {
             let neighbors: number[] = [];
 
             let handledDoor = {
-                id: lastId + 1,
+                id: this.jsonData.lastId + 1,
                 name: doors[i].getAttribute("name") + "",
                 floor: parseInt(doors[i].getAttribute("floor") + ""),
                 point: {
@@ -196,7 +228,7 @@ export class CreateMapComponent implements OnInit {
                 type: "door"
             }
             handledDoors.push(handledDoor);
-            lastId++;
+            this.jsonData.lastId++;
         }
 
         return handledDoors;

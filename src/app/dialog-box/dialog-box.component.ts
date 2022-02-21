@@ -74,6 +74,9 @@ export class DialogBoxComponent implements AfterViewInit {
             case "createDoor":
                 this.confirmAction(null, inputFields[0].value, this.params.self);
                 break;
+            case "createNode":
+                this.confirmAction(null, inputFields[0].value, this.params.self);
+                break;
             default:
                 console.error("This dialog action is currently not supported");
         }

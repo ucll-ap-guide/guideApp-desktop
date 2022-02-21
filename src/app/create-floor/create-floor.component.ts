@@ -19,6 +19,7 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
+    @Input() setNeighborMode: boolean = false;
     imageWidth = 720;
     imageHeight = 487;
     imageRatio = this.imageHeight / this.imageWidth;
@@ -41,11 +42,11 @@ export class CreateFloorComponent implements AfterViewInit {
         this.regenerateFloorMap(true);
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
-            this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
+            this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors);
         });
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.NODE).map((elem: GuidoNode) => {
-            this.createNode(elem.point, elem.name);
+            this.createNode(elem.point, elem.name, elem.neighbors);
         });
     }
 
@@ -85,6 +86,8 @@ export class CreateFloorComponent implements AfterViewInit {
                 if (this.deleteMode)
                     this.removeElement(e);
             }));
+
+        d3.select("#demo" + this.floor).select("svg").on("dblclick.zoom", null);
     }
 
     /**
@@ -266,7 +269,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    createDoor(previousPoints: string | null = null, name: string | null = "", self: CreateFloorComponent = this): void {
+    createDoor(previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], self: CreateFloorComponent = this): void {
         let origin = new Point(25, 25);
         let width = 50;
         let height = 15;
@@ -280,7 +283,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points)
 
-        d3.select("#doors" + self.floor)
+        let door = d3.select("#doors" + self.floor)
             .append("polygon")
             .attr("id", self.jsonData.lastId + 1)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
@@ -288,28 +291,47 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("height", height)
             .attr("type", NodeType.DOOR)
             .attr("class", NodeType.DOOR)
+            .attr("node", "")
+            .attr("neighbors", neighbors.join(","))
             .attr("name", name)
             .attr("removable", "")
             .attr("floor", self.floor)
             .attr("degreesRotated", 0)
             .on("contextmenu", self.rotateDoor)
-            .call(d3.behavior.drag().on("drag", self.moveDoorCoordinates))
-            .node().addEventListener("click", (e: Event) => {
+            .call(d3.behavior.drag().on("drag", function(){
+                if (!self.setNeighborMode) { // @ts-ignore
+                    self.moveDoorCoordinates(this)
+                }
+            }));
+
+        door.node().addEventListener("click", (e: Event) => {
             if (self.deleteMode)
                 self.removeElement(e);
+        });
+
+        door.node().addEventListener('dblclick', function (e: Event) {
+            if (self.setNeighborMode) {
+                self.displayDialogBox("setNeighbors", {id: (e.target as Element).id})
+            }
         });
 
         self.jsonData.lastId += 1;
     }
 
+    setNeighbors(id: number, neighbors: string) {
+        let elem = document.getElementById(String(id))
+        if (elem !== null)
+            elem.setAttribute("neighbors", neighbors)
+    }
+
     /**
      * Creates passThrough node
      */
-    createNode(previousOrigin: Point | null = null, name: string, self: any = this): void {
+    createNode(previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: any = this): void {
         let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
         let radius = 5;
 
-        d3.select("#nodes" + self.floor)
+        let node = d3.select("#nodes" + self.floor)
             .append("circle")
             .attr("id", self.jsonData.lastId + 1)
             .attr('cx', origin.x)
@@ -317,6 +339,8 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr('r', radius)
             .attr("floor", this.floor)
             .attr("name", name)
+            .attr("neighbors", neighbors.join(","))
+            .attr("node", "")
             .attr("type", NodeType.NODE)
             .attr("class", NodeType.NODE)
             .attr('stroke', 'black')
@@ -334,10 +358,21 @@ export class CreateFloorComponent implements AfterViewInit {
                     .attr("r", 5)
                     .style("opacity", 1)
             })
-            .call(d3.behavior.drag().on("drag", self.moveNodeCoordinates))
-            .node().addEventListener("click", (e: Event) => {
+            .call(d3.behavior.drag().on("drag", function() {
+                if (!self.setNeighborMode) { // @ts-ignore
+                    self.moveNodeCoordinates(this)
+                }
+            }));
+
+        node.node().addEventListener("click", (e: Event) => {
             if (self.deleteMode)
                 self.removeElement(e);
+        });
+
+        node.node().addEventListener('dblclick', function (e: Event) {
+            if (self.setNeighborMode) {
+                self.displayDialogBox("setNeighbors", {id: (e.target as Element).id})
+            }
         });
 
         self.jsonData.lastId += 1;
@@ -346,17 +381,17 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Moves passThrough node
      */
-    moveNodeCoordinates() {
-        let node = d3.select(this);
+    moveNodeCoordinates(self: this) {
+        let node = d3.select(self);
         node.attr('cx', d3.event.x).attr('cy', d3.event.y)
     }
 
     /**
      * Moves the door according to drag, only executes on left click drag
      */
-    moveDoorCoordinates(): void {
+    moveDoorCoordinates(self: any): void {
         if (d3.event.sourceEvent.which === 1) {
-            let door = d3.select(this);
+            let door = d3.select(self);
             let width = parseFloat(door.attr("width"));
             let height = parseFloat(door.attr("height"));
 
@@ -371,7 +406,7 @@ export class CreateFloorComponent implements AfterViewInit {
             ];
 
             let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points);
-            let degreesRotated = parseFloat(d3.select(this).attr("degreesRotated"));
+            let degreesRotated = parseFloat(d3.select(self).attr("degreesRotated"));
 
             if (degreesRotated !== 0) {
                 pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);

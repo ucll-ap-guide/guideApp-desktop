@@ -21,29 +21,29 @@
         </button>
     </div>
     <div class="flex justify-center">
-        <div class="text-white bg-white overflow-auto" id="demo{{floor}}"></div>
+        <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>
     </div>
 
     <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2">
+            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Triangle
     </button>
     <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 4})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2">
+            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Square
     </button>
     <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 5})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2">
+            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Pentagon
     </button>
     <button (click)="displayDialogBox('createPolygon', {vertices: null})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2">
+            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Polygon
     </button>
-    <button (click)="displayDialogBox('createDoor', {emergency: false})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+    <button (click)="displayDialogBox('createDoor', {emergency: false})" class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Door
     </button>
-    <button (click)="displayDialogBox('createNode', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+    <button (click)="displayDialogBox('createNode', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
         Node
     </button>
 
@@ -63,5 +63,9 @@
     <app-dialog-box [confirmAction]="createNode" [formElements]="[{name: 'Node name'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createNode" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the node's name:" title="Create node">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="setNeighbors" [formElements]="[{name: 'Enter neighbors'}]"
+                    [params]="this.paramsToGiveToDialogBoxes" action="setNeighbors" confirmButtonText="OK"
+                    [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
 </div>

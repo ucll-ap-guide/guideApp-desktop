@@ -7,6 +7,8 @@ import {GuidoNode} from "../model/guido-node";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 
+declare var d3: any;
+
 @Component({
     selector: 'create-map',
     templateUrl: './create-map.component.html',
@@ -17,6 +19,7 @@ import {PolygonType} from "../model/polygon-type";
 export class CreateMapComponent implements OnInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
     deleteMode = false;
+    setNeighborMode=false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
@@ -150,6 +153,48 @@ export class CreateMapComponent implements OnInit {
         this.jsonData.floors = [];
     }
 
+    enableSetNeighborMode() {
+        document.querySelectorAll(".addFigureButton").forEach(elem => elem.setAttribute("disabled", "true"))
+        this.setNeighborMode = true;
+        let floors = document.querySelectorAll('.floor');
+        let nodes = document.querySelectorAll('[node]');
+
+        //SET LABELS
+        floors.forEach(elem => d3.select("#" + elem.getAttribute("id"))
+                                          .select("svg")
+                                          .append("g")
+                                          .attr("setNeighborModeTextGroup","")
+                                          .attr("id", elem.getAttribute("id") + "textLabels"));
+
+        nodes.forEach(elem => {
+            let node = d3.select("[id='" + elem.getAttribute("id") +"']");
+            let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
+            switch (elem.getAttribute("type")) {
+                case "door":
+                    let corner = node.attr("points").split(" ")[0].split(",")
+                    let point = new Point(parseFloat(corner[0]), parseFloat(corner[1]));
+
+                    floorTextLabels.append("text")
+                        .attr("x", point.x + 25)
+                        .attr("y", point.y - 1)
+                        .text(node.attr("id"));
+                    break;
+
+                case "node":
+                    floorTextLabels.append("text")
+                        .attr("x", parseFloat(node.attr("cx")) + 6)
+                        .attr("y", parseFloat(node.attr("cy")) - 1)
+                        .text(node.attr("id"));
+            }
+        })
+    }
+
+    disableSetNeighborMode() {
+        document.querySelectorAll(".addFigureButton").forEach(elem => elem.removeAttribute("disabled"))
+        document.querySelectorAll("[setNeighborModeTextGroup]").forEach(elem => elem.remove());
+        this.setNeighborMode = false;
+    }
+
     /**
      * Gets all nodes and adds them to the JSON structure before saving
      */
@@ -168,8 +213,7 @@ export class CreateMapComponent implements OnInit {
             let cx = parseFloat(String(nodes[i].getAttribute("cx")));
             let cy = parseFloat(String(nodes[i].getAttribute("cy")));
             let r = parseFloat(String(nodes[i].getAttribute("r")));
-
-            let neighbors: number[] = [];
+            let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
 
             let handledDoor = new GuidoNode(
                 this.jsonData.lastId + 1,
@@ -208,7 +252,7 @@ export class CreateMapComponent implements OnInit {
 
         for (let i = 0; i != doors.length; i++) {
             let doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
-            let neighbors: number[] = [];
+            let neighbors = String(doors[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
 
             let handledDoor = new GuidoNode(
                 this.jsonData.lastId + 1,

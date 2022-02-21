@@ -85,9 +85,15 @@
                     <label class="text-white block mb-1" for="floorName">Floor name:</label>
                     <input class="rounded-md py-1 px-2" id="floorName" placeholder="Floor name"
                            type="text" [(ngModel)]="createFloorForm.name">
-                    <label class="text-white block mb-1" for="floorHeight">Floor height:</label>
+                    <label class="text-white block mb-1" for="floorHeight">Floor height (meters):</label>
                     <input class="rounded-md py-1 px-2" id="floorHeight" min="0" placeholder="Floor height"
                            type="number" [(ngModel)]="createFloorForm.height">
+                    <label class="text-white block mb-1" for="floorLength">Floor length (meters):</label>
+                    <input class="rounded-md py-1 px-2" id="floorLength" min="0" placeholder="Floor length"
+                           type="number" [(ngModel)]="createFloorForm.length">
+                    <label class="text-white block mb-1" for="floorWidth">Floor width (meters):</label>
+                    <input class="rounded-md py-1 px-2" id="floorWidth" min="0" placeholder="Floor width"
+                           type="number" [(ngModel)]="createFloorForm.width">
                     <button (click)="addFloor()"
                             class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
                         Add floor

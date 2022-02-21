@@ -8,7 +8,7 @@ import {AfterViewInit, Component, Input} from '@angular/core';
 export class DialogBoxComponent implements AfterViewInit {
 
     @Input() action!: string;
-    @Input() floor!: string;
+    @Input() floor!: number;
     @Input() title!: string;
     @Input() dialogText!: string;
     @Input() confirmButtonText!: string;
@@ -40,9 +40,15 @@ export class DialogBoxComponent implements AfterViewInit {
             if (elem.nodeName === "INPUT") {
                 (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
                 elem.type = formElement.inputType ? formElement.inputType : "text";
-                if (formElement.inputType === "number" && elem.min !== undefined) {
-                    elem.min = formElement.min;
+                if (formElement.inputType === "number") {
+                    if (!isNaN(formElement.min)) {
+                        elem.min = formElement.min;
+                    }
+                    elem.step = (isNaN(formElement)) ? 1 : formElement.step;
                 }
+            }
+            if (formElement.defaultValue !== undefined) {
+                elem.value = formElement.defaultValue
             }
             inputsDiv.appendChild(elem);
         }
@@ -63,7 +69,6 @@ export class DialogBoxComponent implements AfterViewInit {
 
     successfullyCloseDialog(): void {
         const inputFields = document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("input");
-        this.hideDialog();
         switch (this.action) {
             case "createPolygonWithNVertices":
                 this.confirmAction(inputFields[0].value, this.params.vertices, inputFields[1].value, this.params.self);
@@ -80,5 +85,6 @@ export class DialogBoxComponent implements AfterViewInit {
             default:
                 console.error("This dialog action is currently not supported");
         }
+        this.hideDialog();
     }
 }

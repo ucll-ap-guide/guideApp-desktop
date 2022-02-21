@@ -4,6 +4,7 @@ import {Floor} from "../model/floor";
 import {GuidoMap} from "../model/guido-map";
 import {Point} from "../model/point";
 import {GuidoNode} from "../model/guido-node";
+import {NodeType} from "../model/node-type";
 
 @Component({
     selector: 'create-map',
@@ -157,9 +158,9 @@ export class CreateMapComponent implements OnInit {
 
     }
 
-    getAllNodes() {
+    getAllNodes(): GuidoNode[] {
         let nodes = document.getElementsByClassName("node");
-        let handledNodes = [];
+        let handledNodes: GuidoNode[] = [];
 
         for (let i = 0; i != nodes.length; i++) {
             let cx = parseFloat(nodes[i].getAttribute("cx") + "");
@@ -169,18 +170,15 @@ export class CreateMapComponent implements OnInit {
             let neighbors: number[] = [];
 
 
-            let handledDoor = {
-                id: this.jsonData.lastId + 1,
-                name: nodes[i].getAttribute("name") + "",
-                floor: parseInt(nodes[i].getAttribute("floor") + ""),
-                point: {
-                    x: cx,
-                    y: cy
-                },
-                displayPoints: [{"x": cx + r, "y": cy + r}],
-                neighbors: neighbors,
-                type: "node"
-            }
+            let handledDoor = new GuidoNode(
+                this.jsonData.lastId + 1,
+                nodes[i].getAttribute("name") + "",
+                parseInt(nodes[i].getAttribute("floor") + ""),
+                new Point(cx, cy),
+                [new Point(cx + r, cy + r)],
+                neighbors,
+                NodeType.NODE
+            );
             handledNodes.push(handledDoor);
             this.jsonData.lastId++;
         }
@@ -218,7 +216,7 @@ export class CreateMapComponent implements OnInit {
                 new Point(doorCoords.middle.x, doorCoords.middle.y),
                 doorCoords.displayPoints,
                 neighbors,
-                "door"
+                NodeType.DOOR
             );
             handledDoors.push(handledDoor);
             this.jsonData.lastId++;

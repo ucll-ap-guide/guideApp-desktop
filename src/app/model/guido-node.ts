@@ -1,4 +1,5 @@
 import {Point} from "./point";
+import {NodeType} from "./node-type";
 
 export class GuidoNode {
     constructor(
@@ -8,7 +9,7 @@ export class GuidoNode {
         public point: Point,
         public displayPoints: Point[],
         public neighbors: number[],
-        public type: string
+        public type: NodeType
     ) {
     }
 }

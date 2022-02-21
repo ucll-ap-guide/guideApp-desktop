@@ -4,6 +4,8 @@ import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
 import {Polygon} from "../model/polygon";
 import {Floor} from "../model/floor";
+import {NodeType} from "../model/node-type";
+import {PolygonType} from "../model/polygon-type";
 
 declare var d3: any;
 
@@ -40,7 +42,7 @@ export class CreateFloorComponent implements AfterViewInit {
             this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
         });
 
-        this.jsonData.nodes.filter((elem: { point: { x: number, y: number }, displayPoints: { x: number, y: number }[], name: string, floor: number, type: string }) => elem.floor === this.floor  && elem.type === "node").map((elem: { point: { x: number, y: number }, displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
+        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.NODE).map((elem: GuidoNode) => {
             this.createNode(elem.point, elem.name);
         });
     }
@@ -84,7 +86,7 @@ export class CreateFloorComponent implements AfterViewInit {
             let id = parseInt(e.target.getAttribute("id"));
             let type = e.target.getAttribute("type");
             switch (type) {
-                case "room":
+                case PolygonType.ROOM:
                     let array: Polygon[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
                     let index = array.map(function (x: Polygon) {
                         return x.id;
@@ -94,18 +96,20 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
                     break;
 
-                case "door":
+                case NodeType.DOOR:
                     let door = document.getElementById(String(id));
                     if (door)
                         door.remove();
                     break;
 
-                case "node":
-                    console.log(e.target)
+                case NodeType.NODE:
                     let node = document.getElementById(id + "");
                     if (node)
                         node.remove();
                     break;
+
+                default:
+                    console.error("Unknown element type");
             }
         }
         this.loadData(this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!);
@@ -179,7 +183,7 @@ export class CreateFloorComponent implements AfterViewInit {
             self.jsonData.lastId + 1,
             name,
             self.floor,
-            "room",
+            PolygonType.ROOM,
             description,
             vertices
         ));
@@ -376,22 +380,22 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         let splitUpPreviousPoints = previousPoints.split(" ");
-        let poppedPoints = [];
+        let poppedPoints: Point[] = [];
 
         while (splitUpPreviousPoints.length !== 0) {
             let elems = splitUpPreviousPoints.pop()!.split(",");
-            poppedPoints.push([parseFloat(elems[0]), parseFloat(elems[1])]);
+            poppedPoints.push(new Point(parseFloat(elems[0]), parseFloat(elems[1])));
         }
 
-        let middleX = (poppedPoints[0][0] + poppedPoints[2][0]) / 2;
-        let middleY = (poppedPoints[0][1] + poppedPoints[2][1]) / 2;
+        let middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
+        let middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
 
-        let resultArray = poppedPoints.map(elem => rotatePoint(elem[0], elem[1], middleX, middleY, degreesRotated));
+        let resultArray = poppedPoints.map((elem: Point) => rotatePoint(elem.x, elem.y, middleX, middleY, degreesRotated));
         return this.pointStringFromArrayOfPoints(resultArray);
     }
 
-    static pointStringFromArrayOfPoints(array: { x: number, y: number }[]): string {
-        return array.map(function (d) {
+    static pointStringFromArrayOfPoints(array: Point[]): string {
+        return array.map(function (d: Point) {
             return [d.x, d.y].join(",");
         }).join(" ");
     }

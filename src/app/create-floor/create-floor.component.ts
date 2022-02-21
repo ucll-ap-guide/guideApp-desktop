@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, HostListener, Input} from '@angular/core';
+import {AfterViewInit, Component, Input} from '@angular/core';
 import {Point} from "../model/point";
 import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
@@ -12,7 +12,7 @@ declare var d3: any;
 @Component({
     selector: 'app-create-floor',
     templateUrl: 'create-floor.component.html',
-    styles: []
+    styleUrls: ['create-floor.component.css']
 })
 export class CreateFloorComponent implements AfterViewInit {
 
@@ -22,7 +22,7 @@ export class CreateFloorComponent implements AfterViewInit {
     mapWidth = 720;
     mapHeight = 487;
     imageRatio = this.mapHeight / this.mapWidth;
-    imageUrl!: string;
+    imageUrl = "https://vryghem.synology.me/maps/C0.png";
     xScale: any;
     yScale: any;
     map: any;
@@ -169,13 +169,13 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the CreateFloorComponent class
      */
     createPolygon(name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
-        let radius = 30;
+        let radius = 2;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
 
         for (let i = 0; i < amountOfVertices; i++) {
-            const x = 75 + radius * Math.sin(i * angle);
-            const y = 75 + radius * Math.cos(i * angle);
+            const x = 5 + radius * Math.sin(i * angle);
+            const y = 5 + radius * Math.cos(i * angle);
             vertices[i] = new Point(x, y);
         }
 
@@ -203,20 +203,23 @@ export class CreateFloorComponent implements AfterViewInit {
         this.jsonData.floors = newFloors;
     }
 
-    @HostListener('window:resize')
     regenerateFloorMap(): void {
-        this.mapWidth = window.innerWidth - 0.2 * window.innerWidth;
+        this.mapWidth = 0.70 * window.screen.width;
         this.mapHeight = this.mapWidth * this.imageRatio;
+        if (this.mapHeight > 0.70 * window.screen.height ) {
+            this.mapHeight = 0.70 * window.screen.height;
+            this.mapWidth = this.mapHeight * (1 / this.imageRatio);
+        }
 
-        this.xScale = d3.scale.linear().domain([0, this.mapWidth]).range([0, this.mapWidth]);
-        this.yScale = d3.scale.linear().domain([0, this.mapHeight]).range([0, this.mapHeight]);
+        this.xScale = d3.scale.linear().domain([0, this.jsonData.length]).range([0, this.mapWidth]);
+        this.yScale = d3.scale.linear().domain([0, this.jsonData.width]).range([0, this.mapHeight]);
 
         this.mapData[this.imageLayer.id()] = [{
             url: this.imageUrl,
             x: 0,
             y: 0,
-            width: this.mapWidth,
-            height: this.mapHeight
+            width: this.jsonData.length,
+            height: this.jsonData.width
         }];
 
         this.map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);

@@ -14,17 +14,11 @@ import {NodeType} from "../model/node-type";
     `]
 })
 export class CreateMapComponent implements OnInit {
-    jsonData = new GuidoMap("UCLL");
+    jsonData = new GuidoMap("UCLL", 50, 30);
     deleteMode = false;
     mapNames: string[] = [];
-    initializedMap: boolean = false;
-    createFloorForm = {
-        floor: 0,
-        name: "Verdieping 0",
-        height: 2.5,
-        length: 100,
-        width: 50
-    };
+    initializedMap: boolean = true;
+    createFloorForm = new Floor(0, "Verdieping 0", 2.5);
 
     constructor(private mapService: MapService) {
     }
@@ -53,7 +47,7 @@ export class CreateMapComponent implements OnInit {
      * Displays the map editor screen.
      */
     createMap(): void {
-        if (this.jsonData.name !== "") {
+        if (this.jsonData.name !== "" && !isNaN(this.jsonData.length) && !isNaN(this.jsonData.width)) {
             this.initializedMap = true;
         }
     }
@@ -64,18 +58,14 @@ export class CreateMapComponent implements OnInit {
      * @param floor The floor number this can be negative or positive
      * @param name The name of the floor
      * @param height The height of the floor
-     * @param length The length of the floor (horizontal)
-     * @param width The width of the floor (vertical)
      */
     addFloor(
         floor: number = this.createFloorForm.floor,
         name: string = this.createFloorForm.name,
-        height: number = this.createFloorForm.height,
-        length: number = this.createFloorForm.length,
-        width: number = this.createFloorForm.width
+        height: number = this.createFloorForm.height
     ): void {
-        if (!isNaN(floor) && name !== "" && !isNaN(height) && !isNaN(length) && !isNaN(width) && !this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
-            this.jsonData.floors.push(new Floor(floor, name, height, length, width, {"polygons": []}));
+        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
+            this.jsonData.floors.push(new Floor(floor, name, height));
             this.createFloorForm.floor++;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
         }
@@ -152,10 +142,8 @@ export class CreateMapComponent implements OnInit {
     setAllNodes() {
         this.jsonData.nodes = [];
 
-        //Doors
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
-
     }
 
     getAllNodes(): GuidoNode[] {

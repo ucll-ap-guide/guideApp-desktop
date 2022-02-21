@@ -5,9 +5,7 @@ export class Floor {
         public floor: number,
         public name: string,
         public height: number,
-        public length: number,
-        public width: number,
-        public overlays: { polygons: Polygon[] }
+        public overlays: { polygons: Polygon[] } = {polygons: []}
     ) {
     }
 }

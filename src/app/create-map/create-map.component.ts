@@ -159,21 +159,20 @@ export class CreateMapComponent implements OnInit {
     }
 
     getAllNodes(): GuidoNode[] {
-        let nodes = document.getElementsByClassName("node");
+        let nodes = document.getElementsByClassName(NodeType.NODE);
         let handledNodes: GuidoNode[] = [];
 
         for (let i = 0; i != nodes.length; i++) {
-            let cx = parseFloat(nodes[i].getAttribute("cx") + "");
-            let cy = parseFloat(nodes[i].getAttribute("cy") + "");
-            let r = parseFloat(nodes[i].getAttribute("r") + "");
+            let cx = parseFloat(String(nodes[i].getAttribute("cx")));
+            let cy = parseFloat(String(nodes[i].getAttribute("cy")));
+            let r = parseFloat(String(nodes[i].getAttribute("r")));
 
             let neighbors: number[] = [];
 
-
             let handledDoor = new GuidoNode(
                 this.jsonData.lastId + 1,
-                nodes[i].getAttribute("name") + "",
-                parseInt(nodes[i].getAttribute("floor") + ""),
+                String(nodes[i].getAttribute("name")),
+                parseInt(String(nodes[i].getAttribute("floor"))),
                 new Point(cx, cy),
                 [new Point(cx + r, cy + r)],
                 neighbors,
@@ -187,7 +186,7 @@ export class CreateMapComponent implements OnInit {
     }
 
     getAllDoors() {
-        let doors = document.getElementsByClassName("door");
+        let doors = document.getElementsByClassName(NodeType.DOOR);
         let handledDoors: GuidoNode[] = [];
 
         function getDoorCoords(previousPoints: string) {

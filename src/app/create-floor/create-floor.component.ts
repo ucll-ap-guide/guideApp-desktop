@@ -38,7 +38,7 @@ export class CreateFloorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.regenerateFloorMap();
 
-        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === "door").map((elem: GuidoNode) => {
+        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
             this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
         });
 
@@ -103,7 +103,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     break;
 
                 case NodeType.NODE:
-                    let node = document.getElementById(id + "");
+                    let node = document.getElementById(String(id));
                     if (node)
                         node.remove();
                     break;
@@ -125,13 +125,13 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer = new MutationObserver(this.setZoom);
         this.observer.observe(document.getElementById("map-layers") as Node, {attributes: true})
 
-        elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
+        elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.DOOR)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
 
-        elementsToBeSaved.filter(elem => elem.getAttribute("class") === "node")
-            .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
-            .map(elem => this.createNode({"x": parseFloat(elem.getAttribute("cx") + ""), "y": parseFloat(elem.getAttribute("cy") + "")}, elem.getAttribute("name") + ""));
+        elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.NODE)
+            .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
+            .map(elem => this.createNode(new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name"))));
 
     }
 
@@ -265,8 +265,8 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
-            .attr("type", "door")
-            .attr("class", "door")
+            .attr("type", NodeType.DOOR)
+            .attr("class", NodeType.DOOR)
             .attr("name", name)
             .attr("removable", "")
             .attr("floor", self.floor)
@@ -284,8 +284,8 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates passThrough node
      */
-    createNode(previousOrigin: {"x": number, "y": number} | null = null, name: string, self: any = this) : void {
-        let origin = previousOrigin === null ? {"x": 25, "y": 25} : previousOrigin;
+    createNode(previousOrigin: Point | null = null, name: string, self: any = this): void {
+        let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
         let radius = 5;
 
         d3.select("#nodes" + self.floor)
@@ -296,8 +296,8 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr('r', radius)
             .attr("floor", this.floor)
             .attr("name", name)
-            .attr("type", "node")
-            .attr("class", "node")
+            .attr("type", NodeType.NODE)
+            .attr("class", NodeType.NODE)
             .attr('stroke', 'black')
             .attr("removable", "")
             .attr('fill', '#ff0000')
@@ -317,7 +317,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .node().addEventListener("click", (e: Event) => {
             if (self.deleteMode)
                 self.removeElement(e);
-            });
+        });
 
         self.jsonData.lastId += 1;
     }

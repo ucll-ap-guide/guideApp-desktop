@@ -1,3 +1,10 @@
+
+<style>
+    g:hover
+    {
+        transform: scale(1.5)
+    }
+</style>
 <div class="w-full">
     <h3 class="text-white text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
     <div class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
@@ -43,6 +50,9 @@
     <button (click)="displayDialogBox('createDoor', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
         Door
     </button>
+    <button (click)="displayDialogBox('createNode', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2">
+        Node
+    </button>
 
     <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createPolygonWithNVertices" confirmButtonText="OK"
@@ -56,5 +66,9 @@
     <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}]"
                     [params]="this.paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the door's name:" title="Create door">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="createNode" [formElements]="[{name: 'Node name'}]"
+                    [params]="this.paramsToGiveToDialogBoxes" action="createNode" confirmButtonText="OK"
+                    [floor]="floor" dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
 </div>

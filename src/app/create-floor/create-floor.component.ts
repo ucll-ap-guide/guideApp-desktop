@@ -31,8 +31,12 @@ export class CreateFloorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.regenerateFloorMap();
 
-        this.jsonData.nodes.filter((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => elem.floor === this.floor).map((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
+        this.jsonData.nodes.filter((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number, type: string }) => elem.floor === this.floor && elem.type === "door").map((elem: { displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
             this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
+        });
+
+        this.jsonData.nodes.filter((elem: { point: { x: number, y: number }, displayPoints: { x: number, y: number }[], name: string, floor: number, type: string }) => elem.floor === this.floor  && elem.type === "node").map((elem: { point: { x: number, y: number }, displayPoints: { x: number, y: number }[], name: string, floor: number }) => {
+            this.createNode(elem.point, elem.name);
         });
     }
 
@@ -46,6 +50,7 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     loadData(data: any): void {
         let elementsToBeSaved = Array.from(document.querySelectorAll('.door'));
+        elementsToBeSaved = elementsToBeSaved.concat(Array.from(document.querySelectorAll('.node')));
         d3.select("#demo" + this.floor).selectAll("*").remove();
 
         this.mapData[this.overlays.id()] = data.overlays;
@@ -89,6 +94,13 @@ export class CreateFloorComponent implements AfterViewInit {
                     if (door)
                         door.remove();
                     break;
+
+                case "node":
+                    console.log(e.target)
+                    let node = document.getElementById(id + "");
+                    if (node)
+                        node.remove();
+                    break;
             }
         }
         this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor));
@@ -100,12 +112,18 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     reloadAllNodes(elementsToBeSaved: Element[]): void {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
         this.observer = new MutationObserver(this.setZoom);
         this.observer.observe(document.getElementById("map-layers") as Node, {attributes: true})
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === "door")
             .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
             .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
+
+        elementsToBeSaved.filter(elem => elem.getAttribute("class") === "node")
+            .filter(elem => parseInt(elem.getAttribute("floor") + "") === this.floor)
+            .map(elem => this.createNode({"x": parseFloat(elem.getAttribute("cx") + ""), "y": parseFloat(elem.getAttribute("cy") + "")}, elem.getAttribute("name") + ""));
+
     }
 
     displayDialogBox(action: string, params: {}) {
@@ -128,6 +146,8 @@ export class CreateFloorComponent implements AfterViewInit {
             }
             // @ts-ignore
             d3.select("#doors" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
+            // @ts-ignore
+            d3.select("#nodes" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
         }
     }
 
@@ -245,11 +265,60 @@ export class CreateFloorComponent implements AfterViewInit {
             .on("contextmenu", self.rotateDoor)
             .call(d3.behavior.drag().on("drag", self.moveDoorCoordinates))
             .node().addEventListener("click", (e: Event) => {
-            if (this.deleteMode)
-                this.removeElement(e);
+            if (self.deleteMode)
+                self.removeElement(e);
         });
 
         self.jsonData.lastId += 1;
+    }
+
+    /**
+     * Creates passThrough node
+     */
+    createNode(previousOrigin: {"x": number, "y": number} | null = null, name: string, self: any = this) : void {
+        let origin = previousOrigin === null ? {"x": 25, "y": 25} : previousOrigin;
+        let radius = 5;
+
+        d3.select("#nodes" + self.floor)
+            .append("circle")
+            .attr("id", self.jsonData.lastId + 1)
+            .attr('cx', origin.x)
+            .attr('cy', origin.y)
+            .attr('r', radius)
+            .attr("floor", this.floor)
+            .attr("name", name)
+            .attr("type", "node")
+            .attr("class", "node")
+            .attr('stroke', 'black')
+            .attr("removable", "")
+            .attr('fill', '#ff0000')
+            .on("mouseover", function () {
+                // @ts-ignore
+                d3.select(this)
+                    .attr("r", 15)
+                    .style("opacity", 0.5);
+            })
+            .on("mouseout", function () {
+                // @ts-ignore
+                d3.select(this)
+                    .attr("r", 5)
+                    .style("opacity", 1)
+            })
+            .call(d3.behavior.drag().on("drag", self.moveNodeCoordinates))
+            .node().addEventListener("click", (e: Event) => {
+            if (self.deleteMode)
+                self.removeElement(e);
+            });
+
+        self.jsonData.lastId += 1;
+    }
+
+    /**
+     * Moves passThrough node
+     */
+    moveNodeCoordinates() {
+        let node = d3.select(this);
+        node.attr('cx', d3.event.x).attr('cy', d3.event.y)
     }
 
     /**

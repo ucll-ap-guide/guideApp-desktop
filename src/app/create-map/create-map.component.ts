@@ -14,10 +14,10 @@ import {NodeType} from "../model/node-type";
     `]
 })
 export class CreateMapComponent implements OnInit {
-    jsonData = new GuidoMap("UCLL", 50, 30);
+    jsonData = new GuidoMap("UCLL", 0, 0);
     deleteMode = false;
     mapNames: string[] = [];
-    initializedMap: boolean = true;
+    initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
 
     constructor(private mapService: MapService) {

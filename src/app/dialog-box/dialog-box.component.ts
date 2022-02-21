@@ -74,7 +74,9 @@ export class DialogBoxComponent implements AfterViewInit {
                 this.confirmAction(inputFields[0].value, this.params.vertices, inputFields[1].value, this.params.self);
                 break;
             case "createPolygon":
-                this.confirmAction(inputFields[0].value, parseInt(inputFields[2].value), inputFields[1].value, this.params.self);
+                if (!isNaN(parseInt(inputFields[2].value))) {
+                    this.confirmAction(inputFields[0].value, parseInt(inputFields[2].value), inputFields[1].value, this.params.self);
+                }
                 break;
             case "createDoor":
                 this.confirmAction(null, inputFields[0].value, this.params.self);

@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, Input} from '@angular/core';
+import {AfterViewInit, Component, HostListener, Input} from '@angular/core';
 import {Point} from "../model/point";
 import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
@@ -19,9 +19,11 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
+    imageWidth = 720;
+    imageHeight = 487;
+    imageRatio = this.imageHeight / this.imageWidth;
     mapWidth = 720;
     mapHeight = 487;
-    imageRatio = this.mapHeight / this.mapWidth;
     imageUrl = "https://vryghem.synology.me/maps/C0.png";
     xScale: any;
     yScale: any;
@@ -36,7 +38,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.regenerateFloorMap();
+        this.regenerateFloorMap(true);
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
             this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name);
@@ -169,24 +171,17 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the CreateFloorComponent class
      */
     createPolygon(name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
-        let radius = 2;
+        let radius = 30;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
 
         for (let i = 0; i < amountOfVertices; i++) {
-            const x = 5 + radius * Math.sin(i * angle);
-            const y = 5 + radius * Math.cos(i * angle);
+            const x = 75 + radius * Math.sin(i * angle);
+            const y = 75 + radius * Math.cos(i * angle);
             vertices[i] = new Point(x, y);
         }
 
-        self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons.push(new Polygon(
-            self.jsonData.lastId + 1,
-            name,
-            self.floor,
-            PolygonType.ROOM,
-            description,
-            vertices
-        ));
+        self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons.push(new Polygon(self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
@@ -203,30 +198,41 @@ export class CreateFloorComponent implements AfterViewInit {
         this.jsonData.floors = newFloors;
     }
 
-    regenerateFloorMap(): void {
-        this.mapWidth = 0.70 * window.screen.width;
-        this.mapHeight = this.mapWidth * this.imageRatio;
-        if (this.mapHeight > 0.70 * window.screen.height ) {
-            this.mapHeight = 0.70 * window.screen.height;
-            this.mapWidth = this.mapHeight * (1 / this.imageRatio);
+    previousWindowWidth = 0;
+
+    @HostListener('window:resize')
+    regenerateFloorMap(force: boolean = false): void {
+        if (force || this.previousWindowWidth !== window.screen.width) {
+            this.previousWindowWidth = window.screen.width;
+            if (this.jsonData.length === 0) {
+                this.jsonData.length = window.screen.width < 1536 ? window.screen.width : 1536;
+                this.jsonData.width = window.screen.height < 864 ? window.screen.height : 864;
+            }
+
+            this.mapWidth = 0.70 * this.jsonData.length;
+            this.mapHeight = this.mapWidth * this.imageRatio;
+            if (this.mapHeight > 0.70 * this.jsonData.width) {
+                this.mapHeight = 0.70 * this.jsonData.width;
+                this.mapWidth = this.mapHeight * (1 / this.imageRatio);
+            }
+
+            this.xScale = d3.scale.linear().domain([0, this.mapWidth]).range([0, this.mapWidth]);
+            this.yScale = d3.scale.linear().domain([0, this.mapHeight]).range([0, this.mapHeight]);
+
+            this.mapData[this.imageLayer.id()] = [{
+                url: this.imageUrl,
+                x: 0,
+                y: 0,
+                width: this.mapWidth,
+                height: this.mapHeight
+            }];
+
+            this.map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);
+            this.map.addLayer(this.imageLayer)
+                .addLayer(this.overlays);
+
+            this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor)!);
         }
-
-        this.xScale = d3.scale.linear().domain([0, this.jsonData.length]).range([0, this.mapWidth]);
-        this.yScale = d3.scale.linear().domain([0, this.jsonData.width]).range([0, this.mapHeight]);
-
-        this.mapData[this.imageLayer.id()] = [{
-            url: this.imageUrl,
-            x: 0,
-            y: 0,
-            width: this.jsonData.length,
-            height: this.jsonData.width
-        }];
-
-        this.map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);
-        this.map.addLayer(this.imageLayer)
-            .addLayer(this.overlays);
-
-        this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor)!);
     }
 
     updateNewBackground(event: any): void {
@@ -238,11 +244,11 @@ export class CreateFloorComponent implements AfterViewInit {
                 const image = new Image();
                 image.src = e.target.result;
                 image.onload = function () {
-                    self.mapHeight = image.height;
-                    self.mapWidth = image.width;
+                    self.imageHeight = image.height;
+                    self.imageWidth = image.width;
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
-                    self.regenerateFloorMap();
+                    self.regenerateFloorMap(true);
                 }
             }
         }

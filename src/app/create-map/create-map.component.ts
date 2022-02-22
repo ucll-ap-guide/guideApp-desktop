@@ -5,6 +5,7 @@ import {GuidoMap} from "../model/guido-map";
 import {Point} from "../model/point";
 import {GuidoNode} from "../model/guido-node";
 import {NodeType} from "../model/node-type";
+import {PolygonType} from "../model/polygon-type";
 
 @Component({
     selector: 'create-map',
@@ -58,16 +59,25 @@ export class CreateMapComponent implements OnInit {
      * @param floor The floor number this can be negative or positive
      * @param name The name of the floor
      * @param height The height of the floor
+     * @param importFloorFrom The floor number of the floor plan you want to copy
      */
     addFloor(
         floor: number = this.createFloorForm.floor,
         name: string = this.createFloorForm.name,
-        height: number = this.createFloorForm.height
+        height: number = this.createFloorForm.height,
+        importFloorFrom: number | null = document.getElementById("useGroundFloor") === null ? null : Number((document.getElementById("useGroundFloor") as HTMLSelectElement).value)
     ): void {
         if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
             this.jsonData.floors.push(new Floor(floor, name, height));
             this.createFloorForm.floor++;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
+            if (importFloorFrom !== null) {
+                const groundFloor = this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons[0].copy();
+                groundFloor.id = this.jsonData.lastId + 1;
+                groundFloor.type = PolygonType.ROOM;
+                this.jsonData.floors[this.jsonData.floors.length - 1].overlays.polygons.push(groundFloor);
+                this.jsonData.lastId++;
+            }
         }
     }
 
@@ -78,6 +88,10 @@ export class CreateMapComponent implements OnInit {
         this.mapService.getAllMapNames().subscribe((mapNames: string[]) => {
             this.mapNames = mapNames;
         });
+    }
+
+    hasAFixedFloor(): boolean {
+        return this.jsonData.floors.find((f: Floor) => f.overlays.polygons.length > 1) !== undefined;
     }
 
     saveMapLocally(): void {

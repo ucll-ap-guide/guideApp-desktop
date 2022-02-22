@@ -11,4 +11,15 @@ export class Polygon {
         public points: Point[]
     ) {
     }
+
+    copy(): Polygon {
+        return new Polygon(
+            this.id,
+            this.name,
+            this.floor,
+            this.type,
+            this.description,
+            this.points.map((point: Point) => point.copy())
+        );
+    }
 }

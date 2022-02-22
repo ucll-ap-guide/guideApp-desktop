@@ -11,4 +11,15 @@ export class GuidoMap {
         public nodes: GuidoNode[] = []
     ) {
     }
+
+    copy(): GuidoMap {
+        return new GuidoMap(
+            this.name,
+            this.length,
+            this.width,
+            this.lastId,
+            this.floors.map((floor: Floor) => floor.copy()),
+            this.nodes.map((node: GuidoNode) => node.copy())
+        );
+    }
 }

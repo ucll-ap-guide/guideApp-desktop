@@ -53,6 +53,14 @@ export class CreateFloorComponent implements AfterViewInit {
         return this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.name;
     }
 
+    getNodeTypes(): string[] {
+        const nodeTypes: string[] = [];
+        for (const nodeTypesKey of Object.values(NodeType)) {
+            nodeTypes.push(nodeTypesKey);
+        }
+        return nodeTypes;
+    }
+
     /**
      * (Re)loads all elements displayed on the drawing area of the floor
      * @param data
@@ -111,7 +119,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     break;
 
                 default:
-                    console.error("Unknown element type");
+                    console.error(`Element type ${type} is unknown.`);
             }
         }
         this.loadData(this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!);
@@ -125,7 +133,7 @@ export class CreateFloorComponent implements AfterViewInit {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
         this.observer = new MutationObserver(this.setZoom);
-        this.observer.observe(document.getElementById("map-layers") as Node, {attributes: true})
+        this.observer.observe(document.getElementsByClassName("map-layers")[0] as Node, {attributes: true})
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.DOOR)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
@@ -181,7 +189,11 @@ export class CreateFloorComponent implements AfterViewInit {
             vertices[i] = new Point(x, y);
         }
 
-        self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons.push(new Polygon(self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
+        const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+        polygons.push(new Polygon(self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
+        if (polygons.length > 1) {
+            polygons[0].type = PolygonType.FLOOR;
+        }
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);

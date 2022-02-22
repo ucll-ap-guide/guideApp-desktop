@@ -8,4 +8,13 @@ export class Floor {
         public overlays: { polygons: Polygon[] } = {polygons: []}
     ) {
     }
+
+    copy(): Floor {
+        return new Floor(
+            this.floor,
+            this.name,
+            this.height,
+            {polygons: this.overlays.polygons.map((polygon: Polygon) => polygon.copy())}
+        );
+    }
 }

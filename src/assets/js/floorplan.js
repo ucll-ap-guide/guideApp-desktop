@@ -1,340 +1,323 @@
+//
+//   Copyright 2012 David Ciarletta
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+
 d3.floorplan = function () {
-    function a(a) {
-        var d = h.range()[1] - h.range()[0], n = l.range()[1] - l.range()[0];
-        a.each(function (a) {
-            if (a) {
-                var k = d3.select(this);
-                k.selectAll("defs").data([0]).enter().append("defs").each(function () {
-                    var a = d3.select(this),
-                        b = a.append("radialGradient").attr("id", "metal-bump").attr("cx", "50%").attr("cy", "50%").attr("r", "50%").attr("fx", "50%").attr("fy", "50%");
-                    b.append("stop").attr("offset", "0%").style("stop-color", "rgb(170,170,170)").style("stop-opacity", 0.6);
-                    b.append("stop").attr("offset",
-                        "100%").style("stop-color", "rgb(204,204,204)").style("stop-opacity", 0.5);
-                    a = a.append("pattern").attr("id", "grip-texture").attr("patternUnits", "userSpaceOnUse").attr("x", 0).attr("y", 0).attr("width", 3).attr("height", 3);
-                    a.append("rect").attr("height", 3).attr("width", 3).attr("stroke", "none").attr("fill", "rgba(204,204,204,0.5)");
-                    a.append("circle").attr("cx", 1.5).attr("cy", 1.5).attr("r", 1).attr("stroke", "none").attr("fill", "url(#metal-bump)")
-                });
-                var c = k.selectAll(".map-layers").data([0]), b = c.enter().append("g").attr("class",
-                    "map-layers").attr("id", "map-layers"), g = d3.transition(c);
-                b.append("rect").attr("class", "canvas").attr("pointer-events", "all").style("opacity", 0);
-                g.attr("width", d).attr("height", n).attr("x", h.range()[0]).attr("y", l.range()[0]);
-                b = k.selectAll(".map-controls").data([0]);
-                b.enter().append("g").attr("class", "map-controls").each(function () {
-                    var a = d3.select(this);
-                    a.append("path").attr("class", "ui-show-hide").attr("d", "M10,3 v40 h-7 a3,3 0 0,1 -3,-3 v-34 a3,3 0 0,1 3,-3 Z").attr("fill", "url(#grip-texture)").attr("stroke", "none").style("opacity",
-                        0.5);
-                    a.append("path").attr("class", "show ui-show-hide").attr("d", "M2,23 l6,-15 v30 Z").attr("fill", "rgb(204,204,204)").attr("stroke", "none").style("opacity", 0.5);
-                    a.append("path").attr("class", "hide").attr("d", "M8,23 l-6,-15 v30 Z").attr("fill", "rgb(204,204,204)").attr("stroke", "none").style("opacity", 0);
-                    a.append("path").attr("d", "M10,3 v40 h-7 a3,3 0 0,1 -3,-3 v-34 a3,3 0 0,1 3,-3 Z").attr("pointer-events", "all").attr("fill", "none").attr("stroke", "none").style("cursor", "pointer").on("mouseover", function () {
-                        a.selectAll("path.ui-show-hide").style("opacity",
-                            1)
-                    }).on("mouseout", function () {
-                        a.selectAll("path.ui-show-hide").style("opacity", 0.5)
-                    }).on("click", function () {
-                        a.select(".hide").classed("ui-show-hide") ? a.transition().duration(1E3).attr("transform", "translate(" + (a.attr("view-width") - 10) + ",0)").each("end", function () {
-                            a.select(".hide").style("opacity", 0).classed("ui-show-hide", !1);
-                            a.select(".show").style("opacity", 1).classed("ui-show-hide", !0);
-                            a.selectAll("path.ui-show-hide").style("opacity", 0.5)
-                        }) : a.transition().duration(1E3).attr("transform", "translate(" +
-                            (a.attr("view-width") - 95) + ",0)").each("end", function () {
-                            a.select(".show").style("opacity", 0).classed("ui-show-hide", !1);
-                            a.select(".hide").style("opacity", 1).classed("ui-show-hide", !0);
-                            a.selectAll("path.ui-show-hide").style("opacity", 0.5)
-                        })
+    var layers = [],
+        panZoomEnabled = true,
+        maxZoom = 5,
+        xScale = d3.scale.linear(),
+        yScale = d3.scale.linear();
+
+    function map(g) {
+        var width = xScale.range()[1] - xScale.range()[0],
+            height = yScale.range()[1] - yScale.range()[0];
+
+        g.each(function (data) {
+            if (!data) return;
+
+            var g = d3.select(this);
+
+            // define common graphical elements
+            __init_defs(g.selectAll("defs").data([0]).enter().append("defs"));
+
+            // setup container for layers and area to capture events
+            var vis = g.selectAll(".map-layers").data([0]),
+                visEnter = vis.enter().append("g").attr("class", "map-layers").attr("id", "map-layers"),
+                visUpdate = d3.transition(vis);
+
+            visEnter.append("rect")
+                .attr("class", "canvas")
+                .attr("pointer-events", "all")
+                .style("opacity", 0);
+
+            visUpdate.attr("width", width)
+                .attr("height", height)
+                .attr("x", xScale.range()[0])
+                .attr("y", yScale.range()[0]);
+
+            // setup map controls
+            var controls = g.selectAll(".map-controls").data([0]),
+                controlsEnter = controls.enter()
+                    .append("g").attr("class", "map-controls");
+
+            __init_controls(controlsEnter);
+            var offset = controls.select(".hide").classed("ui-show-hide") ? 95 : 10,
+                panelHt = Math.max(45, 10 + layers.length * 20);
+            controls.attr("view-width", width)
+                .attr("transform", "translate(" + (width - offset) + ",0)")
+                .select("rect")
+                .attr("height", panelHt);
+
+
+            // render and reorder layer controls
+            var layerControls = controls.select("g.layer-controls").selectAll("g").data(layers, function (l) {
+                    return l.id();
+                }),
+                layerControlsEnter = layerControls.enter()
+                    .append("g").attr("class", "ui-active")
+                    .style("cursor", "pointer")
+                    .on("click", function (l) {
+                        var button = d3.select(this);
+                        var layer = g.selectAll("g." + l.id());
+                        if (button.classed("ui-active")) {
+                            layer.style("display", "none");
+                            button.classed("ui-active", false)
+                                .classed("ui-default", true);
+                        } else {
+                            layer.style("display", "inherit");
+                            button.classed("ui-active", true)
+                                .classed("ui-default", false);
+                        }
                     });
-                    a.append("rect").attr("x", 10).attr("y", 0).attr("width", 85).attr("fill", "rgba(204,204,204,0.9)").attr("stroke", "none");
-                    a.append("g").attr("class", "layer-controls").attr("transform", "translate(15,5)")
+
+            layerControlsEnter.append("rect")
+                .attr("x", 0)
+                .attr("y", 1)
+                .attr("rx", 5)
+                .attr("ry", 5)
+                .attr("width", 75)
+                .attr("height", 18)
+                .attr("stroke-width", "1px");
+
+            layerControlsEnter.append("text")
+                .attr("x", 10)
+                .attr("y", 15)
+                .style("font-size", "12px")
+                .style("font-family", "Helvetica, Arial, sans-serif")
+                .text(function (l) {
+                    return l.title();
                 });
-                var g = b.select(".hide").classed("ui-show-hide") ? 95 : 10, p = Math.max(45,
-                    10 + 20 * e.length);
-                b.attr("view-width", d).attr("transform", "translate(" + (d - g) + ",0)").select("rect").attr("height", p);
-                b = b.select("g.layer-controls").selectAll("g").data(e, function (a) {
-                    return a.id()
+
+            layerControls.transition().duration(1000)
+                .attr("transform", function (d, i) {
+                    return "translate(0," + ((layers.length - (i + 1)) * 20) + ")";
                 });
-                g = b.enter().append("g").attr("class", "ui-active").style("cursor", "pointer").on("click", function (a) {
-                    var b = d3.select(this), a = k.selectAll("g." + a.id());
-                    b.classed("ui-active") ? (a.style("display", "none"), b.classed("ui-active", !1).classed("ui-default", !0)) : (a.style("display", "inherit"), b.classed("ui-active", !0).classed("ui-default",
-                        !1))
-                });
-                g.append("rect").attr("x", 0).attr("y", 1).attr("rx", 5).attr("ry", 5).attr("width", 75).attr("height", 18).attr("stroke-width", "1px");
-                g.append("text").attr("x", 10).attr("y", 15).style("font-size", "12px").style("font-family", "Helvetica, Arial, sans-serif").text(function (a) {
-                    return a.title()
-                });
-                b.transition().duration(1E3).attr("transform", function (a, b) {
-                    return "translate(0," + 20 * (e.length - (b + 1)) + ")"
-                });
-                c = c.selectAll(".maplayer").data(e, function (a) {
-                    return a.id()
-                });
-                c.enter().append("g").attr("class", function (a) {
-                    return "maplayer " +
-                        a.title()
-                }).append("g").attr("class", function (a) {
-                    return a.id()
-                }).datum(null);
-                c.exit().remove();
-                c.order();
-                c.each(function (b) {
-                    d3.select(this).select("g." + b.id()).datum(a[b.id()]).call(b)
-                });
-                k.call(d3.behavior.zoom().scaleExtent([1, i]).on("zoom", function () {
-                    if (f) {
-                        var a = d3.event.scale, b = d3.event.translate;
-                        k && (a && (k.__scale__ = a), b && 1 < b.length && (k.__translate__ = b), a = (1 - k.__scale__) * (h.range()[1] - h.range()[0]), b = (1 - k.__scale__) * (l.range()[1] - l.range()[0]), k.__translate__[0] = Math.min(h.range()[0], Math.max(k.__translate__[0],
-                            a)), k.__translate__[1] = Math.min(l.range()[0], Math.max(k.__translate__[1], b)), k.selectAll(".map-layers").attr("transform", "translate(" + k.__translate__ + ")scale(" + k.__scale__ + ")"))
+
+            // render and reorder layers
+            var maplayers = vis.selectAll(".maplayer").data(layers, function (l) {
+                return l.id();
+            });
+            maplayers.enter()
+                .append("g")
+                .attr("class", function (l) {
+                    return "maplayer " + l.title();
+                })
+                .append("g")
+                .attr("class", function (l) {
+                    return l.id();
+                })
+                .datum(null);
+            maplayers.exit().remove();
+            maplayers.order();
+
+            // redraw layers
+            maplayers.each(function (layer) {
+                d3.select(this).select("g." + layer.id()).datum(data[layer.id()]).call(layer);
+            });
+
+            // add pan - zoom behavior
+            g.call(d3.behavior.zoom().scaleExtent([1, maxZoom])
+                .on("zoom", function () {
+                    if (panZoomEnabled) {
+                        __set_view(g, d3.event.scale, d3.event.translate);
                     }
-                }))
-            }
-        })
+                }));
+        });
     }
 
-    var e = [], f = !0, i = 5, h = d3.scale.linear(), l = d3.scale.linear();
-    a.xScale = function (c) {
-        if (!arguments.length) return h;
-        h = c;
-        e.forEach(function (a) {
-            a.xScale(h)
+    map.xScale = function (scale) {
+        if (!arguments.length) return xScale;
+        xScale = scale;
+        layers.forEach(function (l) {
+            l.xScale(xScale);
         });
-        return a
+        return map;
     };
-    a.yScale = function (c) {
-        if (!arguments.length) return l;
-        l = c;
-        e.forEach(function (a) {
-            a.yScale(l)
+
+    map.yScale = function (scale) {
+        if (!arguments.length) return yScale;
+        yScale = scale;
+        layers.forEach(function (l) {
+            l.yScale(yScale);
         });
-        return a
+        return map;
     };
-    a.panZoom = function (c) {
-        if (!arguments.length) return f;
-        f = c;
-        return a
+
+    map.panZoom = function (enabled) {
+        if (!arguments.length) return panZoomEnabled;
+        panZoomEnabled = enabled;
+        return map;
     };
-    a.addLayer = function (c, d) {
-        c.xScale(h);
-        c.yScale(l);
-        1 < arguments.length && 0 <= d ? e.splice(d, 0, c) : e.push(c);
-        return a
+
+    map.addLayer = function (layer, index) {
+        layer.xScale(xScale);
+        layer.yScale(yScale);
+
+        if (arguments.length > 1 && index >= 0) {
+            layers.splice(index, 0, layer);
+        } else {
+            layers.push(layer);
+        }
+
+        return map;
     };
-    return a
+
+    function __set_view(g, s, t) {
+        if (!g) return;
+        if (s) g.__scale__ = s;
+        if (t && t.length > 1) g.__translate__ = t;
+
+        // limit translate to edges of extents
+        var minXTranslate = (1 - g.__scale__) * (xScale.range()[1] - xScale.range()[0]);
+        var minYTranslate = (1 - g.__scale__) * (yScale.range()[1] - yScale.range()[0]);
+
+        g.__translate__[0] = Math.min(xScale.range()[0], Math.max(g.__translate__[0], minXTranslate));
+        g.__translate__[1] = Math.min(yScale.range()[0], Math.max(g.__translate__[1], minYTranslate));
+        g.selectAll(".map-layers")
+            .attr("transform", "translate(" + g.__translate__ + ")scale(" + g.__scale__ + ")");
+    }
+
+    function __init_defs(selection) {
+        selection.each(function () {
+            var defs = d3.select(this);
+
+            var grad = defs.append("radialGradient")
+                .attr("id", "metal-bump")
+                .attr("cx", "50%")
+                .attr("cy", "50%")
+                .attr("r", "50%")
+                .attr("fx", "50%")
+                .attr("fy", "50%");
+
+            grad.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color", "rgb(170,170,170)")
+                .style("stop-opacity", 0.6);
+
+            grad.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color", "rgb(204,204,204)")
+                .style("stop-opacity", 0.5);
+
+            var grip = defs.append("pattern")
+                .attr("id", "grip-texture")
+                .attr("patternUnits", "userSpaceOnUse")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", 3)
+                .attr("height", 3);
+
+            grip.append("rect")
+                .attr("height", 3)
+                .attr("width", 3)
+                .attr("stroke", "none")
+                .attr("fill", "rgba(204,204,204,0.5)");
+
+            grip.append("circle")
+                .attr("cx", 1.5)
+                .attr("cy", 1.5)
+                .attr("r", 1)
+                .attr("stroke", "none")
+                .attr("fill", "url(#metal-bump)");
+        });
+    }
+
+    function __init_controls(selection) {
+        selection.each(function () {
+            var controls = d3.select(this);
+
+            controls.append("path")
+                .attr("class", "ui-show-hide")
+                .attr("d", "M10,3 v40 h-7 a3,3 0 0,1 -3,-3 v-34 a3,3 0 0,1 3,-3 Z")
+                .attr("fill", "url(#grip-texture)")
+                .attr("stroke", "none")
+                .style("opacity", 0.5);
+
+            controls.append("path")
+                .attr("class", "show ui-show-hide")
+                .attr("d", "M2,23 l6,-15 v30 Z")
+                .attr("fill", "rgb(204,204,204)")
+                .attr("stroke", "none")
+                .style("opacity", 0.5);
+
+            controls.append("path")
+                .attr("class", "hide")
+                .attr("d", "M8,23 l-6,-15 v30 Z")
+                .attr("fill", "rgb(204,204,204)")
+                .attr("stroke", "none")
+                .style("opacity", 0);
+
+            controls.append("path")
+                .attr("d", "M10,3 v40 h-7 a3,3 0 0,1 -3,-3 v-34 a3,3 0 0,1 3,-3 Z")
+                .attr("pointer-events", "all")
+                .attr("fill", "none")
+                .attr("stroke", "none")
+                .style("cursor", "pointer")
+                .on("mouseover", function () {
+                    controls.selectAll("path.ui-show-hide").style("opacity", 1);
+                })
+                .on("mouseout", function () {
+                    controls.selectAll("path.ui-show-hide").style("opacity", 0.5);
+                })
+                .on("click", function () {
+                    if (controls.select(".hide").classed("ui-show-hide")) {
+                        controls.transition()
+                            .duration(1000)
+                            .attr("transform", "translate(" + (controls.attr("view-width") - 10) + ",0)")
+                            .each("end", function () {
+                                controls.select(".hide")
+                                    .style("opacity", 0)
+                                    .classed("ui-show-hide", false);
+                                controls.select(".show")
+                                    .style("opacity", 1)
+                                    .classed("ui-show-hide", true);
+                                controls.selectAll("path.ui-show-hide")
+                                    .style("opacity", 0.5);
+                            });
+                    } else {
+                        controls.transition()
+                            .duration(1000)
+                            .attr("transform", "translate(" + (controls.attr("view-width") - 95) + ",0)")
+                            .each("end", function () {
+                                controls.select(".show")
+                                    .style("opacity", 0)
+                                    .classed("ui-show-hide", false);
+                                controls.select(".hide")
+                                    .style("opacity", 1)
+                                    .classed("ui-show-hide", true);
+                                controls.selectAll("path.ui-show-hide")
+                                    .style("opacity", 0.5);
+                            });
+                    }
+                });
+
+            controls.append("rect")
+                .attr("x", 10)
+                .attr("y", 0)
+                .attr("width", 85)
+                .attr("fill", "rgba(204,204,204,0.9)")
+                .attr("stroke", "none");
+
+            controls.append("g")
+                .attr("class", "layer-controls")
+                .attr("transform", "translate(15,5)");
+        });
+    }
+
+    return map;
 };
+
 d3.floorplan.version = "0.1.0";
-d3.floorplan.imagelayer = function () {
-    function a(a) {
-        a.each(function (a) {
-            a && (a = d3.select(this).selectAll("image").data(a, function (a) {
-                return a.url
-            }), a.enter().append("image").attr("xlink:href", function (a) {
-                return a.url
-            }).style("opacity", 1E-6), a.exit().transition().style("opacity", 1E-6).remove(), a.transition().attr("x", function (a) {
-                return e(a.x)
-            }).attr("y", function (a) {
-                return f(a.y)
-            }).attr("height", function (a) {
-                return f(a.y + a.height) - f(a.y)
-            }).attr("width", function (a) {
-                return e(a.x + a.width) - e(a.x)
-            }).style("opacity",
-                function (a) {
-                    return a.opacity || 1
-                }))
-        })
-    }
-
-    var e = d3.scale.linear(), f = d3.scale.linear(), i = "fp-imagelayer-" + (new Date).valueOf(), h = "imagelayer";
-    a.xScale = function (f) {
-        if (!arguments.length) return e;
-        e = f;
-        return a
-    };
-    a.yScale = function (e) {
-        if (!arguments.length) return f;
-        f = e;
-        return a
-    };
-    a.id = function () {
-        return i
-    };
-    a.title = function (e) {
-        if (!arguments.length) return h;
-        h = e;
-        return a
-    };
-    return a
-};
-d3.floorplan.overlays = function () {
-    function a(a) {
-        a.each(function (a) {
-            if (a) {
-                var b = d3.select(this), g = b.selectAll("rect.overlay-canvas").data([0]);
-                g.enter().append("rect").attr("class", "overlay-canvas").style("opacity", 0).attr("pointer-events", "all").on("click", function () {
-                    if (j) {
-                        var a = d3.mouse(this);
-                        c.forEach(function (b) {
-                            b(f.invert(a[0]), i.invert(a[1]))
-                        })
-                    }
-                }).on("mouseup.drag", e).on("touchend.drag", e);
-                g.attr("x", f.range()[0]).attr("y", i.range()[0]).attr("height", i.range()[1] - i.range()[0]).attr("width", f.range()[1] -
-                    f.range()[0]);
-                g = b.selectAll("path.polygon").data(a.polygons || [], function (a) {
-                    return a.id
-                });
-                g.enter().append("path").attr("class", "polygon").attr("removable", "").attr("type", "room").attr("vector-effect", "non-scaling-stroke").attr("pointer-events", "all").on("mousedown", function (a) {
-                    d.forEach(function (b) {
-                        b(a.id)
-                    })
-                }).call(o).append("title");
-                g.exit().transition().style("opacity", 1E-6).remove();
-                g.attr("id", function(a) {
-                   return a.id ;
-                });
-                g.attr("floor", function(a) {
-                    return a.floor ;
-                });
-                g.attr("d", function (a) {
-                    return k(a.points) + "Z"
-                }).style("cursor", j ? "move" : "pointer").select("title").text(function (a) {
-                    return a.name || a.id;
-                });
-                if (j) {
-                    var h = [];
-                    a.polygons && a.polygons.forEach(function (a) {
-                        a.points.forEach(function (b, d) {
-                            h.push({index: d, parent: a})
-                        })
-                    });
-                    a = 1;
-                    for (g = b.node(); g.parentNode;) if (g = g.parentNode, g.__scale__) {
-                        a = g.__scale__;
-                        break
-                    }
-                    b = b.selectAll("circle.vertex").data(h, function (a) {
-                        return a.parent.id + "-" + a.index
-                    });
-                    b.exit().transition().attr("r", 1E-6).remove();
-                    b.enter().append("circle").attr("class", "vertex").attr("pointer-events", "all").attr("vector-effect", "non-scaling-stroke").style("cursor", "move").attr("r", 1E-6).call(o);
-                    b.attr("cx", function (a) {
-                        return f(a.parent.points[a.index].x)
-                    }).attr("cy",
-                        function (a) {
-                            return i(a.parent.points[a.index].y)
-                        }).attr("r", 4 / a)
-                } else b.selectAll("circle.vertex").transition().attr("r", 1E-6).remove()
-            }
-        })
-    }
-
-    function e() {
-        b && (n.forEach(function (a) {
-            b.parent ? a(b.parent.id, b.parent.points, b.index) : a(b.id, b.points)
-        }), b = null)
-    }
-
-    var f = d3.scale.linear(), i = d3.scale.linear(), h = "fp-overlays-" + (new Date).valueOf(), l = "overlays", c = [],
-        d = [], n = [], j = !1, k = d3.svg.line().x(function (a) {
-            return f(a.x)
-        }).y(function (a) {
-            return i(a.y)
-        }), o = d3.behavior.drag().on("dragstart", function (a) {
-            j && (b = a)
-        }).on("drag",
-        function () {
-            if (b) {
-                var d = f.invert(d3.event.dx) - f.invert(0), c = i.invert(d3.event.dy) - i.invert(0);
-                b.parent ? (b.parent.points[b.index].x += d, b.parent.points[b.index].y += c) : b.points && b.points.forEach(function (a) {
-                    a.x += d;
-                    a.y += c
-                });
-                a(d3.select(this.parentNode))
-            }
-        }).on("dragend", e), b = null;
-    a.xScale = function (b) {
-        if (!arguments.length) return f;
-        f = b;
-        return a
-    };
-    a.yScale = function (b) {
-        if (!arguments.length) return i;
-        i = b;
-        return a
-    };
-    a.id = function () {
-        return h
-    };
-    a.title = function (b) {
-        if (!arguments.length) return l;
-        l = b;
-        return a
-    };
-    a.editMode =
-        function (b) {
-            if (!arguments.length) return j;
-            j = b;
-            return a
-        };
-    a.registerCanvasCallback = function (b) {
-        arguments.length && c.push(b);
-        return a
-    };
-    a.registerSelectCallback = function (b) {
-        arguments.length && select.Callbacks.push(b);
-        return a
-    };
-    a.registerMoveCallback = function (b) {
-        arguments.length && n.push(b);
-        return a
-    };
-    return a
-};
-d3.floorplan.vectorfield = function () {
-    function a(a) {
-        a.each(function (a) {
-            if (a && a.map) {
-                var c = d3.select(this).selectAll("path.vector").data(a.map, function (a) {
-                    return a.x + "," + a.y
-                });
-                c.exit().transition().style("opacity", 1E-6).remove();
-                c.enter().append("path").attr("class", "vector").attr("vector-effect", "non-scaling-stroke").style("opacity", 1E-6).append("title");
-                var e = a.binSize / 2 / d3.max(a.map, function (a) {
-                    return Math.max(Math.abs(a.value.x), Math.abs(a.value.y))
-                });
-                c.attr("d", function (c) {
-                    var f = {
-                        x: c.x + a.binSize /
-                            2, y: c.y + a.binSize / 2
-                    };
-                    return i([f, {x: f.x + c.value.x * e, y: f.y + c.value.y * e}])
-                }).select("title").text(function (c) {
-                    return Math.sqrt(c.value.x * c.value.x + c.value.y * c.value.y) + " " + a.units
-                });
-                c.transition().style("opacity", 1)
-            }
-        })
-    }
-
-    var e = d3.scale.linear(), f = d3.scale.linear(), i = d3.svg.line().x(function (a) {
-        return e(a.x)
-    }).y(function (a) {
-        return f(a.y)
-    }), h = "fp-vectorfield-" + (new Date).valueOf(), l = "vectorfield";
-    a.xScale = function (c) {
-        if (!arguments.length) return e;
-        e = c;
-        return a
-    };
-    a.yScale = function (c) {
-        if (!arguments.length) return f;
-        f = c;
-        return a
-    };
-    a.id = function () {
-        return h
-    };
-    a.title = function (a) {
-        if (!arguments.length) return l;
-        l = a;
-        return images
-    };
-    return a
-};

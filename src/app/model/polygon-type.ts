@@ -1,3 +1,4 @@
 export enum PolygonType {
-    ROOM = "room"
+    ROOM = "Room",
+    FLOOR = "Floor"
 }

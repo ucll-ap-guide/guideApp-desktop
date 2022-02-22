@@ -12,4 +12,16 @@ export class GuidoNode {
         public type: NodeType
     ) {
     }
+
+    copy(): GuidoNode {
+        return new GuidoNode(
+            this.id,
+            this.name,
+            this.floor,
+            this.point.copy(),
+            this.displayPoints.map((point: Point) => point.copy()),
+            this.neighbors.map((neighbor: number) => neighbor),
+            this.type
+        );
+    }
 }

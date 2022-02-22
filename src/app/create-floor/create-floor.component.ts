@@ -133,11 +133,15 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     removeNodeFromNeighborData(id: number) {
-        this.jsonData.nodes.forEach(elem => {
-            let removeIndex = elem.neighbors.indexOf(id);
+        let nodes = document.querySelectorAll("[node]");
+        nodes.forEach(node => {
+            let neighbors = String(node.getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
+            let removeIndex = neighbors.indexOf(id);
 
             if (removeIndex !== -1)
-                this.jsonData.nodes.splice(removeIndex, 1);
+                neighbors.splice(removeIndex, 1);
+
+            node.setAttribute("neighbors", neighbors.join(","))
         });
     }
 
@@ -153,11 +157,11 @@ export class CreateFloorComponent implements AfterViewInit {
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.DOOR)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createDoor(parseInt(elem.getAttribute("id") + ""), elem.getAttribute("points"), elem.getAttribute("name")));
+            .map(elem => this.createDoor(parseInt(elem.getAttribute("id") + ""), elem.getAttribute("points"), elem.getAttribute("name"), (elem.getAttribute("neighbors") + "").split(",").map(elem => parseInt(elem))));
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.NODE)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createNode(parseInt(elem.getAttribute("id") + ""), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name"))));
+            .map(elem => this.createNode(parseInt(elem.getAttribute("id") + ""), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), (elem.getAttribute("neighbors") + "").split(",").map(elem => parseInt(elem))));
 
     }
 
@@ -207,12 +211,12 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(previousId ? previousId : self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
+        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }
 
-        if (previousId !== null)
+        if (previousId === null)
             self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
     }

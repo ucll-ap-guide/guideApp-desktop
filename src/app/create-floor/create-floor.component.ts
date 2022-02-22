@@ -42,11 +42,11 @@ export class CreateFloorComponent implements AfterViewInit {
         this.regenerateFloorMap(true);
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
-            this.createDoor(CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors);
+            this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors);
         });
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.NODE).map((elem: GuidoNode) => {
-            this.createNode(elem.point, elem.name, elem.neighbors);
+            this.createNode(elem.id, elem.point, elem.name, elem.neighbors);
         });
     }
 
@@ -111,14 +111,18 @@ export class CreateFloorComponent implements AfterViewInit {
 
                 case NodeType.DOOR:
                     let door = document.getElementById(String(id));
-                    if (door)
+                    if (door) {
+                        this.removeNodeFromNeighborData(id);
                         door.remove();
+                    }
                     break;
 
                 case NodeType.NODE:
                     let node = document.getElementById(String(id));
-                    if (node)
+                    if (node) {
+                        this.removeNodeFromNeighborData(id);
                         node.remove();
+                    }
                     break;
 
                 default:
@@ -126,6 +130,15 @@ export class CreateFloorComponent implements AfterViewInit {
             }
         }
         this.loadData(this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!);
+    }
+
+    removeNodeFromNeighborData(id: number) {
+        this.jsonData.nodes.forEach(elem => {
+            let removeIndex = elem.neighbors.indexOf(id);
+
+            if (removeIndex !== -1)
+                this.jsonData.nodes.splice(removeIndex, 1);
+        });
     }
 
     /**
@@ -140,11 +153,11 @@ export class CreateFloorComponent implements AfterViewInit {
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.DOOR)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createDoor(elem.getAttribute("points"), elem.getAttribute("name")));
+            .map(elem => this.createDoor(parseInt(elem.getAttribute("id") + ""), elem.getAttribute("points"), elem.getAttribute("name")));
 
         elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.NODE)
             .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createNode(new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name"))));
+            .map(elem => this.createNode(parseInt(elem.getAttribute("id") + ""), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name"))));
 
     }
 
@@ -176,12 +189,13 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
      *
+     * @param previousId id when reloading the svg elements
      * @param name The name of the polygon
      * @param amountOfVertices The amount of vertices each room has
      * @param description The description of rooms purpose
      * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
+    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
         let radius = 30;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
@@ -193,12 +207,13 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
+        polygons.push(new Polygon(previousId ? previousId : self.jsonData.lastId + 1, name, self.floor, PolygonType.ROOM, description, vertices));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }
 
-        self.jsonData.lastId += 1;
+        if (previousId !== null)
+            self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
     }
 
@@ -269,7 +284,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    createDoor(previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], self: CreateFloorComponent = this): void {
         let origin = new Point(25, 25);
         let width = 50;
         let height = 15;
@@ -285,7 +300,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let door = d3.select("#doors" + self.floor)
             .append("polygon")
-            .attr("id", self.jsonData.lastId + 1)
+            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
@@ -305,7 +320,7 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         door.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode)
+            if (self.deleteMode && !self.setNeighborMode)
                 self.removeElement(e);
         });
 
@@ -315,7 +330,8 @@ export class CreateFloorComponent implements AfterViewInit {
             }
         });
 
-        self.jsonData.lastId += 1;
+        if (previousId === null)
+            self.jsonData.lastId += 1;
     }
 
     setNeighbors(id: number, neighbors: string) {
@@ -327,13 +343,13 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates passThrough node
      */
-    createNode(previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: any = this): void {
+    createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: any = this): void {
         let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
         let radius = 5;
 
         let node = d3.select("#nodes" + self.floor)
             .append("circle")
-            .attr("id", self.jsonData.lastId + 1)
+            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
             .attr('cx', origin.x)
             .attr('cy', origin.y)
             .attr('r', radius)
@@ -365,7 +381,7 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         node.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode)
+            if (self.deleteMode && !self.setNeighborMode)
                 self.removeElement(e);
         });
 
@@ -375,7 +391,8 @@ export class CreateFloorComponent implements AfterViewInit {
             }
         });
 
-        self.jsonData.lastId += 1;
+        if(previousId === null)
+            self.jsonData.lastId += 1;
     }
 
     /**

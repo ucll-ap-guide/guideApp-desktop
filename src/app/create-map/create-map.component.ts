@@ -213,10 +213,11 @@ export class CreateMapComponent implements OnInit {
             let cx = parseFloat(String(nodes[i].getAttribute("cx")));
             let cy = parseFloat(String(nodes[i].getAttribute("cy")));
             let r = parseFloat(String(nodes[i].getAttribute("r")));
+            let id = parseInt(String(nodes[i].getAttribute("id")));
             let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
 
             let handledDoor = new GuidoNode(
-                this.jsonData.lastId + 1,
+                id,
                 String(nodes[i].getAttribute("name")),
                 parseInt(String(nodes[i].getAttribute("floor"))),
                 new Point(cx, cy),
@@ -253,9 +254,10 @@ export class CreateMapComponent implements OnInit {
         for (let i = 0; i != doors.length; i++) {
             let doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
             let neighbors = String(doors[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
-
+            let id = parseInt(String(doors[i].getAttribute("id")));
+            
             let handledDoor = new GuidoNode(
-                this.jsonData.lastId + 1,
+                id,
                 String(doors[i].getAttribute("name")),
                 parseInt(String(doors[i].getAttribute("floor"))),
                 new Point(doorCoords.middle.x, doorCoords.middle.y),

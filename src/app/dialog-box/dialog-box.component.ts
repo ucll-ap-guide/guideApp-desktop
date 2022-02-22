@@ -71,18 +71,21 @@ export class DialogBoxComponent implements AfterViewInit {
         const inputFields = document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("input");
         switch (this.action) {
             case "createPolygonWithNVertices":
-                this.confirmAction(inputFields[0].value, this.params.vertices, inputFields[1].value, this.params.self);
+                this.confirmAction(null, inputFields[0].value, this.params.vertices, inputFields[1].value, this.params.self);
                 break;
             case "createPolygon":
                 if (!isNaN(parseInt(inputFields[2].value))) {
-                    this.confirmAction(inputFields[0].value, parseInt(inputFields[2].value), inputFields[1].value, this.params.self);
+                    this.confirmAction(null, inputFields[0].value, parseInt(inputFields[2].value), inputFields[1].value, this.params.self);
                 }
                 break;
             case "createDoor":
-                this.confirmAction(null, inputFields[0].value, this.params.self);
+                this.confirmAction(null, null, inputFields[0].value, [], this.params.self);
                 break;
             case "createNode":
-                this.confirmAction(null, inputFields[0].value, this.params.self);
+                this.confirmAction(null, null, inputFields[0].value, [], this.params.self);
+                break;
+            case "setNeighbors":
+                this.confirmAction(this.params.id, inputFields[0].value.split(",").map(elem => parseInt(elem)), this.params.self);
                 break;
             default:
                 console.error("This dialog action is currently not supported");

@@ -170,7 +170,7 @@ export class CreateMapComponent implements OnInit {
             let node = d3.select("[id='" + elem.getAttribute("id") +"']");
             let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
             switch (elem.getAttribute("type")) {
-                case "door":
+                case NodeType.DOOR:
                     let corner = node.attr("points").split(" ")[0].split(",")
                     let point = new Point(parseFloat(corner[0]), parseFloat(corner[1]));
 
@@ -180,11 +180,11 @@ export class CreateMapComponent implements OnInit {
                         .text(node.attr("id"));
                     break;
 
-                case "node":
+                case NodeType.NODE:
                     floorTextLabels.append("text")
                         .attr("x", parseFloat(node.attr("cx")) + 6)
                         .attr("y", parseFloat(node.attr("cy")) - 1)
-                        .text(node.attr("id"));
+                        .text(node.attr("id"))
             }
         })
     }
@@ -192,6 +192,7 @@ export class CreateMapComponent implements OnInit {
     disableSetNeighborMode() {
         document.querySelectorAll(".addFigureButton").forEach(elem => elem.removeAttribute("disabled"))
         document.querySelectorAll("[setNeighborModeTextGroup]").forEach(elem => elem.remove());
+        document.querySelectorAll("[setNeighborModeLineGroup]").forEach(elem => elem.innerHTML = "");
         this.setNeighborMode = false;
     }
 
@@ -222,7 +223,7 @@ export class CreateMapComponent implements OnInit {
                 parseInt(String(nodes[i].getAttribute("floor"))),
                 new Point(cx, cy),
                 [new Point(cx + r, cy + r)],
-                neighbors,
+                neighbors === null ? [] : neighbors,
                 NodeType.NODE
             );
             handledNodes.push(handledDoor);
@@ -253,16 +254,20 @@ export class CreateMapComponent implements OnInit {
 
         for (let i = 0; i != doors.length; i++) {
             let doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
-            let neighbors = String(doors[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
+            let neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
+            let neighbors = neighborsStr.map(elem => parseInt(elem));
             let id = parseInt(String(doors[i].getAttribute("id")));
-            
+
+            console.log(neighborsStr)
+            console.log(neighbors)
+
             let handledDoor = new GuidoNode(
                 id,
                 String(doors[i].getAttribute("name")),
                 parseInt(String(doors[i].getAttribute("floor"))),
                 new Point(doorCoords.middle.x, doorCoords.middle.y),
                 doorCoords.displayPoints,
-                neighbors,
+                neighborsStr.length === 0 ? [] : neighbors,
                 NodeType.DOOR
             );
             handledDoors.push(handledDoor);

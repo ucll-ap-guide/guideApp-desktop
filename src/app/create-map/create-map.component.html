@@ -83,7 +83,7 @@
             <h2 class="text-white text-2xl mt-2">Floors</h2>
             <div id="floors">
                 <app-create-floor *ngFor="let floor of jsonData.floors" [deleteMode]="deleteMode" [floor]="floor.floor"
-                                  [jsonData]="jsonData" [setNeighborMode]="setNeighborMode">
+                                  [jsonData]="jsonData" [changeSetNeighborMode]="setNeighborMode">
                 </app-create-floor>
             </div>
 

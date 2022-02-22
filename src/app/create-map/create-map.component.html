@@ -59,7 +59,8 @@
                 </button>
             </div>
             <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
-                <button [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' px-2'" (click)="deleteMode = !deleteMode">
+                <button (click)="deleteMode = !deleteMode"
+                        [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' px-2'">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                          xmlns="http://www.w3.org/2000/svg">
                         <path d="M290.422,79.244L220.034,8.857c-11.794-11.795-30.986-11.795-42.78,0C175.866,10.245,12.971,173.14,8.867,177.244 c-11.822,11.821-11.824,30.957,0,42.78l70.388,70.388c11.821,11.822,30.957,11.824,42.78,0 c1.046-1.046,165.357-165.357,168.388-168.388C302.244,110.203,302.246,91.066,290.422,79.244z M110.367,278.744 c-5.374,5.373-14.071,5.373-19.446,0l-70.388-70.388c-5.373-5.374-5.375-14.071,0-19.446l34.61-34.61l89.834,89.834 L110.367,278.744z M278.755,110.357l-122.111,122.11l-89.833-89.833l122.11-122.111c5.374-5.374,14.071-5.374,19.446,0 l70.388,70.388C284.129,96.285,284.129,104.983,278.755,110.357z"/>
@@ -78,22 +79,34 @@
         <div class="mx-4 md:mx-8">
             <h2 class="text-white text-2xl mt-2">Floors</h2>
             <div id="floors">
-                <app-create-floor *ngFor="let floor of jsonData.floors" [floor]="floor.floor"
-                                  [jsonData]="jsonData" [deleteMode]="deleteMode"></app-create-floor>
+                <app-create-floor *ngFor="let floor of jsonData.floors" [deleteMode]="deleteMode" [floor]="floor.floor"
+                                  [jsonData]="jsonData">
+                </app-create-floor>
             </div>
 
             <div class="m-4">
                 <h2 class="text-white text-xl">Add floor</h2>
                 <div class="max-w-md m-2">
                     <label class="text-white block mb-1" for="floorNumber">Floor number:</label>
-                    <input class="rounded-md py-1 px-2" id="floorNumber" placeholder="Floor number" step="1"
+                    <input class="rounded-md py-1 px-2 mb-2" id="floorNumber" placeholder="Floor number" step="1"
                            type="number" [(ngModel)]="createFloorForm.floor">
                     <label class="text-white block mb-1" for="floorName">Floor name:</label>
-                    <input class="rounded-md py-1 px-2" id="floorName" placeholder="Floor name"
+                    <input class="rounded-md py-1 px-2 mb-2" id="floorName" placeholder="Floor name"
                            type="text" [(ngModel)]="createFloorForm.name">
                     <label class="text-white block mb-1" for="floorHeight">Floor height (meters):</label>
-                    <input class="rounded-md py-1 px-2" id="floorHeight" min="0" placeholder="Floor height"
+                    <input class="rounded-md py-1 px-2 mb-2" id="floorHeight" min="0" placeholder="Floor height"
                            type="number" [(ngModel)]="createFloorForm.height">
+                    <div *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">
+                        <label class="text-white block mb-1" for="useGroundFloor">Use previous ground floor:</label>
+                        <select class="bg-white rounded-md py-1.5 px-3" id="useGroundFloor" type="checkbox">
+                            <option value="null">No</option>
+                            <ng-container *ngFor="let floor of jsonData.floors">
+                                <option *ngIf="floor.overlays.polygons.length > 1" value="{{floor.floor}}">
+                                    Of {{floor.name}}
+                                </option>
+                            </ng-container>
+                        </select>
+                    </div>
                     <button (click)="addFloor()"
                             class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
                         Add floor

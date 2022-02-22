@@ -4,4 +4,11 @@ export class Point {
         public y: number
     ) {
     }
+
+    copy(): Point {
+        return new Point(
+            this.x,
+            this.y
+        );
+    }
 }

@@ -55,7 +55,10 @@
               "src/styles/styles.css"
             ],
             "scripts": [
-              "src/assets/js/floorplan.js"
+              "src/assets/js/floorplan.js",
+              "src/assets/js/imagelayer.js",
+              "src/assets/js/overlays.js",
+              "src/assets/js/vectorfield.js"
             ]
           },
           "configurations": {

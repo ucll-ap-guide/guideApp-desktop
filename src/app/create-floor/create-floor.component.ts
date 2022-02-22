@@ -50,11 +50,11 @@ export class CreateFloorComponent implements AfterViewInit {
         this.regenerateFloorMap(true);
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
-            this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors);
+            this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, this);
         });
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.NODE).map((elem: GuidoNode) => {
-            this.createNode(elem.id, elem.point, elem.name, elem.neighbors);
+            this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
         });
     }
 

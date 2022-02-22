@@ -6,6 +6,7 @@ import {Point} from "../model/point";
 import {GuidoNode} from "../model/guido-node";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
+import {ToastrService} from "ngx-toastr";
 
 declare var d3: any;
 
@@ -19,12 +20,12 @@ declare var d3: any;
 export class CreateMapComponent implements OnInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
     deleteMode = false;
-    setNeighborMode=false;
+    setNeighborMode = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
 
-    constructor(private mapService: MapService) {
+    constructor(private mapService: MapService, private toastr: ToastrService) {
     }
 
     ngOnInit() {
@@ -51,7 +52,14 @@ export class CreateMapComponent implements OnInit {
      * Displays the map editor screen.
      */
     createMap(): void {
-        if (this.jsonData.name !== "" && !isNaN(this.jsonData.length) && !isNaN(this.jsonData.width)) {
+        document.getElementById("mapNameError")!.innerText =
+            this.jsonData.name === "" ? "No map name given." : "";
+        document.getElementById("floorLengthError")!.innerText =
+            this.jsonData.length < 0 ? "The floor length can't be negative" : "";
+        document.getElementById("floorWidthError")!.innerText =
+            this.jsonData.length < 0 ? "The floor width can't be negative" : "";
+
+        if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.initializedMap = true;
         }
     }
@@ -70,7 +78,14 @@ export class CreateMapComponent implements OnInit {
         height: number = this.createFloorForm.height,
         importFloorFrom: number | null = document.getElementById("useGroundFloor") === null ? null : Number((document.getElementById("useGroundFloor") as HTMLSelectElement).value)
     ): void {
-        if (!isNaN(floor) && name !== "" && !isNaN(height) && !this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
+        document.getElementById("floorNumberError")!.innerText =
+            floor === null || isNaN(floor) ? "Not a valid floor number1;" : this.jsonData.floors.find((f: Floor) => f.floor === floor) ? "This floor already exists." : "";
+        document.getElementById("floorNameError")!.innerText =
+            name === "" ? "The floor name cannot be empty." : "";
+        document.getElementById("floorHeightError")!.innerText =
+            height === null || isNaN(height) ? "This isn't a valid number." : height <= 0 ? "The floor height must be a positive number." : "";
+
+        if (!(Array.from(document.querySelectorAll("#addFloorForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.jsonData.floors.push(new Floor(floor, name, height));
             this.createFloorForm.floor++;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
@@ -116,7 +131,9 @@ export class CreateMapComponent implements OnInit {
     saveMapRemotely(): void {
         this.setAllNodes();
         let map = JSON.parse(JSON.stringify(this.jsonData));
-        this.mapService.addMap(map).subscribe();
+        this.mapService.addMap(map).subscribe(() => {
+            this.toastr.success('Successfully uploaded map!', "", {positionClass: "toast-bottom-right"});
+        });
     }
 
     /**
@@ -146,11 +163,22 @@ export class CreateMapComponent implements OnInit {
         });
     }
 
+    toggleDeleteMode(): void {
+        this.deleteMode = !this.deleteMode;
+        if (this.deleteMode) {
+            this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
+        } else {
+            this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
+        }
+    }
+
     /**
      * Removes all the floors from the current map.
      */
     clearMap(): void {
         this.jsonData.floors = [];
+        this.jsonData.nodes = [];
+        this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});
     }
 
     enableSetNeighborMode() {
@@ -161,13 +189,13 @@ export class CreateMapComponent implements OnInit {
 
         //SET LABELS
         floors.forEach(elem => d3.select("#" + elem.getAttribute("id"))
-                                          .select("svg")
-                                          .append("g")
-                                          .attr("setNeighborModeTextGroup","")
-                                          .attr("id", elem.getAttribute("id") + "textLabels"));
+            .select("svg")
+            .append("g")
+            .attr("setNeighborModeTextGroup", "")
+            .attr("id", elem.getAttribute("id") + "textLabels"));
 
         nodes.forEach(elem => {
-            let node = d3.select("[id='" + elem.getAttribute("id") +"']");
+            let node = d3.select("[id='" + elem.getAttribute("id") + "']");
             let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
             switch (elem.getAttribute("type")) {
                 case NodeType.DOOR:

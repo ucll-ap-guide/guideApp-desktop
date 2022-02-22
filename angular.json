@@ -52,7 +52,8 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles/styles.css"
+              "src/styles/styles.css",
+              "src/styles/toast.css"
             ],
             "scripts": [
               "src/assets/js/floorplan.js",

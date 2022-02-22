@@ -6,6 +6,7 @@ import {Polygon} from "../model/polygon";
 import {Floor} from "../model/floor";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
+import {ToastrService} from "ngx-toastr";
 
 declare var d3: any;
 
@@ -19,7 +20,9 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
-    @Input() set changeSetNeighborMode(value: boolean) {
+
+    @Input()
+    set changeSetNeighborMode(value: boolean) {
         this.setNeighborMode = value;
         if (this.setNeighborMode) {
             this.setConnectingNeighbors(this)
@@ -27,6 +30,7 @@ export class CreateFloorComponent implements AfterViewInit {
             this.removeConnectingNeighbors(this);
         }
     }
+
     setNeighborMode: boolean = false;
     imageWidth = 720;
     imageHeight = 487;
@@ -43,18 +47,25 @@ export class CreateFloorComponent implements AfterViewInit {
     observer!: MutationObserver;
     paramsToGiveToDialogBoxes: any = {};
 
-    constructor() {
+    constructor(private toastr: ToastrService) {
     }
 
     ngAfterViewInit(): void {
         this.regenerateFloorMap(true);
 
-        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.DOOR).map((elem: GuidoNode) => {
-            this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, this);
-        });
+        console.log(this.jsonData.nodes === undefined)
 
-        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor && elem.type === NodeType.NODE).map((elem: GuidoNode) => {
-            this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
+        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor).map((elem: GuidoNode) => {
+            switch (elem.type) {
+                case NodeType.DOOR:
+                    this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, this);
+                    break;
+                case NodeType.NODE:
+                    this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
+                    break;
+                default:
+                    console.error(`Type ${elem.type} is currently not supported yet`);
+            }
         });
     }
 
@@ -107,9 +118,9 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M0,1 " +
-                       "L3,3 " +
-                       "L0,5 ")
-            .attr("fill","orange");
+                "L3,3 " +
+                "L0,5 ")
+            .attr("fill", "orange");
     }
 
     /**
@@ -174,7 +185,7 @@ export class CreateFloorComponent implements AfterViewInit {
     reloadAllNodes(elementsToBeSaved: Element[]): void {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
-        d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup","").attr("id", "demo" + this.floor + "lineGroup");
+        d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
         this.observer = new MutationObserver(this.setZoom);
         this.observer.observe(document.getElementsByClassName("map-layers")[0] as Node, {attributes: true})
 
@@ -200,10 +211,7 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     setZoom = (mutationsList: MutationRecord[]) => {
         for (const mutation of mutationsList) {
-            if (
-                mutation.type !== "attributes" ||
-                mutation.attributeName !== "transform"
-            ) {
+            if (mutation.type !== "attributes" || mutation.attributeName !== "transform") {
                 break;
             }
             // @ts-ignore
@@ -256,6 +264,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 break;
             }
         }
+        this.toastr.success(`Removed ${this.getFloorName()}!`, "", {positionClass: "toast-bottom-right"});
         this.jsonData.floors = newFloors;
     }
 
@@ -337,15 +346,16 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("height", height)
             .attr("type", NodeType.DOOR)
             .attr("class", NodeType.DOOR)
-            .attr(NodeType.NODE, "")
+            .attr("node", "")
             .attr("neighbors", neighbors.join(","))
             .attr("name", name)
             .attr("removable", "")
             .attr("floor", self.floor)
             .attr("degreesRotated", 0)
             .on("contextmenu", self.rotateDoor)
-            .call(d3.behavior.drag().on("drag", function(){
-                if (!self.setNeighborMode) { // @ts-ignore
+            .call(d3.behavior.drag().on("drag", function () {
+                if (!self.setNeighborMode) {
+                    // @ts-ignore
                     self.moveDoorCoordinates(this)
                 }
             }));
@@ -366,7 +376,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     setNeighbors(id: number, neighbors: string, self: CreateFloorComponent = this) {
-        let elem = d3.select("[id='" + String(id) +"']")
+        let elem = d3.select(`[id='${id}']`)
         elem.attr("neighbors", neighbors)
 
         self.setConnectingNeighbors(self);
@@ -389,7 +399,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
             neighbors.map((neighborId: number) => {
                 let connectableNeighborPoint = self.getConnectablePoint(neighborId);
-                let neighborNode = document.querySelector("[id='" + neighborId +"']");
+                let neighborNode = document.querySelector(`[id='${neighborId}']`);
 
                 let isReciprical = false;
                 if (neighborNode && String(neighborNode.getAttribute("neighbors")).split(",").some(neighborIdEntry => parseInt(neighborIdEntry) === parseInt(elem.id)))
@@ -413,7 +423,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     getConnectablePoint(id: number): Point {
-        let elem = d3.select("[id='" + id +"']");
+        let elem = d3.select(`[id='${id}']`);
         switch (elem.attr("type")) {
             case NodeType.DOOR:
                 let points = CreateFloorComponent.arrayOfPointsFromPointString(elem.attr("points"));
@@ -424,7 +434,7 @@ export class CreateFloorComponent implements AfterViewInit {
             case NodeType.NODE:
                 return new Point(parseFloat(elem.attr("cx")), parseFloat(elem.attr("cy")));
         }
-        return new Point(0,0);
+        return new Point(0, 0);
     }
 
     /**
@@ -443,7 +453,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("floor", this.floor)
             .attr("name", name)
             .attr("neighbors", neighbors.join(","))
-            .attr(NodeType.NODE, "")
+            .attr("node", "")
             .attr("type", NodeType.NODE)
             .attr("class", NodeType.NODE)
             .attr('stroke', 'black')
@@ -470,7 +480,7 @@ export class CreateFloorComponent implements AfterViewInit {
                         .style("opacity", 1)
                 }
             })
-            .call(d3.behavior.drag().on("drag", function() {
+            .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode) { // @ts-ignore
                     self.moveNodeCoordinates(this)
                 }
@@ -487,7 +497,7 @@ export class CreateFloorComponent implements AfterViewInit {
             }
         });
 
-        if(previousId === null)
+        if (previousId === null)
             self.jsonData.lastId += 1;
     }
 
@@ -557,7 +567,7 @@ export class CreateFloorComponent implements AfterViewInit {
         return this.pointStringFromArrayOfPoints(resultArray);
     }
 
-    static arrayOfPointsFromPointString(points: string) : Point[] {
+    static arrayOfPointsFromPointString(points: string): Point[] {
         let splitUpPoints = points.split(" ");
         let poppedPoints: Point[] = [];
 

@@ -1,17 +1,23 @@
 <main>
     <div [hidden]="initializedMap" class="my-3 mx-2 md:mx-4">
         <h1 class="text-white text-3xl">Create Map</h1>
-        <div class="max-w-md m-2">
+        <div id="addMapForm" class="max-w-md m-2">
             <label class="text-white block mb-1" for="mapName">Name:</label>
-            <input class="rounded-md py-1 px-2 mb-2" id="mapName" placeholder="Name" type="text"
-                   [(ngModel)]="jsonData.name">
-            <!--<label class="text-white block mb-1" for="floorLength">Floor length (meters):</label>
-            <input class="rounded-md py-1 px-2" id="floorLength" min="0" placeholder="Floor length"
-                   type="number" [(ngModel)]="jsonData.length">
+            <input class="rounded-md py-1.5 px-2 mx-1.5" id="mapName" placeholder="Name" type="text"
+                   [(ngModel)]="jsonData.name" (keydown.enter)="createMap()">
+            <p id="mapNameError" class="text-red-500 mx-3 mb-1 error"></p>
+
+            <label class="text-white block mb-1" for="floorLength">Floor length (meters):</label>
+            <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorLength" min="0" step="0.01" placeholder="Floor length"
+                   type="number" [(ngModel)]="jsonData.length" (keydown.enter)="createMap()">
+            <p id="floorLengthError" class="text-red-500 mx-3 mb-1 error"></p>
+
             <label class="text-white block mb-1" for="floorWidth">Floor width (meters):</label>
-            <input class="rounded-md py-1 px-2" id="floorWidth" min="0" placeholder="Floor width"
-                   type="number" [(ngModel)]="jsonData.width">-->
-            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-2"
+            <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorWidth" min="0" step="0.01" placeholder="Floor width"
+                   type="number" [(ngModel)]="jsonData.width" (keydown.enter)="createMap()">
+            <p id="floorWidthError" class="text-red-500 mx-3 mb-1 error"></p>
+
+            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4"
                     (click)="createMap()">
                 Create map
             </button>
@@ -59,7 +65,7 @@
                 </button>
             </div>
             <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
-                <button (click)="deleteMode = !deleteMode"
+                <button (click)="toggleDeleteMode()"
                         [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' px-2'">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                          xmlns="http://www.w3.org/2000/svg">
@@ -76,8 +82,12 @@
             </div>
         </div>
 
-        <button *ngIf="!setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="enableSetNeighborMode()">Enable setNeighborMode</button>
-        <button *ngIf="setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="disableSetNeighborMode()">Disable setNeighborMode</button>
+        <button *ngIf="!setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="enableSetNeighborMode()">
+            Enable setNeighborMode
+        </button>
+        <button *ngIf="setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="disableSetNeighborMode()">
+            Disable setNeighborMode
+        </button>
         <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.name}}</h1>
         <div class="mx-4 md:mx-8">
             <h2 class="text-white text-2xl mt-2">Floors</h2>
@@ -89,19 +99,26 @@
 
             <div class="m-4">
                 <h2 class="text-white text-xl">Add floor</h2>
-                <div class="max-w-md m-2">
+                <div id="addFloorForm" class="max-w-md m-2">
                     <label class="text-white block mb-1" for="floorNumber">Floor number:</label>
-                    <input class="rounded-md py-1 px-2 mb-2" id="floorNumber" placeholder="Floor number" step="1"
-                           type="number" [(ngModel)]="createFloorForm.floor">
+                    <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorNumber" placeholder="Floor number" step="1"
+                           type="number" [(ngModel)]="createFloorForm.floor" (keydown.enter)="addFloor()">
+                    <p id="floorNumberError" class="text-red-500 mx-3 mb-1 error"></p>
+
                     <label class="text-white block mb-1" for="floorName">Floor name:</label>
-                    <input class="rounded-md py-1 px-2 mb-2" id="floorName" placeholder="Floor name"
-                           type="text" [(ngModel)]="createFloorForm.name">
+                    <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorName" placeholder="Floor name"
+                           type="text" [(ngModel)]="createFloorForm.name" (keydown.enter)="addFloor()">
+                    <p id="floorNameError" class="text-red-500 mx-3 mb-1 error"></p>
+
                     <label class="text-white block mb-1" for="floorHeight">Floor height (meters):</label>
-                    <input class="rounded-md py-1 px-2 mb-2" id="floorHeight" min="0" placeholder="Floor height"
-                           type="number" [(ngModel)]="createFloorForm.height">
-                    <div *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">
+                    <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorHeight" min="0" placeholder="Floor height"
+                           type="number" [(ngModel)]="createFloorForm.height" step="0.01" (keydown.enter)="addFloor()">
+                    <p id="floorHeightError" class="text-red-500 mx-3 mb-1"></p>
+
+                    <ng-container *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">
                         <label class="text-white block mb-1" for="useGroundFloor">Use previous ground floor:</label>
-                        <select class="bg-white rounded-md py-1.5 px-3" id="useGroundFloor" type="checkbox">
+                        <select class="bg-white rounded-md py-1.5 px-2 mx-1.5" id="useGroundFloor" type="checkbox"
+                                (keydown.enter)="addFloor()">
                             <option value="null">No</option>
                             <ng-container *ngFor="let floor of jsonData.floors">
                                 <option *ngIf="floor.overlays.polygons.length > 1" value="{{floor.floor}}">
@@ -109,7 +126,7 @@
                                 </option>
                             </ng-container>
                         </select>
-                    </div>
+                    </ng-container>
                     <button (click)="addFloor()"
                             class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
                         Add floor
@@ -133,7 +150,8 @@
                     </div>
                     <div [hidden]="mapNames.length === 0">
                         <p class="mb-4 dark:text-white">Which of the following maps do you want to edit?</p>
-                        <select id="editMapSelect" class="bg-white rounded-md py-1.5 px-2 mb-4">
+                        <select id="editMapSelect" class="bg-white rounded-md py-1.5 px-2 mb-4"
+                                (keydown.enter)="editMap()">
                             <option *ngFor="let mapName of mapNames">{{mapName}}</option>
                         </select>
                     </div>

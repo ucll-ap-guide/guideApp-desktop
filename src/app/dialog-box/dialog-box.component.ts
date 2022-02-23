@@ -1,11 +1,11 @@
-import {AfterViewInit, Component, Input} from '@angular/core';
+import {AfterViewInit, Component, Input, OnChanges, SimpleChanges} from '@angular/core';
 
 @Component({
     selector: 'app-dialog-box',
     templateUrl: 'dialog-box.component.html',
     styles: []
 })
-export class DialogBoxComponent implements AfterViewInit {
+export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
     @Input() action!: string;
     @Input() floor!: number;
@@ -19,36 +19,47 @@ export class DialogBoxComponent implements AfterViewInit {
     constructor() {
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        const inputsDiv = document.getElementById(`${this.action}InputsFloor${this.floor}`);
+        if (changes["params"] !== undefined && changes['params'].currentValue.defaultValues !== undefined) {
+            const inputElements = inputsDiv!.getElementsByTagName("input");
+            const defaultValues = changes['params'].currentValue.defaultValues;
+            for (let i = 0; i < defaultValues.length; i++) {
+                inputElements[i].value = defaultValues[i];
+            }
+        }
+    }
+
     ngAfterViewInit(): void {
         const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}`);
-        for (const formElement of this.formElements) {
+        for (let i = 0; i < this.formElements.length; i++) {
             const label = document.createElement("label");
-            if (formElement.name) {
-                label.innerText = formElement.name + ":";
+            if (this.formElements[i].name) {
+                label.innerText = this.formElements[i].name + ":";
             }
             label.className = "text-white block mb-1";
             inputsDiv.appendChild(label);
 
-            const elem = document.createElement(formElement.tagType ? formElement.tagType : "input");
+            const elem = document.createElement(this.formElements[i].tagType ? this.formElements[i].tagType : "input");
             elem.className = "bg-white rounded-md py-1.5 px-2 mb-4";
             elem.onkeyup = (event: KeyboardEvent) => {
                 if (event.key === "Enter") {
                     this.successfullyCloseDialog();
                 }
             };
-            elem.required = formElement.required === true
+            elem.required = this.formElements[i].required === true
             if (elem.nodeName === "INPUT") {
-                (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
-                elem.type = formElement.inputType ? formElement.inputType : "text";
-                if (formElement.inputType === "number") {
-                    if (!isNaN(formElement.min)) {
-                        elem.min = formElement.min;
+                (elem as HTMLInputElement).placeholder = this.formElements[i].name ? this.formElements[i].name : "";
+                elem.type = this.formElements[i].inputType ? this.formElements[i].inputType : "text";
+                if (this.formElements[i].inputType === "number") {
+                    if (!isNaN(this.formElements[i].min)) {
+                        elem.min = this.formElements[i].min;
                     }
-                    elem.step = (isNaN(formElement)) ? 1 : formElement.step;
+                    elem.step = (isNaN(this.formElements[i])) ? 1 : this.formElements[i].step;
                 }
             }
-            if (formElement.defaultValue !== undefined) {
-                elem.value = formElement.defaultValue
+            if (this.formElements[i].defaultValue !== undefined) {
+                elem.value = this.formElements[i].defaultValue;
             }
             inputsDiv.appendChild(elem);
         }

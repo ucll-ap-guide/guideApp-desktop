@@ -454,7 +454,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates passThrough node
      */
-    createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: any = this): void {
+    createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: CreateFloorComponent = this): void {
         let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
         let radius = 5;
 
@@ -508,7 +508,11 @@ export class CreateFloorComponent implements AfterViewInit {
 
         node.node().addEventListener('dblclick', function (e: Event) {
             if (self.setNeighborMode) {
-                self.displayDialogBox("setNeighbors", {id: (e.target as Element).id})
+                const id = (e.target as Element).id;
+                self.displayDialogBox("setNeighbors", {
+                    id: id,
+                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")]
+                });
             }
         });
 
@@ -527,7 +531,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Moves the door according to drag, only executes on left click drag
      */
-    moveDoorCoordinates(self: any): void {
+    moveDoorCoordinates(self: CreateFloorComponent): void {
         if (d3.event.sourceEvent.which === 1) {
             let door = d3.select(self);
             let width = parseFloat(door.attr("width"));

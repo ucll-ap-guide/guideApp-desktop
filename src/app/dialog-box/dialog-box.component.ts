@@ -79,7 +79,7 @@ export class DialogBoxComponent implements AfterViewInit {
                 }
                 break;
             case "createDoor":
-                this.confirmAction(null, null, inputFields[0].value, [], this.params.self);
+                this.confirmAction(null, null, inputFields[0].value, [], this.params.emergency, this.params.self);
                 break;
             case "createNode":
                 this.confirmAction(null, null, inputFields[0].value, [], this.params.self);

@@ -1,7 +1,7 @@
 export enum NodeType {
-    DOOR = "door",
+    DOOR = "Door",
     EMERGENCY_EXIT = "Emergency exit",
-    NODE = "node",
+    NODE = "Node",
     FIRE_EXTINGUISHER = "Fire extinguisher",
     DEFIBRILLATOR = "Defibrillator",
     COFFEE = "Coffee",

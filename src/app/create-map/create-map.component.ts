@@ -199,6 +199,7 @@ export class CreateMapComponent implements OnInit {
             let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
             switch (elem.getAttribute("type")) {
                 case NodeType.DOOR:
+                case NodeType.EMERGENCY_EXIT:
                     let corner = node.attr("points").split(" ")[0].split(",")
                     let point = new Point(parseFloat(corner[0]), parseFloat(corner[1]));
 
@@ -262,44 +263,44 @@ export class CreateMapComponent implements OnInit {
     }
 
     getAllDoors() {
-        let doors = document.getElementsByClassName(NodeType.DOOR);
-        let handledDoors: GuidoNode[] = [];
+        const handledDoors: GuidoNode[] = [];
 
-        function getDoorCoords(previousPoints: string) {
-            let splitUpPreviousPoints = previousPoints.split(" ");
-            let poppedPoints: Point[] = [];
+        for (const nodeType of [NodeType.DOOR, NodeType.EMERGENCY_EXIT]) {
+            const doors = document.getElementsByClassName(nodeType);
 
-            while (splitUpPreviousPoints.length !== 0) {
-                let elems = splitUpPreviousPoints.pop()!.split(",");
-                poppedPoints.push(new Point(parseFloat(elems[0]), parseFloat(elems[1])));
+            function getDoorCoords(previousPoints: string) {
+                const splitUpPreviousPoints: string[] = previousPoints.split(" ");
+                const poppedPoints: Point[] = [];
+
+                while (splitUpPreviousPoints.length !== 0) {
+                    const elems = splitUpPreviousPoints.pop()!.split(",");
+                    poppedPoints.push(new Point(parseFloat(elems[0]), parseFloat(elems[1])));
+                }
+
+                const middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
+                const middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
+
+                return {"displayPoints": poppedPoints, "middle": new Point(middleX, middleY)};
             }
 
-            let middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
-            let middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
+            for (let i = 0; i != doors.length; i++) {
+                const doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
+                const neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
+                const neighbors = neighborsStr.map(elem => parseInt(elem));
+                const id = parseInt(String(doors[i].getAttribute("id")));
 
-            return {"displayPoints": poppedPoints, "middle": new Point(middleX, middleY)};
-        }
-
-        for (let i = 0; i != doors.length; i++) {
-            let doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
-            let neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
-            let neighbors = neighborsStr.map(elem => parseInt(elem));
-            let id = parseInt(String(doors[i].getAttribute("id")));
-
-            console.log(neighborsStr)
-            console.log(neighbors)
-
-            let handledDoor = new GuidoNode(
-                id,
-                String(doors[i].getAttribute("name")),
-                parseInt(String(doors[i].getAttribute("floor"))),
-                new Point(doorCoords.middle.x, doorCoords.middle.y),
-                doorCoords.displayPoints,
-                neighborsStr.length === 0 ? [] : neighbors,
-                NodeType.DOOR
-            );
-            handledDoors.push(handledDoor);
-            this.jsonData.lastId++;
+                let handledDoor = new GuidoNode(
+                    id,
+                    String(doors[i].getAttribute("name")),
+                    parseInt(String(doors[i].getAttribute("floor"))),
+                    new Point(doorCoords.middle.x, doorCoords.middle.y),
+                    doorCoords.displayPoints,
+                    neighborsStr.length === 0 ? [] : neighbors,
+                    nodeType
+                );
+                handledDoors.push(handledDoor);
+                this.jsonData.lastId++;
+            }
         }
 
         return handledDoors;

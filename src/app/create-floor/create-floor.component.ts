@@ -53,12 +53,11 @@ export class CreateFloorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.regenerateFloorMap(true);
 
-        console.log(this.jsonData.nodes === undefined)
-
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor).map((elem: GuidoNode) => {
             switch (elem.type) {
                 case NodeType.DOOR:
-                    this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, this);
+                case NodeType.EMERGENCY_EXIT:
+                    this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.DOOR, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -86,8 +85,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param data
      */
     loadData(data: Floor): void {
-        let elementsToBeSaved = Array.from(document.querySelectorAll('.door'));
-        elementsToBeSaved = elementsToBeSaved.concat(Array.from(document.querySelectorAll('.node')));
+        let elementsToBeSaved = Array.from(document.querySelectorAll('[node]'));
         d3.select("#demo" + this.floor).selectAll("*").remove();
 
         this.mapData[this.overlays.id()] = data.overlays;
@@ -143,6 +141,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     break;
 
                 case NodeType.DOOR:
+                case NodeType.EMERGENCY_EXIT:
                     let door = document.getElementById(String(id));
                     if (door) {
                         this.removeNodeFromNeighborData(id);
@@ -189,14 +188,20 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer = new MutationObserver(this.setZoom);
         this.observer.observe(document.getElementsByClassName("map-layers")[0] as Node, {attributes: true})
 
-        elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.DOOR)
-            .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createDoor(parseInt(elem.getAttribute("id") + ""), elem.getAttribute("points"), elem.getAttribute("name"), (elem.getAttribute("neighbors") + "").split(",").map(elem => parseInt(elem))));
-
-        elementsToBeSaved.filter(elem => elem.getAttribute("class") === NodeType.NODE)
-            .filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => this.createNode(parseInt(elem.getAttribute("id") + ""), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), (elem.getAttribute("neighbors") + "").split(",").map(elem => parseInt(elem))));
-
+        elementsToBeSaved.filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
+            .map(elem => {
+                switch (elem.getAttribute("class")) {
+                    case NodeType.DOOR:
+                    case NodeType.EMERGENCY_EXIT:
+                        this.createDoor(parseInt(String(elem.getAttribute("id"))), elem.getAttribute("points"), elem.getAttribute("name"), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
+                        break;
+                    case NodeType.NODE:
+                        this.createNode(parseInt(String(elem.getAttribute("id"))), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
+                        break;
+                    default:
+                        console.error(`Type ${elem.getAttribute("class")} is currently not supported yet`);
+                }
+            });
     }
 
     displayDialogBox(action: string, params: {}) {
@@ -324,7 +329,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    createDoor(previousId: number | null = null, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, self: CreateFloorComponent = this): void {
         let origin = new Point(25, 25);
         let width = 50;
         let height = 15;
@@ -344,8 +349,8 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("points", previousPoints === null ? pointsString : previousPoints)
             .attr("width", width)
             .attr("height", height)
-            .attr("type", NodeType.DOOR)
-            .attr("class", NodeType.DOOR)
+            .attr("type", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
+            .attr("class", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
             .attr("node", "")
             .attr("neighbors", neighbors.join(","))
             .attr("name", name)
@@ -426,6 +431,7 @@ export class CreateFloorComponent implements AfterViewInit {
         let elem = d3.select(`[id='${id}']`);
         switch (elem.attr("type")) {
             case NodeType.DOOR:
+            case NodeType.EMERGENCY_EXIT:
                 let points = CreateFloorComponent.arrayOfPointsFromPointString(elem.attr("points"));
                 let middleX = (points[0].x + points[2].x) / 2;
                 let middleY = (points[0].y + points[2].y) / 2;
@@ -467,22 +473,23 @@ export class CreateFloorComponent implements AfterViewInit {
                 if (!self.setNeighborMode) {
                     // @ts-ignore
                     d3.select(this)
-                        .style("opacity", 0.5)
+                        .style("opacity", 0.5);
                 }
             })
             .on("mouseout", function () {
                 // @ts-ignore
                 d3.select(this)
-                    .attr("r", 5)
+                    .attr("r", 5);
                 if (!self.setNeighborMode) {
                     // @ts-ignore
                     d3.select(this)
-                        .style("opacity", 1)
+                        .style("opacity", 1);
                 }
             })
             .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode) { // @ts-ignore
-                    self.moveNodeCoordinates(this)
+                if (!self.setNeighborMode) {
+                    // @ts-ignore
+                    self.moveNodeCoordinates(this);
                 }
             }));
 

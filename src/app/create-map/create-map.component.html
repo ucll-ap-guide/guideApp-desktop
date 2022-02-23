@@ -1,5 +1,5 @@
 <main>
-    <div [hidden]="initializedMap" class="my-3 mx-2 md:mx-4">
+    <div *ngIf="!initializedMap" class="my-3 mx-2 md:mx-4">
         <h1 class="text-white text-3xl">Create Map</h1>
         <div id="addMapForm" class="max-w-md m-2">
             <label class="text-white block mb-1" for="mapName">Name:</label>

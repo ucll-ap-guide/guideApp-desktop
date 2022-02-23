@@ -1,4 +1,5 @@
 import {AfterViewInit, Component, Input, OnChanges, SimpleChanges} from '@angular/core';
+import input from "postcss/lib/input";
 
 @Component({
     selector: 'app-dialog-box',
@@ -90,7 +91,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 }
                 break;
             case "createDoor":
-                this.confirmAction(null, null, inputFields[0].value, [], this.params.emergency, this.params.self);
+                this.confirmAction(null, parseFloat(inputFields[1].value), parseFloat(inputFields[2].value), null, inputFields[0].value, [], this.params.emergency, this.params.self);
                 break;
             case "createNode":
                 this.confirmAction(null, null, inputFields[0].value, [], this.params.self);

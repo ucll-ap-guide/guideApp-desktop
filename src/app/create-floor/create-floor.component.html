@@ -59,7 +59,7 @@
                     [params]="paramsToGiveToDialogBoxes" action="createPolygon" confirmButtonText="OK"
                     [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}]"
+    <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}, {defaultValue: 50, inputType: 'number', name: 'Door height'}, {defaultValue: 15, inputType: 'number', name: 'Door width'}]"
                     [params]="paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>

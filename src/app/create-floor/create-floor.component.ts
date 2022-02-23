@@ -56,7 +56,8 @@ export class CreateFloorComponent implements AfterViewInit {
             switch (elem.type) {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
-                    this.createDoor(elem.id, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.DOOR, this);
+                    let doorProperties = this.getDoorDimensions(elem.displayPoints);
+                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.DOOR, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -197,7 +198,14 @@ export class CreateFloorComponent implements AfterViewInit {
                 switch (elem.getAttribute("class")) {
                     case NodeType.DOOR:
                     case NodeType.EMERGENCY_EXIT:
-                        this.createDoor(parseInt(String(elem.getAttribute("id"))), elem.getAttribute("points"), elem.getAttribute("name"), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
+                        this.createDoor(
+                            parseInt(String(elem.getAttribute("id"))),
+                            parseInt(String(elem.getAttribute("height"))),
+                            parseInt(String(elem.getAttribute("width"))),
+                            elem.getAttribute("points"),
+                            elem.getAttribute("name"),
+                            String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem))
+                        );
                         break;
                     case NodeType.NODE:
                         this.createNode(parseInt(String(elem.getAttribute("id"))), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
@@ -337,10 +345,8 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    createDoor(previousId: number | null = null, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, self: CreateFloorComponent = this): void {
         let origin = new Point(25, 25);
-        let width = 50;
-        let height = 15;
 
         let points = [
             origin,
@@ -386,6 +392,12 @@ export class CreateFloorComponent implements AfterViewInit {
 
         if (previousId === null)
             self.jsonData.lastId += 1;
+    }
+
+    getDoorDimensions(doorCoords: Point[]) : {height: number, width: number} {
+        let distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
+        let distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
+        return {height: distance1 > distance2 ? distance1 : distance2, width: distance1 > distance2 ? distance2 : distance1}
     }
 
     setNeighbors(id: number, neighbors: string, self: CreateFloorComponent = this) {

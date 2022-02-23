@@ -51,24 +51,24 @@
     </button>
 
     <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="this.paramsToGiveToDialogBoxes" action="createPolygonWithNVertices" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes" action="createPolygonWithNVertices" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon"
                     [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]"
-                    [params]="this.paramsToGiveToDialogBoxes" action="createPolygon" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes" action="createPolygon" confirmButtonText="OK"
                     [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}]"
-                    [params]="this.paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes" action="createDoor" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createNode" [formElements]="[{name: 'Node name'}]"
-                    [params]="this.paramsToGiveToDialogBoxes" action="createNode" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes" action="createNode" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors" [formElements]="[{name: 'Enter neighbors'}]"
-                    [params]="this.paramsToGiveToDialogBoxes" action="setNeighbors" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes" action="setNeighbors" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
 </div>

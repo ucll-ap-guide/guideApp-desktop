@@ -164,11 +164,15 @@ export class CreateMapComponent implements OnInit {
     }
 
     toggleDeleteMode(): void {
-        this.deleteMode = !this.deleteMode;
-        if (this.deleteMode) {
-            this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
+        if (!this.setNeighborMode) {
+            this.deleteMode = !this.deleteMode;
+            if (this.deleteMode) {
+                this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
+            } else {
+                this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
+            }
         } else {
-            this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
+            this.toastr.warning("You cannot enabled delete mode this action while Neighbor mode is enabled!", "", {positionClass: "toast-bottom-right"});
         }
     }
 
@@ -182,7 +186,7 @@ export class CreateMapComponent implements OnInit {
     }
 
     enableSetNeighborMode() {
-        document.querySelectorAll(".addFigureButton").forEach(elem => elem.setAttribute("disabled", "true"))
+        this.deleteMode = false;
         this.setNeighborMode = true;
         let floors = document.querySelectorAll('.floor');
         let nodes = document.querySelectorAll('[node]');
@@ -219,7 +223,6 @@ export class CreateMapComponent implements OnInit {
     }
 
     disableSetNeighborMode() {
-        document.querySelectorAll(".addFigureButton").forEach(elem => elem.removeAttribute("disabled"))
         document.querySelectorAll("[setNeighborModeTextGroup]").forEach(elem => elem.remove());
         document.querySelectorAll("[setNeighborModeLineGroup]").forEach(elem => elem.innerHTML = "");
         this.setNeighborMode = false;

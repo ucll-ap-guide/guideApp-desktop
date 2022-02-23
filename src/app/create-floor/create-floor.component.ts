@@ -205,9 +205,13 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     displayDialogBox(action: string, params: {}) {
-        this.paramsToGiveToDialogBoxes = params;
-        this.paramsToGiveToDialogBoxes.self = this;
-        document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
+        if (!this.setNeighborMode || action === "setNeighbors") {
+            this.paramsToGiveToDialogBoxes = params;
+            this.paramsToGiveToDialogBoxes.self = this;
+            document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
+        } else {
+            this.toastr.warning("You cannot perform this action while Neighbor mode is enabled!", "", {positionClass: "toast-bottom-right"});
+        }
     }
 
     /**

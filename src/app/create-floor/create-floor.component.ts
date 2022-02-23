@@ -20,6 +20,7 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
+
     @Input()
     set changeSetNeighborMode(value: boolean) {
         this.setNeighborMode = value;
@@ -44,7 +45,13 @@ export class CreateFloorComponent implements AfterViewInit {
     overlays = d3.floorplan.overlays().editMode(true);
     mapData: any = {};
     observer!: MutationObserver;
-    paramsToGiveToDialogBoxes: any = {};
+    paramsToGiveToDialogBoxes: any = {
+        createPolygonWithNVertices: {},
+        createPolygon: {},
+        createDoor: {},
+        createNode: {},
+        setNeighbors: {}
+    };
 
     constructor(private toastr: ToastrService) {
     }
@@ -218,8 +225,8 @@ export class CreateFloorComponent implements AfterViewInit {
 
     displayDialogBox(action: string, params: {}) {
         if (!this.setNeighborMode || action === "setNeighbors") {
-            this.paramsToGiveToDialogBoxes = params;
-            this.paramsToGiveToDialogBoxes.self = this;
+            this.paramsToGiveToDialogBoxes[action] = params;
+            this.paramsToGiveToDialogBoxes[action].self = this;
             document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
         } else {
             this.toastr.warning("You cannot perform this action while Neighbor mode is enabled!", "", {positionClass: "toast-bottom-right"});
@@ -523,7 +530,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 const id = (e.target as Element).id;
                 self.displayDialogBox("setNeighbors", {
                     id: id,
-                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")]
+                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")!.split(",")]
                 });
             }
         });

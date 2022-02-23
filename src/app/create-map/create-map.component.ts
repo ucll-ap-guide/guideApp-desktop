@@ -187,6 +187,7 @@ export class CreateMapComponent implements OnInit {
 
     enableSetNeighborMode() {
         this.deleteMode = false;
+        document.querySelectorAll('.map-layers').forEach(elem => elem.setAttribute("transform", "translate(0,0)scale(1)"));
         this.setNeighborMode = true;
         let floors = document.querySelectorAll('.floor');
         let nodes = document.querySelectorAll('[node]');

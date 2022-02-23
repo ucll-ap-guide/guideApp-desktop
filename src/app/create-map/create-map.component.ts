@@ -7,6 +7,7 @@ import {GuidoNode} from "../model/guido-node";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 import {ToastrService} from "ngx-toastr";
+import {CreateFloorComponent} from "../create-floor/create-floor.component";
 
 declare var d3: any;
 
@@ -202,24 +203,49 @@ export class CreateMapComponent implements OnInit {
         nodes.forEach(elem => {
             let node = d3.select("[id='" + elem.getAttribute("id") + "']");
             let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
+            let group = floorTextLabels.append("g");
+            let textLabel;
             switch (elem.getAttribute("type")) {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
-                    let corner = node.attr("points").split(" ")[0].split(",")
-                    let point = new Point(parseFloat(corner[0]), parseFloat(corner[1]));
+                    let points = CreateFloorComponent.arrayOfPointsFromPointString(node.attr("points"));
+                    let middleX = (points[0].x + points[2].x) / 2;
+                    let middleY = (points[0].y + points[2].y) / 2;
+                    let point = new Point(middleX, middleY);
 
-                    floorTextLabels.append("text")
-                        .attr("x", point.x + 25)
-                        .attr("y", point.y - 1)
+                    textLabel = group.append("text")
+                        .attr("x", point.x)
+                        .attr("y", point.y)
+                        .style("font-size", "0.5em")
                         .text(node.attr("id"));
                     break;
 
                 case NodeType.NODE:
-                    floorTextLabels.append("text")
+                    textLabel = group.append("text")
                         .attr("x", parseFloat(node.attr("cx")) + 6)
                         .attr("y", parseFloat(node.attr("cy")) - 1)
+                        .style("font-size", "0.5em")
                         .text(node.attr("id"))
             }
+
+            if (textLabel) {
+                const SVGRect = group.node().getBBox();
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", SVGRect.x);
+                rect.setAttribute("y", SVGRect.y);
+                rect.setAttribute("width", SVGRect.width);
+                rect.setAttribute("height", SVGRect.height);
+                rect.setAttribute("fill", "white");
+                rect.setAttribute("stroke", "black");
+                rect.setAttribute("stroke-width", "0.5px");
+
+                group.node().insertBefore(rect, textLabel.node());
+            }
+
+            group.node().addEventListener('click', function (e: Event) {
+                // @ts-ignore
+                e.target.parentNode.parentNode.appendChild(e.target.parentNode)
+            });
         })
     }
 

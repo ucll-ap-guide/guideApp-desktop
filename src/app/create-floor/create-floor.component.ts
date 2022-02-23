@@ -20,7 +20,6 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
-
     @Input()
     set changeSetNeighborMode(value: boolean) {
         this.setNeighborMode = value;
@@ -186,7 +185,12 @@ export class CreateFloorComponent implements AfterViewInit {
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
         d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
         this.observer = new MutationObserver(this.setZoom);
-        this.observer.observe(document.getElementsByClassName("map-layers")[0] as Node, {attributes: true})
+        const svg = document.querySelector('#demo' + this.floor);
+        if (svg) {
+            const map_layer = svg.querySelector('.map-layers')
+            if (map_layer)
+                this.observer.observe(map_layer as Node, {attributes: true})
+        }
 
         elementsToBeSaved.filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
             .map(elem => {
@@ -394,7 +398,7 @@ export class CreateFloorComponent implements AfterViewInit {
     setConnectingNeighbors(self: CreateFloorComponent = this) {
         let group = d3.select("#demo" + self.floor + "lineGroup");
         group.selectAll("line").remove();
-        let nodes = document.querySelectorAll("[node]");
+        let nodes = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
         nodes.forEach((elem: any) => {
             let origin = self.getConnectablePoint(elem.id);
             let neighborsStr = elem.getAttribute("neighbors").split(",");

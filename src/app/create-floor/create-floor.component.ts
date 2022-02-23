@@ -530,7 +530,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 const id = (e.target as Element).id;
                 self.displayDialogBox("setNeighbors", {
                     id: id,
-                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")!.split(",")]
+                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")!.split(",").map((neighbor: string) => [neighbor, true])]
                 });
             }
         });

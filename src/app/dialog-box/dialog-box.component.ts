@@ -32,14 +32,22 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                     topLevelChildren.item(i).innerHTML = "";
                     let j;
                     for (j = 0; j < defaultValues[i].length; j++) {
-                        const elem = this.createField(this.formElements[i], j);
-                        if (elem.nodeName === "INPUT") {
-                            (elem as HTMLInputElement).value = defaultValues[i][j];
+                        const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j);
+                        const groupInputFields = group.getElementsByTagName("input");
+                        for (let k = 0; k < groupInputFields.length; k++) {
+                            // Check needed for future extension where select fields can also be generated
+                            if (groupInputFields[k].nodeName === "INPUT") {
+                                if (this.formElements[i].infinite[k].inputType === "checkbox") {
+                                    (groupInputFields[k] as HTMLInputElement).checked = defaultValues[i][j][k];
+                                } else {
+                                    (groupInputFields[k] as HTMLInputElement).value = defaultValues[i][j][k];
+                                }
+                            }
                         }
-                        topLevelChildren.item(i).appendChild(elem);
+                        topLevelChildren.item(i).appendChild(group);
                     }
-                    if (defaultValues[i][0] !== "") {
-                        topLevelChildren.item(i).appendChild(this.createField(this.formElements[i], j));
+                    if (defaultValues[i][0][0] !== "") {
+                        topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
                     }
                 } else {
                     if (this.formElements[i].nodeName === "INPUT") {
@@ -53,18 +61,30 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     ngAfterViewInit(): void {
         const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}`);
         for (let i = 0; i < this.formElements.length; i++) {
-            inputsDiv.appendChild(this.createLabel(this.formElements[i], String(i)));
-
-            const elem = this.createField(this.formElements[i], i);
-            if (this.formElements[i].infinite == true) {
+            if (Array.isArray(this.formElements[i].infinite)) {
+                // Container containing all the groups of input fields
                 const container = document.createElement("div");
-                container.id = `${this.action}InputsFloor${this.floor}${this.formElements[i].name}Container`
+                container.id = `${this.action}InputsFloor${this.floor}Infinite${i}Container`
                 container.className = "flex flex-col";
                 container.setAttribute("infinite", String(i));
-                container.appendChild(elem);
+
+                container.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, i));
+
                 inputsDiv.appendChild(container);
+
+                // Listen to changes in input fields and adds fields if necessary
+                inputsDiv.addEventListener("input", (event) => {
+                    const input = (event.target as HTMLInputElement);
+                    const inputsFields = Array.from(input.parentElement!.parentElement!.querySelectorAll("div:last-of-type>input"));
+                    for (let i = 0; i < inputsFields.length; i++) {
+                        if ((inputsFields[i] as HTMLInputElement).id === input.id) {
+                            input.parentElement!.parentElement!.appendChild(this.createInfiniteFieldsGroup(this.formElements[0].infinite, inputsFields[i].parentElement!.parentElement!.children.length));
+                        }
+                    }
+                });
             } else {
-                inputsDiv.appendChild(elem);
+                inputsDiv.appendChild(this.createLabel(this.formElements[i], String(i)));
+                inputsDiv.appendChild(this.createField(this.formElements[i], String(i)));
             }
         }
         document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', e => {
@@ -72,18 +92,19 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.hideDialog();
             }
         });
-        this.formElements.map((elem: any) => {
-            if (elem.infinite === true) {
-                inputsDiv.addEventListener("input", (event) => {
-                    const input = (event.target as HTMLInputElement);
-                    const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}${this.formElements[parseInt(input.parentElement!.getAttribute("infinite")!)].name}Container`)!;
-                    if ((inputsDiv.lastChild as HTMLInputElement).id === input.id) {
-                        const e = this.createField(this.formElements[0], inputsDiv.children.length);
-                        inputsDiv.appendChild(e);
-                    }
-                });
-            }
-        });
+    }
+
+    createInfiniteFieldsGroup(infiniteFormElements: any[], upperLevelPosition: number): HTMLDivElement {
+        const group = document.createElement("div");
+        for (let j = 0; j < infiniteFormElements.length; j++) {
+            const label = this.createLabel(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
+            const field = this.createField(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
+
+            if (infiniteFormElements[j].inputType !== "checkbox") group.appendChild(label);
+            group.appendChild(field);
+            if (infiniteFormElements[j].inputType === "checkbox") group.appendChild(label);
+        }
+        return group;
     }
 
     createLabel(formElement: any, forId: string): HTMLLabelElement {
@@ -91,15 +112,15 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         if (formElement.name) {
             label.innerText = formElement.name + ":";
         }
-        label.className = "text-white block mb-1";
-        label.htmlFor = forId;
+        label.className = (formElement.inputType === "checkbox" ? "" : "block ") + "text-white mb-1";
+        label.htmlFor = `${this.action}Floor${this.floor}Input${forId}`;
         return label;
     }
 
-    createField(formElement: any, id: number): Element {
+    createField(formElement: any, id: string): Element {
         const elem = document.createElement(formElement.tagType ? formElement.tagType : "input");
         elem.id = `${this.action}Floor${this.floor}Input${id}`;
-        elem.className = "bg-white rounded-md py-1.5 px-2 mb-4";
+        elem.className = (formElement.inputType === "checkbox" ? "inline mr-1" : "block") + " bg-white rounded-md py-1.5 px-2 mb-4";
         elem.onkeyup = (event: KeyboardEvent) => {
             if (event.key === "Enter") {
                 this.successfullyCloseDialog();
@@ -148,7 +169,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
                 break;
             case "setNeighbors":
-                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("input")).slice(0, -1).map((elem: HTMLInputElement) => elem.value), this.params.self);
+                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("input")).slice(0, -1 * this.formElements[0].infinite.length).filter((e: HTMLInputElement) => e.type !== "checkbox").map((elem: HTMLInputElement) => elem.value), this.params.self);
                 break;
             default:
                 console.error("This dialog action is currently not supported");

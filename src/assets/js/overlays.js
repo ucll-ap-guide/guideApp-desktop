@@ -85,6 +85,7 @@ d3.floorplan.overlays = function () {
             for (let i = 0; i < polygons[0].length; i++) {
                 polygons[0][i].id = data.polygons[i].id;
                 const elem = document.querySelector("[id='" + data.polygons[i].id + "']");
+                elem.setAttribute("id", data.polygons[i].id);
                 elem.setAttribute("type", data.polygons[i].type);
                 if (data.polygons[i].type === "Floor") {
                     elem.setAttribute("fill", "#0004ff");

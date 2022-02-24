@@ -287,13 +287,14 @@ export class CreateFloorComponent implements AfterViewInit {
     removeFloor(): void {
         const newFloors = this.jsonData.floors.slice();
         for (let i = 0; i < this.jsonData.floors.length; i++) {
-            if (this.floor === newFloors[i].floor) {
+            if (newFloors[i].floor === this.floor) {
                 newFloors.splice(i, 1);
                 break;
             }
         }
         this.toastr.success(`Removed ${this.getFloorName()}!`, "", {positionClass: "toast-bottom-right"});
         this.jsonData.floors = newFloors;
+        this.jsonData.nodes = this.jsonData.nodes.filter((node: GuidoNode) => this.floor !== node.floor);
     }
 
     previousWindowWidth = 0;

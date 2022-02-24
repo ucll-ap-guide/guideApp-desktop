@@ -33,6 +33,7 @@ export class CreateMapComponent implements OnInit {
         const self = this;
         document.getElementById("uploadedMapFromComputer")!.onchange = function (event: Event) {
             const reader = new FileReader();
+            self.clearMap(false);
             reader.onload = function (event: ProgressEvent<FileReader>) {
                 let tempName = self.jsonData.name;
                 self.jsonData = JSON.parse(<string>event.target!.result);
@@ -159,6 +160,7 @@ export class CreateMapComponent implements OnInit {
     editMap(name: string = (<HTMLSelectElement>document.getElementById("editMapSelect")).value): void {
         this.displayEditMapDialog(false);
         document.getElementById("submitMap")!.innerText = "Update map";
+        this.clearMap(false);
         this.mapService.getMap(name).subscribe((v) => {
             this.jsonData = v;
         });
@@ -180,10 +182,12 @@ export class CreateMapComponent implements OnInit {
     /**
      * Removes all the floors from the current map.
      */
-    clearMap(): void {
+    clearMap(displayMessage: boolean = true): void {
         this.jsonData.floors = [];
         this.jsonData.nodes = [];
-        this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});
+        if (displayMessage) {
+            this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});
+        }
     }
 
     enableSetNeighborMode() {

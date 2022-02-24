@@ -126,6 +126,13 @@ export class CreateFloorComponent implements AfterViewInit {
                 "L3,3 " +
                 "L0,5 ")
             .attr("fill", "orange");
+
+        let self = this;
+
+        d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function() {
+            //@ts-ignore
+            self.addVerticeToPolygon(this, self)
+        });
     }
 
     /**
@@ -282,6 +289,53 @@ export class CreateFloorComponent implements AfterViewInit {
         if (previousId === null)
             self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+    }
+
+    addVerticeToPolygon(event: any, self: CreateFloorComponent = this) {
+        if (d3.event.ctrlKey || d3.event.metaKey) {
+            function determineDistanceBetweenCoords(coords1: [number, number], coords2: [number, number]) {
+                return Math.sqrt(Math.pow(coords2[0] - coords1[0], 2) + Math.pow(coords2[1] - coords1[1], 2));
+            }
+
+            const mouseCoordinates = d3.mouse(event);
+            let clickedPolygon = d3.select(event);
+            const clickedPolygonId = parseInt(clickedPolygon.attr("id"));
+            let vertices: [number, number][] = clickedPolygon.attr("d").substring(1).split("L").map((elem: any) => elem.split(",").map((elem: any) => parseFloat(elem)));
+            let distances = vertices.map((elem: any) => determineDistanceBetweenCoords(elem, mouseCoordinates));
+            let indexOfClosestExistingPoint = distances.indexOf(Math.min(...distances));
+
+            const neighbor1Index = indexOfClosestExistingPoint === 0 ? distances.length - 1 : indexOfClosestExistingPoint - 1;
+            const neighbor2Index = indexOfClosestExistingPoint === distances.length - 1 ? 0 : indexOfClosestExistingPoint + 1;
+
+            let closestIndex = distances[neighbor1Index] > distances[neighbor2Index] ? neighbor2Index : neighbor1Index;
+
+            const newX = vertices[indexOfClosestExistingPoint][0] + (vertices[closestIndex][0] - vertices[indexOfClosestExistingPoint][0]) * 0.5;
+            const newY = vertices[indexOfClosestExistingPoint][1] + (vertices[closestIndex][1] - vertices[indexOfClosestExistingPoint][1]) * 0.5;
+            let toBeInsertedAt: number;
+
+            if (indexOfClosestExistingPoint !== 0 && indexOfClosestExistingPoint !== vertices.length - 1) {
+                toBeInsertedAt = indexOfClosestExistingPoint < closestIndex ? indexOfClosestExistingPoint + 1 : closestIndex + 1;
+            } else if (indexOfClosestExistingPoint === 0) {
+                toBeInsertedAt = closestIndex === indexOfClosestExistingPoint + 1 ? indexOfClosestExistingPoint + 1 : closestIndex + 1;
+            } else if (indexOfClosestExistingPoint === vertices.length - 1) {
+                toBeInsertedAt = closestIndex === indexOfClosestExistingPoint - 1 ? closestIndex + 1 : 0;
+            }
+
+            vertices.splice(toBeInsertedAt!, 0, [newX, newY]);
+
+            let floorNr: number = 0;
+
+            for (let i = 0; i !== this.jsonData.floors.length; i++) {
+                const index = this.jsonData.floors[i].overlays.polygons.map(elem => elem.id).indexOf(clickedPolygonId);
+                if (index !== -1) {
+                    this.jsonData.floors[i].overlays.polygons[index].points = vertices.map((elem: [number, number]) => new Point(elem[0], elem[1]));
+                    floorNr = i;
+                    break;
+                }
+            }
+
+            self.loadData(this.jsonData.floors[floorNr]);
+        }
     }
 
     removeFloor(): void {

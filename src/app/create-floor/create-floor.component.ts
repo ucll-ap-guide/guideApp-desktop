@@ -393,7 +393,13 @@ export class CreateFloorComponent implements AfterViewInit {
 
         door.node().addEventListener('dblclick', function (e: Event) {
             if (self.setNeighborMode) {
-                self.displayDialogBox("setNeighbors", {id: (e.target as Element).id})
+                const id = (e.target as Element).id;
+                self.displayDialogBox("setNeighbors", {
+                    id: id,
+                    defaultValues: [(e.target as Element).getAttribute("neighbors") === null ? [] :
+                        (e.target as Element).getAttribute("neighbors")!.split(",").filter((neighbor: string) => neighbor !== "")
+                            .map((neighbor: string) => [neighbor, document.getElementById(neighbor)!.getAttribute("neighbors")!.split(",").includes(id)])]
+                });
             }
         });
 
@@ -401,15 +407,32 @@ export class CreateFloorComponent implements AfterViewInit {
             self.jsonData.lastId += 1;
     }
 
-    getDoorDimensions(doorCoords: Point[]) : {height: number, width: number} {
+    getDoorDimensions(doorCoords: Point[]): { height: number, width: number } {
         let distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
         let distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
-        return {height: distance1 > distance2 ? distance1 : distance2, width: distance1 > distance2 ? distance2 : distance1}
+        return {
+            height: distance1 > distance2 ? distance1 : distance2,
+            width: distance1 > distance2 ? distance2 : distance1
+        }
     }
 
-    setNeighbors(id: number, neighbors: string, self: CreateFloorComponent = this) {
-        let elem = d3.select(`[id='${id}']`)
-        elem.attr("neighbors", neighbors)
+    setNeighbors(id: number, neighbors: [string, boolean][], self: CreateFloorComponent = this): void {
+        const elem = d3.select(`[id='${id}']`);
+        let newNeighbors: string[] = [];
+        for (const neighbor of neighbors) {
+            newNeighbors.push(neighbor[0]);
+            const neighborElement = document.getElementById(neighbor[0]);
+            if (neighborElement === null) {
+                console.error(`The neighbor with id ${neighbor[0]} does not exist.`)
+            } else {
+                const neighborsNeighbors = neighborElement!.getAttribute("neighbors")!.split(",").filter((n: string) => n !== "");
+                if (neighbor[1] && !neighborsNeighbors.includes(String(id))) {
+                    neighborsNeighbors.push(String(id));
+                }
+                neighborElement.setAttribute("neighbors", neighborsNeighbors.join(","));
+            }
+        }
+        elem.attr("neighbors", newNeighbors.join(","));
 
         self.setConnectingNeighbors(self);
     }
@@ -530,7 +553,9 @@ export class CreateFloorComponent implements AfterViewInit {
                 const id = (e.target as Element).id;
                 self.displayDialogBox("setNeighbors", {
                     id: id,
-                    defaultValues: [document.getElementById(id)!.getAttribute("neighbors")!.split(",").map((neighbor: string) => [neighbor, true])]
+                    defaultValues: [(e.target as Element).getAttribute("neighbors") === null ? [] :
+                        (e.target as Element).getAttribute("neighbors")!.split(",").filter((neighbor: string) => neighbor !== "")
+                            .map((neighbor: string) => [neighbor, document.getElementById(neighbor)!.getAttribute("neighbors")!.split(",").includes(id)])]
                 });
             }
         });

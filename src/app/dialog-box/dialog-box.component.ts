@@ -27,13 +27,16 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
         if (changes["params"] !== undefined && changes['params'].currentValue.defaultValues !== undefined) {
             const defaultValues = changes['params'].currentValue.defaultValues;
-            for (let i = 0; i < changes['params'].currentValue.defaultValues.length; i++) {
+            // For all top level children in defaultValues
+            for (let i = 0; i < defaultValues.length; i++) {
                 if (Array.isArray(defaultValues[i])) {
                     topLevelChildren.item(i).innerHTML = "";
                     let j;
+                    // For all groups in top level children
                     for (j = 0; j < defaultValues[i].length; j++) {
                         const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j);
                         const groupInputFields = group.getElementsByTagName("input");
+                        // For all fields in groups
                         for (let k = 0; k < groupInputFields.length; k++) {
                             // Check needed for future extension where select fields can also be generated
                             if (groupInputFields[k].nodeName === "INPUT") {
@@ -46,9 +49,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                         }
                         topLevelChildren.item(i).appendChild(group);
                     }
-                    if (defaultValues[i][0][0] !== "") {
-                        topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
-                    }
+                    topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
                 } else {
                     if (this.formElements[i].nodeName === "INPUT") {
                         (topLevelChildren.item(i) as HTMLInputElement).value = defaultValues[i];
@@ -169,7 +170,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
                 break;
             case "setNeighbors":
-                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("input")).slice(0, -1 * this.formElements[0].infinite.length).filter((e: HTMLInputElement) => e.type !== "checkbox").map((elem: HTMLInputElement) => elem.value), this.params.self);
+                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).slice(0, -1).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
             default:
                 console.error("This dialog action is currently not supported");

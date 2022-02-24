@@ -67,7 +67,7 @@
                     [params]="paramsToGiveToDialogBoxes.createNode" action="createNode" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="setNeighbors" [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors'}, {inputType: 'checkbox', name: 'Bidirectional path'}]}]"
+    <app-dialog-box [confirmAction]="setNeighbors" [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors'}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>

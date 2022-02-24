@@ -131,11 +131,15 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         if (elem.nodeName === "INPUT") {
             (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
             elem.type = formElement.inputType ? formElement.inputType : "text";
-            if (formElement.inputType === "number") {
-                if (!isNaN(formElement.min)) {
-                    elem.min = formElement.min;
-                }
-                elem.step = (isNaN(formElement)) ? 1 : formElement.step;
+            switch (elem.type) {
+                case "number":
+                    if (!isNaN(formElement.min)) {
+                        elem.min = formElement.min;
+                    }
+                    elem.step = (isNaN(formElement)) ? 1 : formElement.step;
+                    break;
+                case "checkbox":
+                    elem.checked = formElement.checked === true
             }
         }
         if (formElement.defaultValue !== undefined) {
@@ -170,7 +174,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
                 break;
             case "setNeighbors":
-                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).slice(0, -1).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
+                this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value))).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
             default:
                 console.error("This dialog action is currently not supported");

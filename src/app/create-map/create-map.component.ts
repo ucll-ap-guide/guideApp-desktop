@@ -167,15 +167,11 @@ export class CreateMapComponent implements OnInit {
     }
 
     toggleDeleteMode(): void {
-        if (!this.setNeighborMode) {
-            this.deleteMode = !this.deleteMode;
-            if (this.deleteMode) {
-                this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
-            } else {
-                this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
-            }
+        this.deleteMode = !this.deleteMode;
+        if (this.deleteMode) {
+            this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
         } else {
-            this.toastr.warning("You cannot enabled delete mode this action while Neighbor mode is enabled!", "", {positionClass: "toast-bottom-right"});
+            this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
         }
     }
 
@@ -265,7 +261,7 @@ export class CreateMapComponent implements OnInit {
     setAllNodes() {
         this.jsonData.nodes = [];
 
-        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
+        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoorsAndPointsOfInterest());
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
     }
 
@@ -296,10 +292,10 @@ export class CreateMapComponent implements OnInit {
         return handledNodes;
     }
 
-    getAllDoors() {
+    getAllDoorsAndPointsOfInterest() {
         const handledDoors: GuidoNode[] = [];
 
-        for (const nodeType of [NodeType.DOOR, NodeType.EMERGENCY_EXIT]) {
+        for (const nodeType of Object.values(NodeType).filter((nodeType: NodeType) => nodeType !== NodeType.NODE)) {
             const doors = document.getElementsByClassName(nodeType);
 
             function getDoorCoords(previousPoints: string) {

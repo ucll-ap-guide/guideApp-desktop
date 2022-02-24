@@ -149,11 +149,21 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     hideDialog(): void {
-        const inputFields = document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!;
-        inputFields.classList.replace("flex", "hidden");
-        inputFields.querySelectorAll("input")!.forEach((inputField: HTMLInputElement) => {
-            inputField.value = "";
-        });
+        document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.classList.replace("flex", "hidden");
+        const topLevelInputs = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
+        for (let i = 0; i < topLevelInputs.length; i++) {
+            switch ((topLevelInputs.item(i) as Element).nodeName) {
+                case "INPUT":
+                    (topLevelInputs.item(i) as HTMLInputElement).value = this.formElements[i].defaultValue === undefined ? "" : this.formElements[i].defaultValue;
+                    break;
+                case "DIV":
+                    for (let j = 0; j < topLevelInputs.item(i).children.length; j++) {
+                        for (let k = 0; k < this.formElements[i].infinite.length; k++) {
+                            ((topLevelInputs.item(i) as HTMLDivElement).children[j] as HTMLInputElement).value = this.formElements[i].infinite[k].defaultValue === undefined ? "" : this.formElements[i].defaultValue;
+                        }
+                    }
+            }
+        }
     }
 
     successfullyCloseDialog(): void {

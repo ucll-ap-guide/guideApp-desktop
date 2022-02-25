@@ -193,7 +193,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
                 break;
             case "createPointOfInterest":
-                this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], null, 50, null, [],  this.params.self);
+                this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], 25, [], this.params.self);
                 break;
             case "setNeighbors":
                 this.confirmAction(this.params.id, Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value))).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);

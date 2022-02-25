@@ -130,7 +130,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let self = this;
 
-        d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function() {
+        d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
             //@ts-ignore
             self.addVerticeToPolygon(this, self)
         });
@@ -494,49 +494,21 @@ export class CreateFloorComponent implements AfterViewInit {
         return new Point(0, 0);
     }
 
-    createPointOfInterest(nodeType: NodeType, previousId: number | null = null, size: number, previousPoints: string | null = null, neighbors: number[] = [], self: CreateFloorComponent = this): void {
-        let origin = new Point(25, 25);
+    createPointOfInterest(nodeType: NodeType, size: number, neighbors: number[] = [], self: CreateFloorComponent = this): void {
+        const origin = new Point(25, 25);
 
-        if (previousPoints === null) {
-            previousPoints = CreateFloorComponent.pointStringFromArrayOfPoints([
-                origin,
-                new Point(origin.x + size, origin.y),
-                new Point(origin.x + size, origin.y + size),
-                new Point(origin.x, origin.y + size)
-            ]);
-        }
+        const displayPoints = [
+            origin,
+            new Point(origin.x + size, origin.y),
+            new Point(origin.x + size, origin.y + size),
+            new Point(origin.x, origin.y + size)
+        ];
 
-        let pointOfInterest = d3.select("#pointsOfInterest" + self.floor)
-            .append("polygon")
-            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
-            .attr("points", previousPoints)
-            .attr("width", size)
-            .attr("height", size)
-            .attr("type", nodeType)
-            .attr("class", nodeType)
-            .attr("node", "")
-            .attr("neighbors", neighbors.join(","))
-            .attr("name", nodeType)
-            .attr("removable", "")
-            .attr("floor", self.floor)
-            .attr("degreesRotated", 0)
-            .on("contextmenu", self.rotateDoor)
-            .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode) {
-                    // @ts-ignore
-                    self.moveDoorCoordinates(this)
-                }
-            }));
+        const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, "name", self.floor, origin, displayPoints, [], nodeType));
 
-        pointOfInterest.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode && !self.setNeighborMode)
-                self.removeElement(e);
-        });
-
-        pointOfInterest.node().addEventListener('dblclick', (event: Event) => this.openDisplayNeighborsDialog(event, self));
-
-        if (previousId === null)
-            self.jsonData.lastId += 1;
+        self.jsonData.lastId += 1;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
     }
 
     /**

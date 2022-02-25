@@ -64,7 +64,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
                     let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.DOOR, this);
+                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -218,7 +218,8 @@ export class CreateFloorComponent implements AfterViewInit {
                             parseInt(String(elem.getAttribute("width"))),
                             elem.getAttribute("points"),
                             elem.getAttribute("name"),
-                            String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem))
+                            String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)),
+                            elem.getAttribute("class") !== NodeType.DOOR
                         );
                         break;
                     case NodeType.NODE:

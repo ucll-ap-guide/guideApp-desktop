@@ -1,7 +1,7 @@
-<div class="w-full">
-    <h3 class="text-white text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
-    <div class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
-        <label class="text-white cursor-pointer">
+<div class="w-full shadow rounded-lg p-2 bg-blue-100 mt-5 mb-2">
+    <h3 class="text-black text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
+    <div *ngIf="!setNeighborMode" class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
+        <label class="text-black cursor-pointer">
             <input (change)="updateNewBackground($event)" type="file" class="hidden" accept="image/*"/>
             <span class="flex gap-2">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -12,7 +12,7 @@
                 <span>Upload image</span>
             </span>
         </label>
-        <button *ngIf="!setNeighborMode" class="text-red-500 flex gap-2 px-2" (click)="removeFloor()">
+        <button class="text-red-500 flex gap-2 px-2" (click)="removeFloor()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -24,7 +24,7 @@
         <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>
     </div>
 
-    <ng-container *ngIf="!setNeighborMode">
+    <div class="mt-5" *ngIf="!setNeighborMode">
         <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
                 class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Triangle
@@ -57,7 +57,7 @@
                 class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Point of interest
         </button>
-    </ng-container>
+    </div>
 
     <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
                     [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices"

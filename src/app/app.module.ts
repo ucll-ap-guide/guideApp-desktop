@@ -10,13 +10,15 @@ import {FormsModule} from "@angular/forms";
 import {DialogBoxComponent} from './dialog-box/dialog-box.component';
 import {ToastrModule} from "ngx-toastr";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import { LandingPageComponent } from './landing-page/landing-page.component';
 
 @NgModule({
     declarations: [
         AppComponent,
         CreateMapComponent,
         CreateFloorComponent,
-        DialogBoxComponent
+        DialogBoxComponent,
+        LandingPageComponent
     ],
     imports: [
         BrowserModule,

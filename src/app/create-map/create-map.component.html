@@ -25,7 +25,7 @@
     </div>
     <div [hidden]="!initializedMap">
         <div class="flex w-full">
-            <div class="text-white bg-gray-800 border-2 border-r-0 border-black flex gap-y-2 gap-x-4 p-3">
+            <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
                 <button class="flex gap-2 px-2" (click)="saveMapLocally()">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 290 290"
                          xmlns="http://www.w3.org/2000/svg">
@@ -64,7 +64,8 @@
                     <span id="submitMap">Upload map</span>
                 </button>
             </div>
-            <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
+            <div *ngIf="!setNeighborMode"
+                 class="text-white bg-gray-800 border-2 border-l-0 border-black flex gap-y-2 gap-x-4 p-3">
                 <button (click)="toggleDeleteMode()"
                         [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' px-2'">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
@@ -82,12 +83,16 @@
             </div>
         </div>
 
-        <button *ngIf="!setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="enableSetNeighborMode()">
-            Enable setNeighborMode
-        </button>
-        <button *ngIf="setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2" (click)="disableSetNeighborMode()">
-            Disable setNeighborMode
-        </button>
+        <ng-container *ngIf="jsonData.floors.length !== 0">
+            <button *ngIf="!setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2"
+                    (click)="enableSetNeighborMode()">
+                Enable setNeighborMode
+            </button>
+            <button *ngIf="setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2"
+                    (click)="disableSetNeighborMode()">
+                Disable setNeighborMode
+            </button>
+        </ng-container>
         <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.name}}</h1>
         <div class="mx-4 md:mx-8">
             <h2 class="text-white text-2xl mt-2">Floors</h2>
@@ -97,7 +102,7 @@
                 </app-create-floor>
             </div>
 
-            <div class="m-4">
+            <div *ngIf="!setNeighborMode" class="m-4">
                 <h2 class="text-white text-xl">Add floor</h2>
                 <div id="addFloorForm" class="max-w-md m-2">
                     <label class="text-white block mb-1" for="floorNumber">Floor number:</label>

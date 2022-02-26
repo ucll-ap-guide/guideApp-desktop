@@ -11,4 +11,8 @@ export class Point {
             this.y
         );
     }
+
+    toArray(): [number, number] {
+        return [this.x, this.y];
+    }
 }

@@ -12,7 +12,7 @@
                 <span>Upload image</span>
             </span>
         </label>
-        <button class="text-red-500 flex gap-2 px-2" (click)="removeFloor()">
+        <button *ngIf="!setNeighborMode" class="text-red-500 flex gap-2 px-2" (click)="removeFloor()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -24,34 +24,44 @@
         <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>
     </div>
 
-    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Triangle
-    </button>
-    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 4})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Square
-    </button>
-    <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 5})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Pentagon
-    </button>
-    <button (click)="displayDialogBox('createPolygon', {vertices: null})"
-            class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Polygon
-    </button>
-    <button (click)="displayDialogBox('createDoor', {emergency: false})" class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Door
-    </button>
-    <button (click)="displayDialogBox('createDoor', {emergency: true})" class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Emergency exit
-    </button>
-    <button (click)="displayDialogBox('createNode', {})" class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
-        Node
-    </button>
+    <ng-container *ngIf="!setNeighborMode">
+        <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Triangle
+        </button>
+        <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 4})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Square
+        </button>
+        <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 5})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Pentagon
+        </button>
+        <button (click)="displayDialogBox('createPolygon', {vertices: null})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Polygon
+        </button>
+        <button (click)="displayDialogBox('createDoor', {emergency: false})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Door
+        </button>
+        <button (click)="displayDialogBox('createDoor', {emergency: true})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Emergency exit
+        </button>
+        <button (click)="displayDialogBox('createNode', {})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Node
+        </button>
+        <button (click)="displayDialogBox('createPointOfInterest', {})"
+                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Point of interest
+        </button>
+    </ng-container>
 
     <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices" confirmButtonText="OK"
+                    [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices"
+                    confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon"
@@ -59,7 +69,8 @@
                     [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon" confirmButtonText="OK"
                     [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createDoor" [formElements]="[{name: 'Door name'}, {defaultValue: 50, inputType: 'number', name: 'Door height'}, {defaultValue: 15, inputType: 'number', name: 'Door width'}]"
+    <app-dialog-box [confirmAction]="createDoor"
+                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', name: 'Door height'}, {defaultValue: 5, inputType: 'number', name: 'Door width'}]"
                     [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>
@@ -67,7 +78,13 @@
                     [params]="paramsToGiveToDialogBoxes.createNode" action="createNode" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="setNeighbors" [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors'}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
+    <app-dialog-box [confirmAction]="createPointOfInterest"
+                    [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]"
+                    [params]="paramsToGiveToDialogBoxes.createPointOfInterest" action="createPointOfInterest" confirmButtonText="OK"
+                    [floor]="floor" dialogText="" title="Create Point of Interest">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="setNeighbors"
+                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors'}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>

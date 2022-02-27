@@ -106,11 +106,15 @@ export class CreateFloorComponent implements AfterViewInit {
 
         this.reloadAllNodes(elementsToBeSaved);
 
-        document.querySelectorAll("[removable]").forEach(elem =>
-            elem.addEventListener("click", (e) => {
-                if (this.deleteMode)
-                    this.removeElement(e);
-            }));
+        document.querySelectorAll("[removable]").forEach((elem: Element) => {
+            if ((elem.getAttribute("type")) && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
+                elem.addEventListener("click", (e: Event) => {
+                    if (self.deleteMode && !self.setNeighborMode) {
+                        this.removeElement(e);
+                    }
+                });
+            }
+        });
 
         d3.select("#demo" + this.floor).select("svg").on("dblclick.zoom", null);
 
@@ -145,10 +149,11 @@ export class CreateFloorComponent implements AfterViewInit {
      * Removes an element based upon its type, given the click event that triggered the remove function
      * @param e
      */
-    removeElement(e: any) {
+    removeElement(e: Event) {
         if (e.target) {
-            let id = parseInt(e.target.getAttribute(isNaN(parseInt(e.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
-            let type = document.querySelector(`[id='${id}']`)!.getAttribute("type");
+            // @ts-ignore
+            let id: number = parseInt(e.target.getAttribute(isNaN(parseInt(e.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
+            let type: string = document.querySelector(`[id='${String(id)}']`)!.getAttribute("type")!;
             switch (type) {
                 case PolygonType.ROOM:
                     let array: Polygon[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
@@ -576,8 +581,9 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         door.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode && !self.setNeighborMode)
+            if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
+            }
         });
 
         door.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
@@ -637,8 +643,9 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         node.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode && !self.setNeighborMode)
+            if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
+            }
         });
 
         node.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));

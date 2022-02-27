@@ -180,6 +180,8 @@ d3.floorplan.overlays = function () {
             const nodeGroup = nodes.enter().append("svg")
                 .attr("height", "30px")
                 .attr("width", "30px")
+                .attr("removable", "")
+                .attr("node", "")
                 .attr("class", "pointOfInterest")
                 .attr("vector-effect", "non-scaling-stroke")
                 .attr("pointer-events", "all")
@@ -190,23 +192,27 @@ d3.floorplan.overlays = function () {
                 })
                 .call(d3.behavior.drag().on("drag", function () {
                     const node = data.nodes.find((elem) => elem.id === parseInt(this.id));
-                    let x = d3.event.x;
-                    let y = d3.event.y;
+                    let x = d3.event.x - (parseInt(d3.select(this).attr("width").split("px")) / 2);
+                    let y = d3.event.y - (parseInt(d3.select(this).attr("height").split("px")) / 2);
 
                     node.point = new Point(x, y);
                     node.displayPoints = [];
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("transform", "translate(" + x + "," + y + ")");
+                        .attr("cx", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        .attr("cy", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
+                        .attr("transform", `translate(${x}, ${y})`);
                 }));
 
             for (let i = 0; i < nodes[0].length; i++) {
                 nodes[0][i].id = data.nodes[i].id;
                 const elem = document.querySelector("[id='" + data.nodes[i].id + "']");
                 elem.setAttribute("id", data.nodes[i].id);
+                elem.setAttribute("pointsOfInterestId", data.nodes[i].id);
                 elem.setAttribute("type", data.nodes[i].type);
-                elem.setAttribute("removable", "");
+                elem.setAttribute("cx", data.nodes[i].point.x + 15);
+                elem.setAttribute("cy", data.nodes[i].point.y + 15);
                 elem.setAttribute("transform", `translate(${data.nodes[i].point.x},${data.nodes[i].point.y})`);
             }
 
@@ -223,12 +229,18 @@ d3.floorplan.overlays = function () {
 
             for (let i = 0; i < nodes[0].length; i++) {
                 const pointOfInterest = document.querySelector("[id='" + data.nodes[i].id + "']");
+                pointOfInterest.setAttribute("floor", data.nodes[i].floor);
+                pointOfInterest.setAttribute("neighbors", data.nodes[i].neighbors.join(","));
                 const logo = pointsOfInterest[data.nodes[i].type];
                 if (logo.backgroundColor !== undefined) {
                     pointOfInterest.setAttribute("fill", logo.backgroundColor);
                 }
                 pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
                 pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
+                // Needed for when user selects child instead of parent for remove element
+                pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
+                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
+                pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
             }
 
             nodes.exit().transition().style("opacity", 1e-6).remove();

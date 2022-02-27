@@ -201,10 +201,11 @@ export class CreateMapComponent implements OnInit {
             .attr("id", elem.getAttribute("id") + "textLabels"));
 
         nodes.forEach(elem => {
-            let node = d3.select("[id='" + elem.getAttribute("id") + "']");
-            let floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
-            let group = floorTextLabels.append("g");
+            const node = d3.select("[id='" + elem.getAttribute("id") + "']");
+            const floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
+            const group = floorTextLabels.append("g");
             let textLabel;
+            let labelCoordinates: Point;
             switch (elem.getAttribute("type")) {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
@@ -213,20 +214,28 @@ export class CreateMapComponent implements OnInit {
                     let middleY = (points[0].y + points[2].y) / 2;
                     let point = new Point(middleX, middleY);
 
-                    textLabel = group.append("text")
-                        .attr("x", point.x)
-                        .attr("y", point.y)
-                        .style("font-size", "0.5em")
-                        .text(node.attr("id"));
+                    labelCoordinates = new Point(point.x, point.y);
                     break;
 
                 case NodeType.NODE:
-                    textLabel = group.append("text")
-                        .attr("x", parseFloat(node.attr("cx")) + 6)
-                        .attr("y", parseFloat(node.attr("cy")) - 1)
-                        .style("font-size", "0.5em")
-                        .text(node.attr("id"))
+                    labelCoordinates = new Point(
+                        parseFloat(node.attr("cx")) + 6,
+                        parseFloat(node.attr("cy")) - 1
+                    );
+                    break;
+
+                default:
+                    labelCoordinates = new Point(
+                        30 + parseFloat(node.attr("transform").substring(10).slice(0, -1).split(",")[0]),
+                        parseFloat(node.attr("transform").substring(10).slice(0, -1).split(",")[1]) + 5
+                    );
             }
+
+            textLabel = group.append("text")
+                .attr("x", labelCoordinates.x)
+                .attr("y", labelCoordinates.y)
+                .style("font-size", "0.5em")
+                .text(node.attr("id"));
 
             if (textLabel) {
                 const SVGRect = group.node().getBBox();

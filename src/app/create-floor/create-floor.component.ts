@@ -90,13 +90,13 @@ export class CreateFloorComponent implements AfterViewInit {
 
     /**
      * (Re)loads all elements displayed on the drawing area of the floor
-     * @param data
+     * @param floor
      */
-    loadData(data: Floor): void {
+    loadData(floor: Floor): void {
         let elementsToBeSaved = Array.from(document.querySelectorAll('[node]'));
         d3.select("#demo" + this.floor).selectAll("*").remove();
 
-        this.mapData[this.overlays.id()] = data.overlays;
+        this.mapData[this.overlays.id()] = floor.overlays;
 
         d3.select("#demo" + this.floor).append("svg")
             .attr("height", this.mapHeight)
@@ -132,8 +132,13 @@ export class CreateFloorComponent implements AfterViewInit {
 
         d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
             //@ts-ignore
-            self.addVerticeToPolygon(this, self)
+            self.addVerticeToPolygon(this, self);
         });
+
+        Array.from(document.getElementsByClassName("pointOfInterest")).filter((elem: Element) => parseInt(String(elem.getAttribute("floor"))) === floor.floor).forEach(elem =>
+            elem.addEventListener("dblclick", (e: Event) => {
+                this.openDisplayNeighborsDialog(e, self);
+            }));
     }
 
     /**
@@ -142,8 +147,8 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     removeElement(e: any) {
         if (e.target) {
-            let id = parseInt(e.target.getAttribute("id"));
-            let type = e.target.getAttribute("type");
+            let id = parseInt(e.target.getAttribute(isNaN(parseInt(e.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
+            let type = document.querySelector(`[id='${id}']`)!.getAttribute("type");
             switch (type) {
                 case PolygonType.ROOM:
                     let array: Polygon[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
@@ -157,23 +162,22 @@ export class CreateFloorComponent implements AfterViewInit {
 
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
-                    let door = document.getElementById(String(id));
-                    if (door) {
-                        this.removeNodeFromNeighborData(id);
-                        door.remove();
-                    }
-                    break;
-
                 case NodeType.NODE:
-                    let node = document.getElementById(String(id));
-                    if (node) {
+                    let elem = document.querySelector(`[id='${id}']`);
+                    if (elem) {
                         this.removeNodeFromNeighborData(id);
-                        node.remove();
+                        elem.remove();
                     }
                     break;
 
                 default:
-                    console.error(`Element type ${type} is unknown.`);
+                    let nodesArray: GuidoNode[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
+                    let i = nodesArray.map(function (x: GuidoNode) {
+                        return x.id;
+                    }).indexOf(id);
+                    if (i > -1) {
+                        nodesArray.splice(i, 1);
+                    }
             }
         }
         this.loadData(this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!);
@@ -188,7 +192,7 @@ export class CreateFloorComponent implements AfterViewInit {
             if (removeIndex !== -1)
                 neighbors.splice(removeIndex, 1);
 
-            node.setAttribute("neighbors", neighbors.join(","))
+            node.setAttribute("neighbors", neighbors.join(","));
         });
     }
 
@@ -204,9 +208,9 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer = new MutationObserver(this.setZoom);
         const svg = document.querySelector('#demo' + this.floor);
         if (svg) {
-            const map_layer = svg.querySelector('.map-layers')
+            const map_layer = svg.querySelector('.map-layers');
             if (map_layer)
-                this.observer.observe(map_layer as Node, {attributes: true})
+                this.observer.observe(map_layer as Node, {attributes: true});
         }
 
         elementsToBeSaved.filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
@@ -226,9 +230,6 @@ export class CreateFloorComponent implements AfterViewInit {
                         break;
                     case NodeType.NODE:
                         this.createNode(parseInt(String(elem.getAttribute("id"))), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
-                        break;
-                    default:
-                        console.error(`Type ${elem.getAttribute("class")} is currently not supported yet`);
                 }
             });
     }
@@ -292,6 +293,9 @@ export class CreateFloorComponent implements AfterViewInit {
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
     }
 
+    /**
+     * Adds an extra vertice to a polygon.
+     */
     addVerticeToPolygon(event: any, self: CreateFloorComponent = this) {
         if (d3.event.ctrlKey || d3.event.metaKey) {
             function determineDistanceBetweenCoords(coords1: [number, number], coords2: [number, number]) {
@@ -419,34 +423,55 @@ export class CreateFloorComponent implements AfterViewInit {
 
     setNeighbors(id: number, neighbors: [string, boolean][], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
-        let newNeighbors: string[] = [];
+        let newNeighbors: number[] = [];
         for (const neighbor of neighbors) {
-            newNeighbors.push(neighbor[0]);
-            const neighborElement = document.getElementById(neighbor[0]);
+            newNeighbors.push(parseInt(neighbor[0]));
+            const neighborElement = document.querySelector(`[id='${neighbor[0]}']`);
             if (neighborElement === null) {
                 console.error(`The neighbor with id ${neighbor[0]} does not exist.`)
             } else {
-                const neighborsNeighbors = neighborElement!.getAttribute("neighbors")!.split(",").filter((n: string) => n !== "");
-                if (neighbor[1] && !neighborsNeighbors.includes(String(id))) {
-                    neighborsNeighbors.push(String(id));
+                let neighborsNeighbors: number[] = neighborElement!.getAttribute("neighbors")!.split(",").filter((n: string) => n !== "").map((n: string) => parseInt(n));
+                if (neighbor[1] && !neighborsNeighbors.includes(id)) {
+                    neighborsNeighbors.push(id);
+                } else if (!neighbor[1]) {
+                    neighborsNeighbors = neighborsNeighbors.filter((n: number) => n !== id);
                 }
                 neighborElement.setAttribute("neighbors", neighborsNeighbors.join(","));
+                self.saveNeighborsInJson(parseInt(neighbor[0]), neighborsNeighbors, self);
             }
         }
         elem.attr("neighbors", newNeighbors.join(","));
+        self.saveNeighborsInJson(id, newNeighbors, self);
 
         self.setConnectingNeighbors(self);
     }
 
-    setConnectingNeighbors(self: CreateFloorComponent = this) {
+    /**
+     * Saves the new neighbors list on the right place in the JSON
+     * @param id The id of the node that you want to update
+     * @param neighbors The new list of neighbors
+     * @param self The instance of the CreateFloorClass
+     */
+    saveNeighborsInJson(id: number, neighbors: number[], self: CreateFloorComponent = this): void {
+        const elem = d3.select(`[id='${id}']`);
+        if (![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.attr("type"))) {
+            self.jsonData.floors[parseInt(elem.attr("floor"))].overlays.nodes.forEach((node: GuidoNode) => {
+                if (node.id === id) {
+                    node.neighbors = neighbors;
+                }
+            });
+        }
+    }
+
+    setConnectingNeighbors(self: CreateFloorComponent = this): void {
         let group = d3.select("#demo" + self.floor + "lineGroup");
         group.selectAll("line").remove();
-        let nodes = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
-        nodes.forEach((elem: any) => {
-            let origin = self.getConnectablePoint(elem.id);
-            let neighborsStr = elem.getAttribute("neighbors").split(",");
+        let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
+        nodes.forEach((elem: Element) => {
+            const origin = self.getConnectablePoint(parseInt(elem.id));
+            const neighborsStr = elem.getAttribute("neighbors")!.split(",");
 
-            let neighbors;
+            let neighbors: number[];
             if (neighborsStr.length === 1 && neighborsStr[0] === "") {
                 neighbors = [];
             } else {
@@ -454,8 +479,8 @@ export class CreateFloorComponent implements AfterViewInit {
             }
 
             neighbors.map((neighborId: number) => {
-                let connectableNeighborPoint = self.getConnectablePoint(neighborId);
-                let neighborNode = document.querySelector(`[id='${neighborId}']`);
+                const connectableNeighborPoint = self.getConnectablePoint(neighborId);
+                const neighborNode = document.querySelector(`[id='${neighborId}']`);
 
                 let isReciprical = false;
                 if (neighborNode && String(neighborNode.getAttribute("neighbors")).split(",").some(neighborIdEntry => parseInt(neighborIdEntry) === parseInt(elem.id)))
@@ -480,6 +505,9 @@ export class CreateFloorComponent implements AfterViewInit {
 
     getConnectablePoint(id: number): Point {
         let elem = d3.select(`[id='${id}']`);
+        if (elem === null) {
+            console.error(`The node with id ${id} does not exist.`);
+        }
         switch (elem.attr("type")) {
             case NodeType.DOOR:
             case NodeType.EMERGENCY_EXIT:
@@ -488,10 +516,9 @@ export class CreateFloorComponent implements AfterViewInit {
                 let middleY = (points[0].y + points[2].y) / 2;
                 return new Point(middleX, middleY);
 
-            case NodeType.NODE:
+            default:
                 return new Point(parseFloat(elem.attr("cx")), parseFloat(elem.attr("cy")));
         }
-        return new Point(0, 0);
     }
 
     createPointOfInterest(nodeType: NodeType, size: number, neighbors: number[] = [], self: CreateFloorComponent = this): void {
@@ -553,7 +580,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 self.removeElement(e);
         });
 
-        door.node().addEventListener('dblclick', (event: Event) => this.openDisplayNeighborsDialog(event, self));
+        door.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
 
         if (previousId === null)
             self.jsonData.lastId += 1;
@@ -614,7 +641,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 self.removeElement(e);
         });
 
-        node.node().addEventListener('dblclick', (event: Event) => this.openDisplayNeighborsDialog(event, self));
+        node.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
 
         if (previousId === null)
             self.jsonData.lastId += 1;
@@ -628,13 +655,16 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     openDisplayNeighborsDialog(event: Event, self: CreateFloorComponent) {
         if (self.setNeighborMode) {
-            const id = (event.target as Element).id;
-            self.displayDialogBox("setNeighbors", {
-                id: id,
-                defaultValues: [(event.target as Element).getAttribute("neighbors") === null ? [] :
-                    (event.target as Element).getAttribute("neighbors")!.split(",").filter((neighbor: string) => neighbor !== "")
-                        .map((neighbor: string) => [neighbor, document.getElementById(neighbor)!.getAttribute("neighbors")!.split(",").includes(id)])]
-            });
+            const id = (event.target as Element).id === "" ? (event.target as Element).getAttribute("pointsOfInterestId") : (event.target as Element).id;
+            if (id !== "") {
+                const neighbors = document.querySelector(`[id='${id}']`)!.getAttribute("neighbors");
+                self.displayDialogBox("setNeighbors", {
+                    id: id,
+                    defaultValues: [neighbors === null ? [] :
+                        neighbors!.split(",").filter((neighbor: string) => neighbor !== "")
+                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])]
+                });
+            }
         }
     }
 

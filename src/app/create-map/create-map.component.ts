@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {MapService} from "../map.service";
 import {Floor} from "../model/floor";
 import {GuidoMap} from "../model/guido-map";
@@ -8,6 +8,7 @@ import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 import {ToastrService} from "ngx-toastr";
 import {CreateFloorComponent} from "../create-floor/create-floor.component";
+import {Router} from "@angular/router";
 
 declare var d3: any;
 
@@ -18,7 +19,7 @@ declare var d3: any;
         @import "https://dciarletta.github.io/d3-floorplan/d3.floorplan.css";
     `]
 })
-export class CreateMapComponent implements OnInit {
+export class CreateMapComponent implements AfterViewInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
     deleteMode = false;
     setNeighborMode = false;
@@ -26,10 +27,10 @@ export class CreateMapComponent implements OnInit {
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
 
-    constructor(private mapService: MapService, private toastr: ToastrService) {
+    constructor(public router: Router, private mapService: MapService, private toastr: ToastrService) {
     }
 
-    ngOnInit() {
+    ngAfterViewInit() {
         const self = this;
         document.getElementById("uploadedMapFromComputer")!.onchange = function (event: Event) {
             const reader = new FileReader();
@@ -41,6 +42,8 @@ export class CreateMapComponent implements OnInit {
             }
             if ((event.target as HTMLInputElement)!.files!.length > 0) {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
+                self.initializedMap = true;
+                self.moveFileInputField();
             }
         };
         document.getElementById("editMapDialog")!.addEventListener('click', e => {
@@ -51,18 +54,28 @@ export class CreateMapComponent implements OnInit {
     }
 
     /**
+     * Moves the file input field from the top of the page to the taskbar
+     */
+    moveFileInputField() {
+        let toBeMoved = document.getElementById("uploadedMapFromComputer");
+        let toMoveTo = document.getElementById("uploadedMapFromComputerTaskBarLocation");
+        (toMoveTo as Element).insertBefore((toBeMoved as Element), (toMoveTo as Element).firstChild);
+    }
+
+    /**
      * Displays the map editor screen.
      */
     createMap(): void {
         document.getElementById("mapNameError")!.innerText =
             this.jsonData.name === "" ? "No map name given." : "";
-        document.getElementById("floorLengthError")!.innerText =
-            this.jsonData.length < 0 ? "The floor length can't be negative" : "";
-        document.getElementById("floorWidthError")!.innerText =
-            this.jsonData.length < 0 ? "The floor width can't be negative" : "";
+        // document.getElementById("floorLengthError")!.innerText =
+        //     this.jsonData.length < 0 ? "The floor length can't be negative" : "";
+        // document.getElementById("floorWidthError")!.innerText =
+        //     this.jsonData.length < 0 ? "The floor width can't be negative" : "";
 
         if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.initializedMap = true;
+            this.moveFileInputField();
         }
     }
 
@@ -164,6 +177,8 @@ export class CreateMapComponent implements OnInit {
         this.mapService.getMap(name).subscribe((v) => {
             this.jsonData = v;
         });
+        this.initializedMap = true;
+        this.moveFileInputField();
     }
 
     toggleDeleteMode(): void {

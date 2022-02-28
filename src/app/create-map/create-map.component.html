@@ -1,31 +1,67 @@
-<main>
-    <div *ngIf="!initializedMap" class="my-3 mx-2 md:mx-4">
-        <h1 class="text-white text-3xl">Create Map</h1>
-        <div id="addMapForm" class="max-w-md m-2">
-            <label class="text-white block mb-1" for="mapName">Name:</label>
-            <input class="rounded-md py-1.5 px-2 mx-1.5" id="mapName" placeholder="Name" type="text"
-                   [(ngModel)]="jsonData.name" (keydown.enter)="createMap()">
-            <p id="mapNameError" class="text-red-500 mx-3 mb-1 error"></p>
+<main style="background-image: url(/assets/img/scattered-forcefields.svg)" class="object-fill h-screen bg-blue-50 overflow-auto relative pb-5">
+        <div class="container mx-auto px-5">
+            <div class="mt-32 xl:mt-auto content-center">
+                <div class="sm:col-span-1 space-y-5 md:space-y-8">
+                    <h1 class="text-4xl sm:text-5xl xl:text-7xl font-semibold mt-20 text-center">Creating a map</h1>
+                    <p *ngIf="!initializedMap" class="text-lg md:text-2xl text-center">Select an option to get started: </p>
+                    <div *ngIf="!initializedMap" class="justify-center space-x-4 grid grid-flow-col auto-cols-max">
+                        <div class="bg-white shadow rounded-lg p-5 my-3 mx-2 md:mx-4">
+                            <h1 class="text-black text-3xl">Create new map</h1>
+                            <div id="addMapForm" class="text-left max-w-md m-2 w-25">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="mapName">Name:</label>
+                                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="mapName" placeholder="Name" type="text"
+                                       [(ngModel)]="jsonData.name" (keydown.enter)="createMap()">
+                                <p id="mapNameError" class="text-red-500 mx-3 mb-1 error"></p>
 
-            <label class="text-white block mb-1" for="floorLength">Floor length (meters):</label>
-            <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorLength" min="0" step="0.01" placeholder="Floor length"
-                   type="number" [(ngModel)]="jsonData.length" (keydown.enter)="createMap()">
-            <p id="floorLengthError" class="text-red-500 mx-3 mb-1 error"></p>
+<!--                                <label class="block text-gray-700 text-sm font-bold mb-2" for="floorLength">Floor length (meters):</label>-->
+<!--                                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="floorLength" min="0" step="0.01" placeholder="Floor length"-->
+<!--                                       type="number" [(ngModel)]="jsonData.length" (keydown.enter)="createMap()">-->
+<!--                                <p id="floorLengthError" class="text-red-500 mx-3 mb-1 error"></p>-->
 
-            <label class="text-white block mb-1" for="floorWidth">Floor width (meters):</label>
-            <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorWidth" min="0" step="0.01" placeholder="Floor width"
-                   type="number" [(ngModel)]="jsonData.width" (keydown.enter)="createMap()">
-            <p id="floorWidthError" class="text-red-500 mx-3 mb-1 error"></p>
+<!--                                <label class="block text-gray-700 text-sm font-bold mb-2" for="floorWidth">Floor width (meters):</label>-->
+<!--                                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="floorWidth" min="0" step="0.01" placeholder="Floor width"-->
+<!--                                       type="number" [(ngModel)]="jsonData.width" (keydown.enter)="createMap()">-->
+<!--                                <p id="floorWidthError" class="text-red-500 mx-3 mb-1 error"></p>-->
 
-            <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4"
-                    (click)="createMap()">
-                Create map
-            </button>
+                                <button class="text-black bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4"
+                                        (click)="createMap()">
+                                    Create map
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <div class="w-25 flex flex-col">
+                            <button class="flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg p-5 bg-white font-semibold my-auto" (click)="displayEditMapDialog(true)">
+                                <svg class="h-6 w-6 pr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round"
+                                          stroke-linejoin="round" stroke-width="2"/>
+                                </svg>
+                                Get map from server
+                            </button>
+
+                            <label class="cursor-pointer flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg p-5 bg-white font-semibold my-auto">
+                                <input id="uploadedMapFromComputer" type="file" class="hidden" accept="application/json"/>
+                                <span class="flex gap-2">
+                                    <svg class="h-6 w-6 pr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                    </svg>
+                                    <span>Get map from computer</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div [hidden]="!initializedMap">
-        <div class="flex w-full">
-            <div class="text-white bg-gray-800 border-2 border-black flex gap-y-2 gap-x-4 p-3">
+
+
+    <div [hidden]="!initializedMap" class="bg-white rounded-lg m-10">
+        <div class="flex justify-center sticky top-0 z-50 w-full">
+            <div class="text-white bg-gray-800 rounded-bl-md flex gap-y-2 gap-x-4 p-3">
                 <button class="flex gap-2 px-2" (click)="saveMapLocally()">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 290 290"
                          xmlns="http://www.w3.org/2000/svg">
@@ -36,8 +72,7 @@
                     </svg>
                     Save file on PC
                 </button>
-                <label class="cursor-pointer">
-                    <input id="uploadedMapFromComputer" type="file" class="hidden" accept="application/json"/>
+                <label class="cursor-pointer" id="uploadedMapFromComputerTaskBarLocation">
                     <span class="flex gap-2">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                              xmlns="http://www.w3.org/2000/svg">
@@ -64,8 +99,10 @@
                     <span id="submitMap">Upload map</span>
                 </button>
             </div>
-            <div *ngIf="!setNeighborMode"
-                 class="text-white bg-gray-800 border-2 border-l-0 border-black flex gap-y-2 gap-x-4 p-3">
+            <div *ngIf="jsonData.floors.length !== 0" class="text-white bg-gray-800 rounded-br-md flex gap-y-2 gap-x-4 p-3">
+                    <button [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-2'" (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()">
+                        <svg fill="currentColor" class="svg-icon h-6 w-6" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M236.1 757.3l533.6-524 25.9 26.6-533.7 524z" /><path d="M837.2 66.4c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.5c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7zM185 717.3c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.6c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7z" /></svg>
+                    </button>
                 <button (click)="toggleDeleteMode()"
                         [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' px-2'">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
@@ -82,47 +119,36 @@
                 </button>
             </div>
         </div>
-
-        <ng-container *ngIf="jsonData.floors.length !== 0">
-            <button *ngIf="!setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2"
-                    (click)="enableSetNeighborMode()">
-                Enable setNeighborMode
-            </button>
-            <button *ngIf="setNeighborMode" class="bg-gray-400 rounded-md py-2 px-3 m-2"
-                    (click)="disableSetNeighborMode()">
-                Disable setNeighborMode
-            </button>
-        </ng-container>
-        <h1 class="text-white text-3xl mx-2 md:mx-4 mt-2">{{jsonData.name}}</h1>
-        <div class="mx-4 md:mx-8">
-            <h2 class="text-white text-2xl mt-2">Floors</h2>
+        <h1 class="text-black text-3xl mx-2 md:mx-4 mt-2 font-semibold">{{jsonData.name}}</h1>
+        <div class="mx-4 md:mx-8 pb-5">
+            <h2 class="text-black text-2xl mt-2">Floors</h2>
             <div id="floors">
                 <app-create-floor *ngFor="let floor of jsonData.floors" [deleteMode]="deleteMode" [floor]="floor.floor"
-                                  [jsonData]="jsonData" [changeSetNeighborMode]="setNeighborMode">
+                                  [jsonData]="jsonData" [changeSetNeighborMode]="setNeighborMode" >
                 </app-create-floor>
             </div>
 
-            <div *ngIf="!setNeighborMode" class="m-4">
-                <h2 class="text-white text-xl">Add floor</h2>
+            <div *ngIf="!setNeighborMode" class="shadow bg-blue-100 rounded-lg p-2 mt-5 mb-2">
+                <h2 class="text-black text-xl">Add floor</h2>
                 <div id="addFloorForm" class="max-w-md m-2">
-                    <label class="text-white block mb-1" for="floorNumber">Floor number:</label>
-                    <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorNumber" placeholder="Floor number" step="1"
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="floorNumber">Floor number:</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="floorNumber" placeholder="Floor number" step="1"
                            type="number" [(ngModel)]="createFloorForm.floor" (keydown.enter)="addFloor()">
                     <p id="floorNumberError" class="text-red-500 mx-3 mb-1 error"></p>
 
-                    <label class="text-white block mb-1" for="floorName">Floor name:</label>
-                    <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorName" placeholder="Floor name"
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="floorName">Floor name:</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="floorName" placeholder="Floor name"
                            type="text" [(ngModel)]="createFloorForm.name" (keydown.enter)="addFloor()">
                     <p id="floorNameError" class="text-red-500 mx-3 mb-1 error"></p>
 
-                    <label class="text-white block mb-1" for="floorHeight">Floor height (meters):</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="floorHeight">Floor height (meters):</label>
                     <input class="rounded-md py-1.5 px-2 mx-1.5" id="floorHeight" min="0" placeholder="Floor height"
                            type="number" [(ngModel)]="createFloorForm.height" step="0.01" (keydown.enter)="addFloor()">
                     <p id="floorHeightError" class="text-red-500 mx-3 mb-1"></p>
 
                     <ng-container *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">
-                        <label class="text-white block mb-1" for="useGroundFloor">Use previous ground floor:</label>
-                        <select class="bg-white rounded-md py-1.5 px-2 mx-1.5" id="useGroundFloor" type="checkbox"
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="useGroundFloor">Use previous ground floor:</label>
+                        <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="useGroundFloor" type="checkbox"
                                 (keydown.enter)="addFloor()">
                             <option value="null">No</option>
                             <ng-container *ngFor="let floor of jsonData.floors">
@@ -133,48 +159,55 @@
                         </select>
                     </ng-container>
                     <button (click)="addFloor()"
-                            class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
+                            class="text-black bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
                         Add floor
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div id="editMapDialog"
-                 class="z-0 bg-black bg-opacity-50 min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 hidden justify-center items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover">
-                <div class="bg-gray-900 text-black p-4 rounded-md">
-                    <div class="text-white grid grid-flow-col auto-cols-auto w-full mb-2">
-                        <h2 class="font-bold">Edit map</h2>
-                        <button class="focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black dark:focus:ring-white rounded-md h-8 w-8 ml-auto mr-0"
-                                (click)="displayEditMapDialog(false)">
-                            <svg aria-label="Close dialog" class="h-6 w-6 mx-auto" fill="none" stroke="currentColor"
-                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"
-                                      stroke-width="4"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div [hidden]="mapNames.length === 0">
-                        <p class="mb-4 dark:text-white">Which of the following maps do you want to edit?</p>
-                        <select id="editMapSelect" class="bg-white rounded-md py-1.5 px-2 mb-4"
-                                (keydown.enter)="editMap()">
-                            <option *ngFor="let mapName of mapNames">{{mapName}}</option>
-                        </select>
-                    </div>
-                    <p [hidden]="mapNames.length !== 0" class="text-white mb-4">
-                        There are currently no maps available.
-                    </p>
-                    <div [class]="mapNames.length === 0 ? 'hidden' : 'grid grid-cols-2'">
-                        <button class="text-white bg-red-500 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 mr-1"
-                                (click)="displayEditMapDialog(false)">
-                            Cancel
-                        </button>
-                        <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 ml-1"
-                                (click)="editMap()">
-                            Edit
-                        </button>
-                    </div>
-                </div>
+    <div id="editMapDialog"
+         class="z-0 bg-black bg-opacity-50 min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 hidden justify-center items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover">
+        <div class="bg-gray-900 text-white p-4 rounded-md">
+            <div class="text-white grid grid-flow-col auto-cols-auto w-full mb-2">
+                <h2 class="font-bold">Edit map</h2>
+                <button class="focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black dark:focus:ring-white rounded-md h-8 w-8 ml-auto mr-0"
+                        (click)="displayEditMapDialog(false)">
+                    <svg aria-label="Close dialog" class="h-6 w-6 mx-auto" fill="none" stroke="currentColor"
+                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"
+                              stroke-width="4"/>
+                    </svg>
+                </button>
+            </div>
+            <div [hidden]="mapNames.length === 0">
+                <p class="mb-4 dark:text-white">Which of the following maps do you want to edit?</p>
+                <select id="editMapSelect" class="text-black bg-white rounded-md py-1.5 px-2 mb-4"
+                        (keydown.enter)="editMap()">
+                    <option *ngFor="let mapName of mapNames">{{mapName}}</option>
+                </select>
+            </div>
+            <p [hidden]="mapNames.length !== 0" class="text-white mb-4">
+                There are currently no maps available.
+            </p>
+            <div [class]="mapNames.length === 0 ? 'hidden' : 'grid grid-cols-2'">
+                <button class="text-white bg-red-500 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 mr-1"
+                        (click)="displayEditMapDialog(false)">
+                    Cancel
+                </button>
+                <button class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow rounded-md p-2 ml-1"
+                        (click)="editMap()">
+                    Edit
+                </button>
             </div>
         </div>
     </div>
+
+    <button (click)="router.navigate(['..'])" class="ml-10 mt-3 w-fit flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg px-4 py-3 bg-white font-semibold my-auto">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 pr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+        </svg>
+        Go back
+    </button>
 </main>

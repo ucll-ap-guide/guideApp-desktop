@@ -106,7 +106,8 @@ export class CreateFloorComponent implements AfterViewInit {
 
         this.reloadAllNodes(elementsToBeSaved);
 
-        document.querySelectorAll("[removable]").forEach((elem: Element) => {
+        Array.from(document.querySelectorAll(`[removable]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+            .forEach((elem: Element) => {
             if ((elem.getAttribute("type")) && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
                 elem.addEventListener("click", (e: Event) => {
                     if (self.deleteMode && !self.setNeighborMode) {

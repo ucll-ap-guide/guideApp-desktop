@@ -1,7 +1,7 @@
-<div class="w-full shadow rounded-lg p-2 bg-blue-100 mt-5 mb-2">
-    <h3 class="text-black text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
+<div class="w-full shadow rounded-lg p-2 bg-blue-100 dark:bg-[#37373b] mt-5 mb-2">
+    <h3 class="text-black dark:text-white text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
     <div *ngIf="!setNeighborMode" class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
-        <label class="text-black cursor-pointer">
+        <label class="text-black dark:text-white cursor-pointer">
             <input (change)="updateNewBackground($event)" type="file" class="hidden" accept="image/*"/>
             <span class="flex gap-2">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -24,37 +24,37 @@
         <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>
     </div>
 
-    <div class="mt-5" *ngIf="!setNeighborMode">
+    <div class="mt-5 text-white" *ngIf="!setNeighborMode">
         <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Triangle
         </button>
         <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 4})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Square
         </button>
         <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 5})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Pentagon
         </button>
         <button (click)="displayDialogBox('createPolygon', {vertices: null})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Polygon
         </button>
         <button (click)="displayDialogBox('createDoor', {emergency: false})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Door
         </button>
         <button (click)="displayDialogBox('createDoor', {emergency: true})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Emergency exit
         </button>
         <button (click)="displayDialogBox('createNode', {})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Node
         </button>
         <button (click)="displayDialogBox('createPointOfInterest', {})"
-                class="bg-gray-400 rounded-md py-2 px-3 m-2 addFigureButton">
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Point of interest
         </button>
     </div>

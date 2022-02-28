@@ -526,18 +526,11 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    createPointOfInterest(nodeType: NodeType, size: number, neighbors: number[] = [], self: CreateFloorComponent = this): void {
+    createPointOfInterest(nodeType: NodeType, neighbors: number[] = [], self: CreateFloorComponent = this): void {
         const origin = new Point(25, 25);
 
-        const displayPoints = [
-            origin,
-            new Point(origin.x + size, origin.y),
-            new Point(origin.x + size, origin.y + size),
-            new Point(origin.x, origin.y + size)
-        ];
-
         const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        nodes.push(new GuidoNode(self.jsonData.lastId + 1, "name", self.floor, origin, displayPoints, [], nodeType));
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, origin, [], [], nodeType));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);

@@ -200,9 +200,8 @@ d3.floorplan.overlays = function () {
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("cx", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                        .attr("cy", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
-                        .attr("transform", `translate(${x}, ${y})`);
+                        .attr("x", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        .attr("y", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
                 }));
 
             for (let i = 0; i < nodes[0].length; i++) {
@@ -211,9 +210,8 @@ d3.floorplan.overlays = function () {
                 elem.setAttribute("id", data.nodes[i].id);
                 elem.setAttribute("pointsOfInterestId", data.nodes[i].id);
                 elem.setAttribute("type", data.nodes[i].type);
-                elem.setAttribute("cx", data.nodes[i].point.x + 15);
-                elem.setAttribute("cy", data.nodes[i].point.y + 15);
-                elem.setAttribute("transform", `translate(${data.nodes[i].point.x},${data.nodes[i].point.y})`);
+                elem.setAttribute("x", data.nodes[i].point.x + 15);
+                elem.setAttribute("y", data.nodes[i].point.y + 15);
             }
 
             nodeGroup.append("rect")

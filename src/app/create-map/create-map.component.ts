@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component} from '@angular/core';
 import {MapService} from "../map.service";
 import {Floor} from "../model/floor";
 import {GuidoMap} from "../model/guido-map";
@@ -241,8 +241,8 @@ export class CreateMapComponent implements AfterViewInit {
 
                 default:
                     labelCoordinates = new Point(
-                        30 + parseFloat(node.attr("transform").substring(10).slice(0, -1).split(",")[0]),
-                        parseFloat(node.attr("transform").substring(10).slice(0, -1).split(",")[1]) + 5
+                        30 + parseFloat(node.attr("x")),
+                        parseFloat(node.attr("y")) + 5
                     );
             }
 
@@ -298,7 +298,7 @@ export class CreateMapComponent implements AfterViewInit {
             let cy = parseFloat(String(nodes[i].getAttribute("cy")));
             let r = parseFloat(String(nodes[i].getAttribute("r")));
             let id = parseInt(String(nodes[i].getAttribute("id")));
-            let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
+            let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").filter((e: string) => e !== "").map(elem => parseInt(elem));
 
             let handledDoor = new GuidoNode(
                 id,
@@ -340,7 +340,7 @@ export class CreateMapComponent implements AfterViewInit {
             for (let i = 0; i != doors.length; i++) {
                 const doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
                 const neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
-                const neighbors = neighborsStr.map(elem => parseInt(elem));
+                const neighbors = neighborsStr.filter((e: string) => e !== "").map(elem => parseInt(elem));
                 const id = parseInt(String(doors[i].getAttribute("id")));
 
                 let handledDoor = new GuidoNode(

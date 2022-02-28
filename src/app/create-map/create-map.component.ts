@@ -32,7 +32,6 @@ export class CreateMapComponent implements AfterViewInit {
 
     ngAfterViewInit() {
         const self = this;
-        console.log(document.getElementById("uploadedMapFromComputer"))
         document.getElementById("uploadedMapFromComputer")!.onchange = function (event: Event) {
             const reader = new FileReader();
             self.clearMap(false);

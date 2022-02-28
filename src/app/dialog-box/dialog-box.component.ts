@@ -1,4 +1,5 @@
 import {AfterViewInit, Component, Input, OnChanges, SimpleChanges} from '@angular/core';
+import {Point} from "../model/point";
 
 @Component({
     selector: 'app-dialog-box',
@@ -88,11 +89,34 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 inputsDiv.appendChild(this.createField(this.formElements[i], String(i)));
             }
         }
-        document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', e => {
+        document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', (e: MouseEvent) => {
             if (e.target === e.currentTarget) {
                 this.hideDialog();
             }
         });
+        this.dragElement(document.querySelector(`#${this.action}DialogBoxFloor${this.floor}>div`)!);
+    }
+
+    dragElement(htmlDivElement: HTMLDivElement) {
+        const translate: string[] = htmlDivElement.style.transform.substring(10, htmlDivElement.style.transform.length - 1).split("px").filter((c: string) => c !== "");
+        let originalPos = new Point(parseInt(translate[0]), parseInt(translate.length === 1 ? translate[0] : translate[1].substring(2)));
+        console.log(originalPos)
+        htmlDivElement.ondblclick = (e: MouseEvent) => {
+            e = e || window.event;
+            e.preventDefault();
+            originalPos = new Point(e.clientX - originalPos.x, e.clientY - originalPos.y);
+            htmlDivElement.ondblclick = () => {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                this.dragElement(document.querySelector(`#${this.action}DialogBoxFloor${this.floor}>div`)!);
+            };
+            document.onmousemove = (e: MouseEvent) => {
+                e = e || window.event;
+                e.preventDefault();
+
+                htmlDivElement.style.transform = `translate(${e.clientX - originalPos.x}px,${e.clientY - originalPos.y}px)`;
+            };
+        }
     }
 
     createInfiniteFieldsGroup(infiniteFormElements: any[], upperLevelPosition: number): HTMLDivElement {

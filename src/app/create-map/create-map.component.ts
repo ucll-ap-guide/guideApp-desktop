@@ -69,10 +69,10 @@ export class CreateMapComponent implements AfterViewInit {
     createMap(): void {
         document.getElementById("mapNameError")!.innerText =
             this.jsonData.name === "" ? "No map name given." : "";
-        document.getElementById("floorLengthError")!.innerText =
-            this.jsonData.length < 0 ? "The floor length can't be negative" : "";
-        document.getElementById("floorWidthError")!.innerText =
-            this.jsonData.length < 0 ? "The floor width can't be negative" : "";
+        // document.getElementById("floorLengthError")!.innerText =
+        //     this.jsonData.length < 0 ? "The floor length can't be negative" : "";
+        // document.getElementById("floorWidthError")!.innerText =
+        //     this.jsonData.length < 0 ? "The floor width can't be negative" : "";
 
         if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.initializedMap = true;

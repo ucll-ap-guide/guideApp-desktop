@@ -9,14 +9,14 @@
     </div>
 
     <div *ngIf="!initializedMap" class="justify-center gap-x-5 flex flex-row flex-grow flex-wrap">
-        <div class="bg-white dark:bg-black shadow rounded-lg p-5 mx-2 md:mx-4 h-min" style="margin: auto 0;">
+        <div class="bg-white dark:bg-black shadow rounded-lg h-min p-5 mx-2 md:mx-4 my-auto">
             <h1 class="text-3xl text-black dark:text-white">Create new map</h1>
             <div class="text-left max-w-md m-2 w-25 text-black dark:text-white" id="addMapForm">
                 <label class="block text-gray-700 text-sm font-bold mb-2 text-black dark:text-white" for="mapName">
                     Name:
                 </label>
                 <input (keydown.enter)="createMap()" [(ngModel)]="jsonData.name"
-                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                        id="mapName" placeholder="Name" type="text">
                 <p class="text-red-500 mx-3 mb-1 error" id="mapNameError"></p>
 
@@ -24,13 +24,13 @@
                     Floor length (meters):
                 </label>
                 <input (keydown.enter)="createMap()" [(ngModel)]="jsonData.length"
-                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                        id="floorLength" min="0" placeholder="Floor length" step="0.01" type="number">
                 <p class="text-red-500 mx-3 mb-1 error" id="floorLengthError"></p>
 
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="floorWidth">Floor width (meters):</label>
                 <input (keydown.enter)="createMap()" [(ngModel)]="jsonData.width"
-                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                        id="floorWidth" min="0" placeholder="Floor width" step="0.01" type="number">
                 <p class="text-red-500 mx-3 mb-1 error" id="floorWidthError"></p>-->
 
@@ -160,20 +160,20 @@
                 <div class="max-w-md m-2 text-black dark:text-white" id="addFloorForm">
                     <label class="block text-sm font-bold mb-2" for="floorNumber">Floor number:</label>
                     <input (keydown.enter)="addFloor()" [(ngModel)]="createFloorForm.floor"
-                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                            id="floorNumber" placeholder="Floor number" step="1" type="number">
                     <p class="text-red-500 mx-3 mb-1 error" id="floorNumberError"></p>
 
                     <label class="block text-sm font-bold mb-2" for="floorName">Floor name:</label>
                     <input (keydown.enter)="addFloor()" [(ngModel)]="createFloorForm.name"
-                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                            id="floorName" placeholder="Floor name" type="text">
                     <p class="text-red-500 mx-3 mb-1 error" id="floorNameError"></p>
 
                     <label class="block text-sm font-bold mb-2" for="floorHeight">Floor height (meters):</label>
                     <input (keydown.enter)="addFloor()"
                            [(ngModel)]="createFloorForm.height"
-                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-full leading-tight py-2 px-3 mx-1.5"
+                           class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                            id="floorHeight" min="0"
                            placeholder="Floor height" step="0.01" type="number">
                     <p class="text-red-500 mx-3 mb-1" id="floorHeightError"></p>

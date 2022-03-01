@@ -58,17 +58,15 @@
             Point of interest
         </button>
     </div>
-
-    <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices"
+    <app-dialog-box [confirmAction]="createPolygon"
+                    [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', defaultValue: '255,100,100'}]" [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices"
                     action="createPolygonWithNVertices"
                     confirmButtonText="OK" dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon"
                     [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}, {name: 'RGB color', defaultValue: '255,100,100'}]" [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon"
                     confirmButtonText="OK" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor"
@@ -101,8 +99,7 @@
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updatePolygon"
                     [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color'}]" [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon"
                     confirmButtonText="OK" dialogText="Update this room: " title="Update room">
     </app-dialog-box>
 </div>

@@ -174,9 +174,9 @@ export class CreateFloorComponent implements AfterViewInit {
                                 let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
                                 let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
                                 self.displayDialogBox("updatePolygon", {
-                                    defaultValues: [polygons[index].name, polygons[index].description],
+                                    defaultValues: [polygons[index].name, polygons[index].description, polygons[index].color.join(",")],
                                     id: elem.id
-                                })
+                                });
                             }
                         });
                     }
@@ -224,11 +224,12 @@ export class CreateFloorComponent implements AfterViewInit {
         door.setAttribute("points", pointsString);
     }
 
-    updatePolygon(id: number, name: string, description: string, self: CreateFloorComponent = this) {
+    updatePolygon(id: number, name: string, description: string, color: number[], self: CreateFloorComponent = this) {
         let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
         let index = polygons.map(elem => elem.id).indexOf(id);
         polygons[index].name = name;
         polygons[index].description = description;
+        polygons[index].color = color;
 
         self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
@@ -325,9 +326,10 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param name The name of the polygon
      * @param amountOfVertices The amount of vertices each room has
      * @param description The description of rooms purpose
+     * @param color The color of the polygon
      * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
+    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, color: number[] = [204, 204, 204], self: CreateFloorComponent = this) {
         let radius = 30;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
@@ -339,7 +341,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices));
+        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices, color));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }

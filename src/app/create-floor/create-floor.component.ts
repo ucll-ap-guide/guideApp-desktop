@@ -20,11 +20,13 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
+
     @Input()
     set changeEditMode(value: boolean) {
         this.editMode = value;
         this.deleteMode = false;
     }
+
     @Input()
     set changeSetNeighborMode(value: boolean) {
         this.setNeighborMode = value;
@@ -525,6 +527,7 @@ export class CreateFloorComponent implements AfterViewInit {
         let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
         nodes.forEach((elem: Element) => {
             const origin = self.getConnectablePoint(parseInt(elem.id));
+            console.log(origin)
             const neighborsStr = elem.getAttribute("neighbors")!.split(",");
 
             let neighbors: number[];
@@ -572,8 +575,13 @@ export class CreateFloorComponent implements AfterViewInit {
                 let middleY = (points[0].y + points[2].y) / 2;
                 return new Point(middleX, middleY);
 
-            default:
+            case PolygonType.ROOM:
+            case PolygonType.FLOOR:
+            case NodeType.NODE:
                 return new Point(parseFloat(elem.attr("cx")), parseFloat(elem.attr("cy")));
+
+            default:
+                return new Point(parseFloat(elem.attr("x")), parseFloat(elem.attr("y")));
         }
     }
 
@@ -627,9 +635,11 @@ export class CreateFloorComponent implements AfterViewInit {
         door.node().addEventListener("click", (e: Event) => {
             if (self.editMode) {
                 self.deleteMode = false;
-                self.displayDialogBox("updateDoor", {defaultValues: [
+                self.displayDialogBox("updateDoor", {
+                    defaultValues: [
                         door.attr("name"), door.attr("height"), door.attr("width")
-                    ], id: previousId === null ? self.jsonData.lastId + 1 : previousId})
+                    ], id: previousId === null ? self.jsonData.lastId + 1 : previousId
+                })
             } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }

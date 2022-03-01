@@ -16,7 +16,6 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     @Input() confirmAction!: Function;
     @Input() params: any;
     @Input() formElements: any[] = [];
-    displaySearchResults = {};
 
     constructor() {
     }
@@ -29,34 +28,61 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
      */
     ngOnChanges(changes: SimpleChanges): void {
         const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
-        if (changes["params"] !== undefined && changes['params'].currentValue.defaultValues !== undefined) {
+        if (changes["params"] !== undefined) {
+            // Set default values
             const defaultValues = changes['params'].currentValue.defaultValues;
-            // For all top level children in defaultValues
-            for (let i = 0; i < defaultValues.length; i++) {
-                if (Array.isArray(defaultValues[i])) {
-                    topLevelChildren.item(i).innerHTML = "";
-                    let j;
-                    // For all groups in top level children
-                    for (j = 0; j < defaultValues[i].length; j++) {
-                        const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j);
-                        const groupInputFields = group.getElementsByTagName("input");
-                        // For all fields in groups
-                        for (let k = 0; k < groupInputFields.length; k++) {
-                            // Check needed for future extension where select fields can also be generated
-                            if (groupInputFields[k].nodeName === "INPUT") {
-                                if (this.formElements[i].infinite[k].inputType === "checkbox") {
-                                    (groupInputFields[k] as HTMLInputElement).checked = defaultValues[i][j][k];
-                                } else {
-                                    (groupInputFields[k] as HTMLInputElement).value = defaultValues[i][j][k];
+            if (defaultValues !== undefined) {
+                // For all top level children in defaultValues
+                for (let i = 0; i < defaultValues.length; i++) {
+                    if (this.formElements[i].infinite !== undefined) {
+                        topLevelChildren.item(i).innerHTML = "";
+                        let j;
+                        // For all groups in top level children
+                        for (j = 0; j < defaultValues[i].length; j++) {
+                            const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j);
+                            const groupInputFields = group.getElementsByTagName("input");
+                            // For all fields in group
+                            for (let k = 0; k < groupInputFields.length; k++) {
+                                // Check needed for future extension where select fields can also be generated
+                                if (groupInputFields[k].nodeName === "INPUT") {
+                                    if (this.formElements[i].infinite[k].inputType === "checkbox") {
+                                        (groupInputFields[k] as HTMLInputElement).checked = defaultValues[i][j][k];
+                                    } else {
+                                        (groupInputFields[k] as HTMLInputElement).value = defaultValues[i][j][k];
+                                    }
+                                }
+                            }
+                            topLevelChildren.item(i).appendChild(group);
+                        }
+                        topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
+                    } else {
+                        if (topLevelChildren.item(i).nodeName === "INPUT") {
+                            (topLevelChildren.item(i) as HTMLInputElement).value = defaultValues[i];
+                        }
+                    }
+                }
+            }
+
+            // Set the search select
+            const values = changes['params'].currentValue.values;
+            if (values !== undefined) {
+                // For all top level children in values
+                for (let i = 0; i < topLevelChildren.length; i++) {
+                    if (this.formElements[i].infinite !== undefined) {
+                        // For all input/select field GROUPS in top level children
+                        for (let j = 0; j < topLevelChildren[i].children.length; j++) {
+                            this.formElements[i].infinite[j].values = values[i][j] ? values[i][j] : [];
+                            // For all input/select fields in groups
+                            for (let k = 0; k < topLevelChildren[i].children[j].getElementsByTagName("input").length; k++) {
+                                if (values[i][k] !== undefined) {
+                                    this.appendSearchSelectField(topLevelChildren[i].children[j].getElementsByTagName("input")[k], values[i][k]);
                                 }
                             }
                         }
-                        topLevelChildren.item(i).appendChild(group);
-                    }
-                    topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
-                } else {
-                    if (this.formElements[i].nodeName === "INPUT") {
-                        (topLevelChildren.item(i) as HTMLInputElement).value = defaultValues[i];
+                    } else {
+                        if (topLevelChildren.item(i).nodeName === "INPUT") {
+                            // TODO implement search select for normal fields
+                        }
                     }
                 }
             }
@@ -66,7 +92,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     ngAfterViewInit(): void {
         const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}`);
         for (let i = 0; i < this.formElements.length; i++) {
-            if (Array.isArray(this.formElements[i].infinite)) {
+            if (this.formElements[i].infinite !== undefined) {
                 // Container containing all the groups of input fields
                 const container = document.createElement("div");
                 container.id = `${this.action}InputsFloor${this.floor}Infinite${i}Container`
@@ -81,9 +107,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 inputsDiv.addEventListener("input", (event) => {
                     const input = (event.target as HTMLInputElement);
                     const inputsFields = Array.from(input.parentElement!.parentElement!.querySelectorAll("div:last-of-type>input"));
-                    for (let i = 0; i < inputsFields.length; i++) {
-                        if ((inputsFields[i] as HTMLInputElement).id === input.id) {
-                            input.parentElement!.parentElement!.appendChild(this.createInfiniteFieldsGroup(this.formElements[0].infinite, inputsFields[i].parentElement!.parentElement!.children.length));
+                    for (let j = 0; j < inputsFields.length; j++) {
+                        if ((inputsFields[j] as HTMLInputElement).id === input.id) {
+                            input.parentElement!.parentElement!.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, inputsFields[j].parentElement!.parentElement!.children.length));
                         }
                     }
                 });
@@ -92,7 +118,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 const field = this.createField(this.formElements[i], String(i));
                 inputsDiv.appendChild(field);
                 if (this.formElements[i].tagType === "search-select") {
-                    this.appendSearchSelectField(field as HTMLInputElement, this.formElements[i]);
+                    this.appendSearchSelectField(field as HTMLInputElement, this.formElements[i].values);
                 }
             }
         }
@@ -140,7 +166,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             group.appendChild(field);
             if (infiniteFormElements[j].inputType === "checkbox") group.appendChild(label);
             if (infiniteFormElements[j].tagType === "search-select") {
-                this.appendSearchSelectField(field as HTMLInputElement, infiniteFormElements[j]);
+                this.appendSearchSelectField(field as HTMLInputElement, this.formElements[j].infinite[j].values);
             }
         }
         return group;
@@ -196,56 +222,80 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
+     * Hides all the elements in the select that don't contain the string in the search box.
+     *
+     * @param input The input field that is used as a search box.
+     */
+    filterSearchElements(input: HTMLInputElement): void {
+        for (const idElem of Array.from(document.querySelectorAll(`#${input.id}Values>li>ul>li`)) as HTMLLIElement[]) {
+            if (String(idElem.innerText).toLowerCase().includes(input.value.toLowerCase())) {
+                idElem.className = idElem.className.replace("hidden", "block");
+            } else {
+                idElem.className = idElem.className.replace("block", "hidden");
+            }
+        }
+
+        for (const groupElem of Array.from(document.querySelectorAll(`#${input.id}Values>li`)) as HTMLLIElement[]) {
+            if (groupElem.getElementsByClassName("block").length === 0) {
+                groupElem.className = groupElem.className.replace("block", "hidden");
+            } else {
+                groupElem.className = groupElem.className.replace("hidden", "block");
+            }
+        }
+    }
+
+    /**
      * Creates a select with possible values for the given input field.
      *
      * @param input The input field for which the select needs to be generated.
-     * @param formElement The information that is given to build the input field (contains the mandatory values field).
+     * @param values The values that need to be displayed in the select.
      */
-    appendSearchSelectField(input: HTMLInputElement, formElement: any): void {
+    appendSearchSelectField(input: HTMLInputElement, values: { group: string, values: any[] }[]): void {
         input.addEventListener("focusin", () => {
             document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("hidden", "block");
         });
         input.addEventListener("focusout", () => {
             setTimeout(() => document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden"), 300);
         });
-        input.addEventListener("input", (e: Event) => this.displaySearchResults = formElement.values.filter((v: any) => String(v).includes((e.target as HTMLInputElement).value)));
+        input.addEventListener("input", () => this.filterSearchElements(input));
         input.className = input.className.replace("mb-4", "");
 
         const ul = document.createElement("ul");
         ul.id = input.id + "Values"
-        ul.className = "bg-white border-px absolute rounded-md hidden overflow-auto max-h-fit my-px";
+        ul.className = "bg-white border-px absolute shadow-lg rounded-md hidden overflow-auto max-h-fit my-px";
         ul.style.width = 'calc(100% - 3rem)';
         ul.style.maxHeight = '50%';
-        console.log(formElement.values)
-        for (let i = 0; i < formElement.values.length; i++) {
-            if (formElement.values[i].values.length > 0) {
-                const subUl = document.createElement("ul");
-                if (formElement.values.length > 1) {
-                    const title = document.createElement("li");
-                    title.className = "font-semibold py-1 px-2";
-                    title.innerText = formElement.values[i].group;
-                    subUl.appendChild(title);
-                } else {
-                    console.log("no title");
-                }
-                const li = document.createElement("li");
-                for (let j = 0; j < formElement.values[i].values.length; j++) {
-                    const subLi = document.createElement("li");
-                    subLi.className = `hover:bg-gray-500 cursor-pointer ${j === 0 && formElement.values.length === 1 ? 'rounded-t-md' : j === formElement.values[i].values.length - 1 ? 'rounded-b-md' : ''} py-1 px-4`;
-                    subLi.innerText = formElement.values[i].values[j];
-                    subLi.addEventListener("click", () => {
-                        input.value = formElement.values[i].values[j];
-                        document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden");
-                    });
-                    subUl.appendChild(subLi);
-                }
-                li.appendChild(subUl);
-                ul.appendChild(li);
-            } else {
-                console.log("no values");
+        values = values.filter((g: { group: string, values: any[] }) => g.values.length !== 0);
+        for (let i = 0; i < values.length; i++) {
+            const subUl = document.createElement("ul");
+            if (values.length > 1) {
+                const title = document.createElement("li");
+                title.className = "group font-semibold py-1 px-2";
+                title.innerText = values[i].group;
+                subUl.appendChild(title);
             }
+            const li = document.createElement("li");
+            li.className = "block";
+            for (let j = 0; j < values[i].values.length; j++) {
+                const subLi = document.createElement("li");
+                subLi.className = `hover:bg-gray-500 cursor-pointer ${j === 0 && values.length === 1 ? 'rounded-t-md' : (i === values.length - 1 && j === values[i].values.length - 1) ? 'rounded-b-md' : ''} block py-1 px-4`;
+                subLi.innerText = values[i].values[j];
+                subLi.addEventListener("click", () => {
+                    input.value = values[i].values[j];
+                    input.dispatchEvent(new Event("input", {bubbles: true}));
+                    document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden");
+                });
+                subUl.appendChild(subLi);
+            }
+            li.appendChild(subUl);
+            ul.appendChild(li);
         }
-        input.after(ul);
+        if (document.getElementById(ul.id) !== null) {
+            document.getElementById(ul.id)!.replaceWith(ul);
+        } else {
+            input.after(ul);
+        }
+        this.filterSearchElements(input);
     }
 
     /**
@@ -296,8 +346,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(parseInt(this.params.id),
                     Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div"))
                         .filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value)))
-                        .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input"))
-                            .map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
+                        .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
             case "updateDoor":
                 this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value));

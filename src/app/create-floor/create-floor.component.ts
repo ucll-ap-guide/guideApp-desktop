@@ -59,6 +59,35 @@ export class CreateFloorComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         this.regenerateFloorMap(true);
+        let floor = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor) as Floor;
+        this.mapData[this.overlays.id()] = floor.overlays;
+
+        let svg = d3.select("#demo" + this.floor).append("svg")
+            .attr("height", this.mapHeight)
+            .attr("width", this.mapWidth)
+            .datum(this.mapData)
+            .call(this.map);
+
+        svg.on("dblclick.zoom", null);
+
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "pointsOfInterest" + this.floor);
+        d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
+
+        d3.select("#demo" + this.floor).select("svg").select("defs")
+            .append("marker")
+            .attr("id", "arrow")
+            .attr("refX", 3)
+            .attr("refY", 3)
+            .attr("markerWidth", 15)
+            .attr("markerHeight", 15)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,1 " +
+                "L3,3 " +
+                "L0,5 ")
+            .attr("fill", "orange");
 
         this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor).map((elem: GuidoNode) => {
             switch (elem.type) {
@@ -74,6 +103,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     console.error(`Type ${elem.type} is currently not supported yet`);
             }
         });
+        this.setEventListeners(floor);
     }
 
     getFloorName(): string {
@@ -93,47 +123,41 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param floor
      */
     loadData(floor: Floor): void {
-        let elementsToBeSaved = Array.from(document.querySelectorAll('[node]'));
-        d3.select("#demo" + this.floor).selectAll("*").remove();
-
+        let svg = d3.select("#demo" + this.floor).select("svg");
         this.mapData[this.overlays.id()] = floor.overlays;
 
-        d3.select("#demo" + this.floor).append("svg")
-            .attr("height", this.mapHeight)
+        svg.select("g.map-layers").remove();
+        svg.select("g.map-controls").remove();
+
+        svg.attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
             .datum(this.mapData)
             .call(this.map);
 
-        this.reloadAllNodes(elementsToBeSaved);
+        //Place all figures on top layers of the svg
+        let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0];
+        orig.appendChild(document.getElementById("demo" + this.floor + "lineGroup")!);
+        orig.appendChild(document.getElementById("doors" + this.floor)!);
+        orig.appendChild(document.getElementById("nodes" + this.floor)!);
+        orig.appendChild(document.getElementById("pointsOfInterest" + this.floor)!);
+
+        svg.on("dblclick.zoom", null);
+        this.setEventListeners(floor);
+    }
+
+    setEventListeners(floor: Floor) {
+        let self = this;
 
         Array.from(document.querySelectorAll(`[removable]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
-            if ((elem.getAttribute("type")) && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
-                elem.addEventListener("click", (e: Event) => {
-                    if (self.deleteMode && !self.setNeighborMode) {
-                        this.removeElement(e);
-                    }
-                });
-            }
-        });
-
-        d3.select("#demo" + this.floor).select("svg").on("dblclick.zoom", null);
-
-        d3.select("#demo" + this.floor).select("svg").select("defs")
-            .append("marker")
-            .attr("id", "arrow")
-            .attr("refX", 3)
-            .attr("refY", 3)
-            .attr("markerWidth", 15)
-            .attr("markerHeight", 15)
-            .attr("orient", "auto")
-            .append("path")
-            .attr("d", "M0,1 " +
-                "L3,3 " +
-                "L0,5 ")
-            .attr("fill", "orange");
-
-        let self = this;
+                if ((elem.getAttribute("type")) && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
+                    elem.addEventListener("click", (e: Event) => {
+                        if (self.deleteMode && !self.setNeighborMode) {
+                            this.removeElement(e);
+                        }
+                    });
+                }
+            });
 
         d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
             //@ts-ignore
@@ -144,6 +168,9 @@ export class CreateFloorComponent implements AfterViewInit {
             elem.addEventListener("dblclick", (e: Event) => {
                 this.openDisplayNeighborsDialog(e, self);
             }));
+
+        this.observer = new MutationObserver(this.setZoom);
+        this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
     }
 
     /**
@@ -200,44 +227,6 @@ export class CreateFloorComponent implements AfterViewInit {
 
             node.setAttribute("neighbors", neighbors.join(","));
         });
-    }
-
-    /**
-     * Reloads all elements stored in the nodes Array in jsonData
-     * @param elementsToBeSaved
-     */
-    reloadAllNodes(elementsToBeSaved: Element[]): void {
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "pointsOfInterest" + this.floor);
-        d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
-        this.observer = new MutationObserver(this.setZoom);
-        const svg = document.querySelector('#demo' + this.floor);
-        if (svg) {
-            const map_layer = svg.querySelector('.map-layers');
-            if (map_layer)
-                this.observer.observe(map_layer as Node, {attributes: true});
-        }
-
-        elementsToBeSaved.filter(elem => parseInt(String(elem.getAttribute("floor"))) === this.floor)
-            .map(elem => {
-                switch (elem.getAttribute("class")) {
-                    case NodeType.DOOR:
-                    case NodeType.EMERGENCY_EXIT:
-                        this.createDoor(
-                            parseInt(String(elem.getAttribute("id"))),
-                            parseInt(String(elem.getAttribute("height"))),
-                            parseInt(String(elem.getAttribute("width"))),
-                            elem.getAttribute("points"),
-                            elem.getAttribute("name"),
-                            String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)),
-                            elem.getAttribute("class") !== NodeType.DOOR
-                        );
-                        break;
-                    case NodeType.NODE:
-                        this.createNode(parseInt(String(elem.getAttribute("id"))), new Point(parseFloat(String(elem.getAttribute("cx"))), parseFloat(String(elem.getAttribute("cy")))), String(elem.getAttribute("name")), String(elem.getAttribute("neighbors")).split(",").map(elem => parseInt(elem)));
-                }
-            });
     }
 
     displayDialogBox(action: string, params: {}) {
@@ -395,7 +384,8 @@ export class CreateFloorComponent implements AfterViewInit {
             this.map.addLayer(this.imageLayer)
                 .addLayer(this.overlays);
 
-            this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor)!);
+            if (!force)
+                this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor)!);
         }
     }
 

@@ -222,6 +222,12 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             case "setNeighbors":
                 this.confirmAction(parseInt(this.params.id), Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value))).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
+            case "updateDoor":
+                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value));
+                break;
+            case "updatePolygon":
+                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value, this.params.self);
+                break;
             default:
                 console.error("This dialog action is currently not supported");
         }

@@ -20,10 +20,15 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
-
+    @Input()
+    set changeEditMode(value: boolean) {
+        this.editMode = value;
+        this.deleteMode = false;
+    }
     @Input()
     set changeSetNeighborMode(value: boolean) {
         this.setNeighborMode = value;
+        this.deleteMode = false;
         if (this.setNeighborMode) {
             this.setConnectingNeighbors(this)
         } else {
@@ -32,6 +37,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     setNeighborMode: boolean = false;
+    editMode: boolean = false;
     imageWidth = 720;
     imageHeight = 487;
     imageRatio = this.imageHeight / this.imageWidth;
@@ -48,7 +54,9 @@ export class CreateFloorComponent implements AfterViewInit {
     paramsToGiveToDialogBoxes: any = {
         createPolygonWithNVertices: {},
         createPolygon: {},
+        updatePolygon: {},
         createDoor: {},
+        updateDoor: {},
         createNode: {},
         createPointOfInterest: {},
         setNeighbors: {}
@@ -156,6 +164,17 @@ export class CreateFloorComponent implements AfterViewInit {
                             this.removeElement(e);
                         }
                     });
+
+                    if (elem.getAttribute("type") === PolygonType.ROOM) {
+                        elem.addEventListener("click", (e: Event) => {
+                            if (self.editMode) {
+                                self.deleteMode = false;
+                                let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+                                let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
+                                self.displayDialogBox("updatePolygon", {defaultValues: [polygons[index].name, polygons[index].description], id: elem.id})
+                            }
+                        });
+                    }
                 }
             });
 
@@ -171,6 +190,43 @@ export class CreateFloorComponent implements AfterViewInit {
 
         this.observer = new MutationObserver(this.setZoom);
         this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
+    }
+
+    updateDoor(id: number, name: string, height: number, width: number) {
+        let door = document.querySelector(`[id='${String(id)}']`)!;
+        let previousPoints = CreateFloorComponent.arrayOfPointsFromPointString(String(door.getAttribute("points")));
+        door.setAttribute("name", name);
+        door.setAttribute("height", String(height));
+        door.setAttribute("width", String(width));
+
+        //Point used in reconstructing the polygon after dragging
+        let toBuildFrom = previousPoints[0];
+
+        let points = [
+            toBuildFrom,
+            new Point(toBuildFrom.x + width, toBuildFrom.y),
+            new Point(toBuildFrom.x + width, toBuildFrom.y + height),
+            new Point(toBuildFrom.x, toBuildFrom.y + height)
+        ];
+
+        let pointsString = CreateFloorComponent.pointStringFromArrayOfPoints(points);
+        let degreesRotated = parseFloat(String(door.getAttribute("degreesRotated")));
+
+        if (degreesRotated !== 0) {
+            pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
+        }
+
+        door.setAttribute("points", pointsString);
+    }
+
+    updatePolygon(id: number, name: string, description: string, self: CreateFloorComponent = this) {
+        let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+        let index = polygons.map(elem => elem.id).indexOf(id);
+        polygons[index].name = name;
+        polygons[index].description = description;
+
+        self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
+        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
     }
 
     /**
@@ -403,6 +459,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
                     self.regenerateFloorMap(true);
+                    self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor)!)
                 }
             }
         }
@@ -565,7 +622,12 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         door.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode && !self.setNeighborMode) {
+            if (self.editMode) {
+                self.deleteMode = false;
+                self.displayDialogBox("updateDoor", {defaultValues: [
+                        door.attr("name"), door.attr("height"), door.attr("width")
+                    ], id: previousId === null ? self.jsonData.lastId + 1 : previousId})
+            } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }
         });

@@ -88,4 +88,14 @@
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
+    <app-dialog-box [confirmAction]="updateDoor"
+                    [formElements]="[{name: 'Door name'}, {inputType: 'number', name: 'Door height'}, {inputType: 'number', name: 'Door width'}]"
+                    [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
+                    [floor]="floor" dialogText="Update this door: " title="Update door">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="updatePolygon"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
+                    [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon" confirmButtonText="OK"
+                    [floor]="floor" dialogText="Update this room: " title="Update room">
+    </app-dialog-box>
 </div>

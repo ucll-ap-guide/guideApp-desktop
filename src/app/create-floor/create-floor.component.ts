@@ -166,12 +166,15 @@ export class CreateFloorComponent implements AfterViewInit {
                     });
 
                     if (elem.getAttribute("type") === PolygonType.ROOM) {
-                        elem.addEventListener("click", (e: Event) => {
+                        elem.addEventListener("click", () => {
                             if (self.editMode) {
                                 self.deleteMode = false;
                                 let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
                                 let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
-                                self.displayDialogBox("updatePolygon", {defaultValues: [polygons[index].name, polygons[index].description], id: elem.id})
+                                self.displayDialogBox("updatePolygon", {
+                                    defaultValues: [polygons[index].name, polygons[index].description],
+                                    id: elem.id
+                                })
                             }
                         });
                     }
@@ -466,8 +469,8 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     getDoorDimensions(doorCoords: Point[]): { height: number, width: number } {
-        let distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
-        let distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
+        const distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
+        const distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
         return {
             height: distance1 > distance2 ? distance1 : distance2,
             width: distance1 > distance2 ? distance2 : distance1
@@ -709,13 +712,54 @@ export class CreateFloorComponent implements AfterViewInit {
     openDisplayNeighborsDialog(event: Event, self: CreateFloorComponent) {
         if (self.setNeighborMode) {
             const id = (event.target as Element).id === "" ? (event.target as Element).getAttribute("pointsOfInterestId") : (event.target as Element).id;
-            if (id !== "") {
+            if (id != null && id !== "") {
+                const elem = document.getElementById(id)!;
                 const neighbors = document.querySelector(`[id='${id}']`)!.getAttribute("neighbors");
                 self.displayDialogBox("setNeighbors", {
                     id: id,
                     defaultValues: [neighbors === null ? [] :
                         neighbors!.split(",").filter((neighbor: string) => neighbor !== "")
-                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])]
+                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])],
+                    /*
+                     * The List of values has 3 [] because the first one is to group all possible input type fields
+                     * (in this case there is only one), the second is to group all the input fields for the infinite
+                     * field type (there are 2 fields in this case, but the checkbox doesn't need a select, so it is
+                     * omitted) and the last one is to group all the different kind of groups of values
+                     */
+                    values: [[[
+                        {
+                            group: "Stairs",
+                            values: elem.getAttribute("type") === NodeType.STAIRS ?
+                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor - 1 || f.floor === this.floor + 1)
+                                    .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                                    .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
+                                    .map((g: GuidoNode) => g.id) : []
+                        },
+                        {
+                            group: "Lifts",
+                            values: elem.getAttribute("type") === NodeType.LIFT ?
+                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor - 1 || f.floor === this.floor + 1)
+                                    .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                                    .filter((g: GuidoNode) => g.type === NodeType.LIFT)
+                                    .map((g: GuidoNode) => g.id) : []
+                        },
+                        {
+                            group: "Points of interest",
+                            values: ![NodeType.STAIRS, NodeType.LIFT].includes(elem.getAttribute("type") as NodeType) ?
+                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
+                                    .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id) : []
+                        },
+                        {
+                            group: "Doors",
+                            values: Array.from(document.getElementById(`doors${this.floor}`)!.getElementsByTagName("polygon")).map((p: SVGPolygonElement) => p.id)
+                            //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && (g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)).map((g: GuidoNode) => g.id)
+                        },
+                        {
+                            group: "Nodes",
+                            values: Array.from(document.getElementById(`nodes${this.floor}`)!.getElementsByTagName("circle")).map((c: SVGCircleElement) => c.id)
+                            //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && g.type === NodeType.NODE).map((g: GuidoNode) => g.id)
+                        }
+                    ]]]
                 });
             }
         }

@@ -16,12 +16,15 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     @Input() confirmAction!: Function;
     @Input() params: any;
     @Input() formElements: any[] = [];
+    displaySearchResults = {};
 
     constructor() {
     }
 
     /**
-     * Fills the inputs with their defaultValues
+     * Fills the inputs with their defaultValues (needs to be done like this because each node needs other neighbors
+     * that can be set dynamically).
+     *
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -86,7 +89,11 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 });
             } else {
                 inputsDiv.appendChild(this.createLabel(this.formElements[i], String(i)));
-                inputsDiv.appendChild(this.createField(this.formElements[i], String(i)));
+                const field = this.createField(this.formElements[i], String(i));
+                inputsDiv.appendChild(field);
+                if (this.formElements[i].tagType === "search-select") {
+                    this.appendSearchSelectField(field as HTMLInputElement, this.formElements[i]);
+                }
             }
         }
         document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', (e: MouseEvent) => {
@@ -97,10 +104,14 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         this.dragElement(document.querySelector(`#${this.action}DialogBoxFloor${this.floor}>div`)!);
     }
 
+    /**
+     * Makes the given element draggable.
+     *
+     * @param htmlDivElement The HTML element that needs to be draggable.
+     */
     dragElement(htmlDivElement: HTMLDivElement) {
         const translate: string[] = htmlDivElement.style.transform.substring(10, htmlDivElement.style.transform.length - 1).split("px").filter((c: string) => c !== "");
         let originalPos = new Point(parseInt(translate[0]), parseInt(translate.length === 1 ? translate[0] : translate[1].substring(2)));
-        console.log(originalPos)
         htmlDivElement.ondblclick = (e: MouseEvent) => {
             e = e || window.event;
             e.preventDefault();
@@ -116,7 +127,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
                 htmlDivElement.style.transform = `translate(${e.clientX - originalPos.x}px,${e.clientY - originalPos.y}px)`;
             };
-        }
+        };
     }
 
     createInfiniteFieldsGroup(infiniteFormElements: any[], upperLevelPosition: number): HTMLDivElement {
@@ -128,6 +139,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             if (infiniteFormElements[j].inputType !== "checkbox") group.appendChild(label);
             group.appendChild(field);
             if (infiniteFormElements[j].inputType === "checkbox") group.appendChild(label);
+            if (infiniteFormElements[j].tagType === "search-select") {
+                this.appendSearchSelectField(field as HTMLInputElement, infiniteFormElements[j]);
+            }
         }
         return group;
     }
@@ -143,7 +157,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     createField(formElement: any, id: string): Element {
-        const elem = document.createElement(formElement.tagType ? formElement.tagType : "input");
+        let elem = document.createElement(formElement.tagType && formElement.tagType !== "search-select" ? formElement.tagType : "input");
         elem.id = `${this.action}Floor${this.floor}Input${id}`;
         elem.className = (formElement.inputType === "checkbox" ? "inline mr-1" : "block") + " bg-white rounded-md py-1.5 px-2 mb-4";
         elem.onkeyup = (event: KeyboardEvent) => {
@@ -151,7 +165,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.successfullyCloseDialog();
             }
         };
-        elem.required = formElement.required === true
+        elem.required = formElement.required === true;
         switch (elem.nodeName) {
             case "INPUT":
                 (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
@@ -164,7 +178,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                         elem.step = (isNaN(formElement)) ? 1 : formElement.step;
                         break;
                     case "checkbox":
-                        elem.checked = formElement.checked === true
+                        elem.checked = formElement.checked === true;
                 }
                 if (formElement.defaultValue !== undefined) {
                     elem.value = formElement.defaultValue;
@@ -181,6 +195,62 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         return elem;
     }
 
+    /**
+     * Creates a select with possible values for the given input field.
+     *
+     * @param input The input field for which the select needs to be generated.
+     * @param formElement The information that is given to build the input field (contains the mandatory values field).
+     */
+    appendSearchSelectField(input: HTMLInputElement, formElement: any): void {
+        input.addEventListener("focusin", () => {
+            document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("hidden", "block");
+        });
+        input.addEventListener("focusout", () => {
+            setTimeout(() => document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden"), 300);
+        });
+        input.addEventListener("input", (e: Event) => this.displaySearchResults = formElement.values.filter((v: any) => String(v).includes((e.target as HTMLInputElement).value)));
+        input.className = input.className.replace("mb-4", "");
+
+        const ul = document.createElement("ul");
+        ul.id = input.id + "Values"
+        ul.className = "bg-white border-px absolute rounded-md hidden overflow-auto max-h-fit my-px";
+        ul.style.width = 'calc(100% - 3rem)';
+        ul.style.maxHeight = '50%';
+        console.log(formElement.values)
+        for (let i = 0; i < formElement.values.length; i++) {
+            if (formElement.values[i].values.length > 0) {
+                const subUl = document.createElement("ul");
+                if (formElement.values.length > 1) {
+                    const title = document.createElement("li");
+                    title.className = "font-semibold py-1 px-2";
+                    title.innerText = formElement.values[i].group;
+                    subUl.appendChild(title);
+                } else {
+                    console.log("no title");
+                }
+                const li = document.createElement("li");
+                for (let j = 0; j < formElement.values[i].values.length; j++) {
+                    const subLi = document.createElement("li");
+                    subLi.className = `hover:bg-gray-500 cursor-pointer ${j === 0 && formElement.values.length === 1 ? 'rounded-t-md' : j === formElement.values[i].values.length - 1 ? 'rounded-b-md' : ''} py-1 px-4`;
+                    subLi.innerText = formElement.values[i].values[j];
+                    subLi.addEventListener("click", () => {
+                        input.value = formElement.values[i].values[j];
+                        document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden");
+                    });
+                    subUl.appendChild(subLi);
+                }
+                li.appendChild(subUl);
+                ul.appendChild(li);
+            } else {
+                console.log("no values");
+            }
+        }
+        input.after(ul);
+    }
+
+    /**
+     * Hides the dialog box and empties the input fields.
+     */
     hideDialog(): void {
         document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.classList.replace("flex", "hidden");
         const topLevelInputs = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
@@ -199,6 +269,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         }
     }
 
+    /**
+     * Closes the dialog box and executes the confirmAction function that is given to this component.
+     */
     successfullyCloseDialog(): void {
         const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div, #${this.action}InputsFloor${this.floor}>select`);
         switch (this.action) {
@@ -220,7 +293,11 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], [], this.params.self);
                 break;
             case "setNeighbors":
-                this.confirmAction(parseInt(this.params.id), Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div")).filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value))).map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
+                this.confirmAction(parseInt(this.params.id),
+                    Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div"))
+                        .filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value)))
+                        .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input"))
+                            .map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
             case "updateDoor":
                 this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value));

@@ -80,11 +80,12 @@
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPointOfInterest"
                     [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPointOfInterest" action="createPointOfInterest" confirmButtonText="OK"
-                    [floor]="floor" dialogText="" title="Create Point of Interest">
+                    [floor]="floor" [params]="paramsToGiveToDialogBoxes.createPointOfInterest"
+                    action="createPointOfInterest" confirmButtonText="OK" dialogText=""
+                    title="Create Point of Interest">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors"
-                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
+                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
                     [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>

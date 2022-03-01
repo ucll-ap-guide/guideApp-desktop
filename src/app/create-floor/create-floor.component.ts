@@ -466,8 +466,8 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     getDoorDimensions(doorCoords: Point[]): { height: number, width: number } {
-        let distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
-        let distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
+        const distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
+        const distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
         return {
             height: distance1 > distance2 ? distance1 : distance2,
             width: distance1 > distance2 ? distance2 : distance1
@@ -715,7 +715,8 @@ export class CreateFloorComponent implements AfterViewInit {
                     id: id,
                     defaultValues: [neighbors === null ? [] :
                         neighbors!.split(",").filter((neighbor: string) => neighbor !== "")
-                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])]
+                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])],
+                    values: []
                 });
             }
         }

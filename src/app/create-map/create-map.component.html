@@ -105,7 +105,7 @@
                 </button>
             </div>
             <div *ngIf="jsonData.floors.length !== 0" class="text-white bg-gray-800 rounded-br-md flex gap-y-2 gap-x-4">
-                <button [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
+                <button id="setNeighbordModeButton" [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
                         (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()">
                     <svg fill="currentColor" class="svg-icon h-8 w-8" viewBox="0 0 1024 1024"
                          xmlns="http://www.w3.org/2000/svg">
@@ -114,7 +114,13 @@
                               stroke="currentColor" stroke-width="10"/>
                     </svg>
                 </button>
-                <button (click)="toggleDeleteMode()"
+                <button [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'"
+                        (click)="editMode = !editMode">
+                    <svg class="svg-icon h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                </button>
+                <button id="deleteModeButton" (click)="toggleDeleteMode()"
                         [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                          xmlns="http://www.w3.org/2000/svg">
@@ -135,7 +141,7 @@
             <h2 class="text-2xl mt-2">Floors</h2>
             <div id="floors">
                 <app-create-floor *ngFor="let floor of jsonData.floors" [deleteMode]="deleteMode" [floor]="floor.floor"
-                                  [jsonData]="jsonData" [changeSetNeighborMode]="setNeighborMode">
+                                  [jsonData]="jsonData" [changeSetNeighborMode]="setNeighborMode" [changeEditMode]="editMode">
                 </app-create-floor>
             </div>
 

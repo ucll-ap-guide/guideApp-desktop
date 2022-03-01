@@ -23,6 +23,7 @@ export class CreateMapComponent implements AfterViewInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
     deleteMode = false;
     setNeighborMode = false;
+    editMode = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);

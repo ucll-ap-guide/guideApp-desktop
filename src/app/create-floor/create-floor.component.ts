@@ -166,7 +166,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     });
 
                     if (elem.getAttribute("type") === PolygonType.ROOM) {
-                        elem.addEventListener("click", (e: Event) => {
+                        elem.addEventListener("click", () => {
                             if (self.editMode) {
                                 self.deleteMode = false;
                                 let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
@@ -718,9 +718,10 @@ export class CreateFloorComponent implements AfterViewInit {
                         neighbors!.split(",").filter((neighbor: string) => neighbor !== "")
                             .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])],
                     /*
-                     * The List of values has 3 [] because the first one is to group all possible input type fields (in this cas === 1),
-                     * the second is to group all the input fields for the infinite field type (there are 2 fields in this case,
-                     * but the checkbox doesn't need a select, so it is omitted) and the last one is to group all the different kind of groups of values
+                     * The List of values has 3 [] because the first one is to group all possible input type fields
+                     * (in this case there is only one), the second is to group all the input fields for the infinite
+                     * field type (there are 2 fields in this case, but the checkbox doesn't need a select, so it is
+                     * omitted) and the last one is to group all the different kind of groups of values
                      */
                     values: [[[
                         {

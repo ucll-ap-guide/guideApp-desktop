@@ -27,6 +27,9 @@ export class CreateMapComponent implements AfterViewInit {
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
+    paramsToGiveToDialogBoxes: any = {
+        updateMap: {}
+    };
 
     constructor(public router: Router, private mapService: MapService, private toastr: ToastrService) {
     }
@@ -47,11 +50,7 @@ export class CreateMapComponent implements AfterViewInit {
                 self.moveFileInputField();
             }
         };
-        document.getElementById("editMapDialog")!.addEventListener('click', e => {
-            if (e.target === e.currentTarget) {
-                this.displayEditMapDialog(false);
-            }
-        });
+        this.getMapNames();
     }
 
     /**
@@ -120,7 +119,11 @@ export class CreateMapComponent implements AfterViewInit {
      */
     getMapNames(): void {
         this.mapService.getAllMapNames().subscribe((mapNames: string[]) => {
-            this.mapNames = mapNames;
+            if (mapNames.length === 0) {
+                this.toastr.error('No maps available', '', {positionClass: 'toast-bottom-right'});
+            } else {
+                this.mapNames = mapNames;
+            }
         });
     }
 
@@ -153,33 +156,36 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Displays the map get map from server dialog.
+     * Displays a DialogBox with the given parameters for a certain action.
      *
-     * @param display The dialog will be hidden if false and visible if true.
+     * @param action The name of the DialogBox that needs to be displayed.
+     * @param params The params to give to the DialogBox.
      */
-    displayEditMapDialog(display: boolean): void {
+    displayDialogBox(action: string, params: {}): void {
         this.getMapNames();
-        if (display) {
-            document.getElementById("editMapDialog")!.classList.replace("hidden", "flex");
-        } else {
-            document.getElementById("editMapDialog")!.classList.replace("flex", "hidden");
-        }
+        this.paramsToGiveToDialogBoxes[action] = params;
+        this.paramsToGiveToDialogBoxes[action].self = this;
+        document.getElementById(`${action}DialogBoxFloor0`)!.classList.replace("hidden", "flex");
     }
 
     /**
      * Loads the map from the server with the given name.
      *
      * @param name The name of the map on the server that needs to be loaded.
+     * @param self The instance of the CreateMapComponent.
      */
-    editMap(name: string = (<HTMLSelectElement>document.getElementById("editMapSelect")).value): void {
-        this.displayEditMapDialog(false);
+    editMap(name: string, self: CreateMapComponent): void {
         document.getElementById("submitMap")!.innerText = "Update map";
-        this.clearMap(false);
-        this.mapService.getMap(name).subscribe((v) => {
-            this.jsonData = v;
+        self.clearMap(false);
+        self.mapService.getMap(name).subscribe((map: GuidoMap) => {
+            if (map === null) {
+                self.toastr.error('No map with the given name found.', '', {positionClass: 'toast-bottom-right'});
+            } else {
+                self.jsonData = map;
+            }
         });
-        this.initializedMap = true;
-        this.moveFileInputField();
+        self.initializedMap = true;
+        self.moveFileInputField();
     }
 
     toggleDeleteMode(): void {

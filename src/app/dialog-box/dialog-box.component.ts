@@ -28,7 +28,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
      */
     ngOnChanges(changes: SimpleChanges): void {
         const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
-        if (changes["params"] !== undefined) {
+        if (changes["params"] !== undefined && changes['params'].currentValue !== undefined) {
             // Set default values
             const defaultValues = changes['params'].currentValue.defaultValues;
             if (defaultValues !== undefined) {
@@ -81,7 +81,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                         }
                     } else {
                         if (topLevelChildren.item(i).nodeName === "INPUT") {
-                            // TODO implement search select for normal fields
+                            this.appendSearchSelectField(topLevelChildren.item(i) as HTMLInputElement, values[i]);
                         }
                     }
                 }
@@ -258,13 +258,13 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             setTimeout(() => document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden"), 300);
         });
         input.addEventListener("input", () => this.filterSearchElements(input));
-        input.className = input.className.replace("mb-4", "");
 
         const ul = document.createElement("ul");
         ul.id = input.id + "Values"
         ul.className = "bg-white border-px absolute shadow-lg rounded-md hidden overflow-auto max-h-fit my-px";
-        ul.style.width = 'calc(100% - 3rem)';
-        ul.style.maxHeight = '50%';
+        ul.style.width = "calc(100% - 3rem)";
+        ul.style.maxHeight = "25vh";
+        ul.style.marginTop = "calc(-.9rem)";
         values = values.filter((g: { group: string, values: any[] }) => g.values.length !== 0);
         for (let i = 0; i < values.length; i++) {
             const subUl = document.createElement("ul");
@@ -293,7 +293,10 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         if (document.getElementById(ul.id) !== null) {
             document.getElementById(ul.id)!.replaceWith(ul);
         } else {
-            input.after(ul);
+            const section = document.createElement("section");
+            section.className = "relative"
+            section.append(ul)
+            input.after(section);
         }
         this.filterSearchElements(input);
     }
@@ -354,8 +357,11 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             case "updatePolygon":
                 this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value, this.params.self);
                 break;
+            case "updateMap":
+                this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
+                break;
             default:
-                console.error("This dialog action is currently not supported");
+                console.error(`The dialog action ${this.action} is currently not supported`);
         }
         this.hideDialog();
     }

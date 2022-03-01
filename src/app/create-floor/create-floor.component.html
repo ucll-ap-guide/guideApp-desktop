@@ -2,7 +2,7 @@
     <h3 class="text-black dark:text-white text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
     <div *ngIf="!setNeighborMode" class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
         <label class="text-black dark:text-white cursor-pointer">
-            <input (change)="updateNewBackground($event)" type="file" class="hidden" accept="image/*"/>
+            <input (change)="updateNewBackground($event)" accept="image/*" class="hidden" type="file"/>
             <span class="flex gap-2">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                      xmlns="http://www.w3.org/2000/svg">
@@ -12,10 +12,10 @@
                 <span>Upload image</span>
             </span>
         </label>
-        <button class="text-red-500 flex gap-2 px-2" (click)="removeFloor()">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        <button (click)="removeFloor()" class="text-red-500 flex gap-2 px-2">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
             </svg>
             Remove floor
         </button>
@@ -24,7 +24,7 @@
         <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>
     </div>
 
-    <div class="mt-5 text-white" *ngIf="!setNeighborMode">
+    <div *ngIf="!setNeighborMode" class="mt-5 text-white">
         <button (click)="displayDialogBox('createPolygonWithNVertices', {vertices: 3})"
                 class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Triangle
@@ -59,44 +59,41 @@
         </button>
     </div>
 
-    <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices"
-                    confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the room's name:" title="Create polygon">
+    <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]" [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices"
+                    action="createPolygonWithNVertices"
+                    confirmButtonText="OK" dialogText="Enter the room's name:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
+                    [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}]" [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon"
+                    confirmButtonText="OK" dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor"
-                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', name: 'Door height'}, {defaultValue: 5, inputType: 'number', name: 'Door width'}]"
-                    [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the door's name:" title="Create door">
+                    [floor]="floor"
+                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', name: 'Door height'}, {defaultValue: 5, inputType: 'number', name: 'Door width'}]" [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor"
+                    confirmButtonText="OK" dialogText="Enter the door's name:" title="Create door">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createNode" [formElements]="[{name: 'Node name'}]"
-                    [params]="paramsToGiveToDialogBoxes.createNode" action="createNode" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the node's name:" title="Create node">
+    <app-dialog-box [confirmAction]="createNode" [floor]="floor"
+                    [formElements]="[{name: 'Node name'}]" [params]="paramsToGiveToDialogBoxes.createNode" action="createNode"
+                    confirmButtonText="OK" dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createPointOfInterest"
-                    [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]"
-                    [floor]="floor" [params]="paramsToGiveToDialogBoxes.createPointOfInterest"
-                    action="createPointOfInterest" confirmButtonText="OK" dialogText=""
-                    title="Create Point of Interest">
+    <app-dialog-box [confirmAction]="createPointOfInterest" [floor]="floor"
+                    [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]" [params]="paramsToGiveToDialogBoxes.createPointOfInterest"
+                    action="createPointOfInterest" confirmButtonText="OK" dialogText="" title="Create Point of Interest">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="setNeighbors"
-                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
-                    [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the neighbor's id's:" title="Set neighbors">
+    <app-dialog-box [confirmAction]="setNeighbors" [floor]="floor"
+                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]" [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors"
+                    confirmButtonText="OK" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updateDoor"
-                    [formElements]="[{name: 'Door name'}, {inputType: 'number', name: 'Door height'}, {inputType: 'number', name: 'Door width'}]"
-                    [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Update this door: " title="Update door">
+                    [floor]="floor"
+                    [formElements]="[{name: 'Door name'}, {inputType: 'number', name: 'Door height'}, {inputType: 'number', name: 'Door width'}]" [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor"
+                    confirmButtonText="OK" dialogText="Update this door: " title="Update door">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updatePolygon"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]"
-                    [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Update this room: " title="Update room">
+                    [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}]" [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon"
+                    confirmButtonText="OK" dialogText="Update this room: " title="Update room">
     </app-dialog-box>
 </div>

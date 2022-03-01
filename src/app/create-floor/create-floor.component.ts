@@ -527,7 +527,6 @@ export class CreateFloorComponent implements AfterViewInit {
         let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
         nodes.forEach((elem: Element) => {
             const origin = self.getConnectablePoint(parseInt(elem.id));
-            console.log(origin)
             const neighborsStr = elem.getAttribute("neighbors")!.split(",");
 
             let neighbors: number[];

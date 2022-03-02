@@ -2,7 +2,11 @@ module.exports = {
     darkMode: 'class',
     content: ["./src/**/*.{html,ts}",],
     theme: {
-        extend: {},
+        extend: {
+            borderWidth: {
+                '3': '3px'
+            }
+        },
     },
     plugins: [],
 }

@@ -120,6 +120,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 if (this.formElements[i].tagType === "search-select") {
                     this.appendSearchSelectField(field as HTMLInputElement, this.formElements[i].values);
                 }
+                if (this.formElements[i].required === true) {
+                    document.querySelector(`#${field.id}${(this.formElements[i].values === undefined ? '' : '+section')}`)!.after(this.createErrorField(field as HTMLInputElement));
+                }
             }
         }
         document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.addEventListener('click', (e: MouseEvent) => {
@@ -158,6 +161,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
     createInfiniteFieldsGroup(infiniteFormElements: any[], upperLevelPosition: number): HTMLDivElement {
         const group = document.createElement("div");
+        group.className = "infiniteFieldsGroup";
         for (let j = 0; j < infiniteFormElements.length; j++) {
             const label = this.createLabel(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
             const field = this.createField(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
@@ -167,6 +171,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             if (infiniteFormElements[j].inputType === "checkbox") group.appendChild(label);
             if (infiniteFormElements[j].tagType === "search-select") {
                 this.appendSearchSelectField(field as HTMLInputElement, this.formElements[j].infinite[j].values);
+            } else if (infiniteFormElements[j].required === true && document.getElementById(field.id + "Error") === null) {
+                field.after(this.createErrorField(field as HTMLInputElement));
             }
         }
         return group;
@@ -185,21 +191,28 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     createField(formElement: any, id: string): Element {
         let elem = document.createElement(formElement.tagType && formElement.tagType !== "search-select" ? formElement.tagType : "input");
         elem.id = `${this.action}Floor${this.floor}Input${id}`;
-        elem.className = (formElement.inputType === "checkbox" ? "inline mr-1" : "block") + " bg-white rounded-md py-1.5 px-2 mb-4";
+        elem.className = (formElement.inputType === "checkbox" ? "inline mr-1" : "block") + " bg-white text-gray-700 focus:outline-none focus:shadow-outline rounded-md shadow w-auto py-1.5 px-2 mb-4";
         elem.onkeyup = (event: KeyboardEvent) => {
             if (event.key === "Enter") {
                 this.successfullyCloseDialog();
             }
         };
+        if (formElement.tagType && formElement.tagType === "search-select") {
+            elem.setAttribute("customType", "search-select");
+        }
         elem.required = formElement.required === true;
         switch (elem.nodeName) {
             case "INPUT":
                 (elem as HTMLInputElement).placeholder = formElement.name ? formElement.name : "";
                 elem.type = formElement.inputType ? formElement.inputType : "text";
+                elem.pattern = formElement.pattern === undefined ? "" : formElement.pattern;
                 switch (elem.type) {
                     case "number":
                         if (!isNaN(formElement.min)) {
                             elem.min = formElement.min;
+                        }
+                        if (!isNaN(formElement.max)) {
+                            elem.max = formElement.max;
                         }
                         elem.step = (isNaN(formElement)) ? 1 : formElement.step;
                         break;
@@ -281,6 +294,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 subLi.innerText = values[i].values[j];
                 subLi.addEventListener("click", () => {
                     input.value = values[i].values[j];
+                    input.dispatchEvent(new Event("change", {bubbles: true}));
                     input.dispatchEvent(new Event("input", {bubbles: true}));
                     document.getElementById(input.id + "Values")!.className = document.getElementById(input.id + "Values")!.className.replace("block", "hidden");
                 });
@@ -296,8 +310,25 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             section.className = "relative"
             section.append(ul)
             input.after(section);
+            if (input.required && document.getElementById(input.id + "Error") === null) {
+                section.after(this.createErrorField(input));
+            }
         }
         this.filterSearchElements(input);
+    }
+
+    /**
+     * Creates an error field for the given input.
+     *
+     * @param input The input for which an error fields needs to be created.
+     *              If none are provided the field will work like the normal input field validation.
+     */
+    createErrorField(input: HTMLInputElement): HTMLParagraphElement {
+        const errorField = document.createElement("p");
+        errorField.id = `${input.id}Error`;
+        errorField.className = "text-red-600 mx-3 mb-1 hidden error";
+        input.addEventListener('change', () => this.checkField(input));
+        return errorField;
     }
 
     /**
@@ -310,6 +341,10 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             switch ((topLevelInputs.item(i) as Element).nodeName) {
                 case "INPUT":
                     (topLevelInputs.item(i) as HTMLInputElement).value = this.formElements[i].defaultValue === undefined ? "" : this.formElements[i].defaultValue;
+                    if ((topLevelInputs.item(i) as HTMLInputElement).required) {
+                        topLevelInputs.item(i).className = ((topLevelInputs.item(i) as HTMLInputElement).type === "checkbox" ? "inline mr-1" : "block") + " bg-white text-gray-700 focus:outline-none focus:shadow-outline rounded-md shadow w-auto py-1.5 px-2 mb-4";
+                        document.getElementById(topLevelInputs.item(i).id + "Error")!.className = "text-red-600 mx-3 mb-1 hidden error";
+                    }
                     break;
                 case "DIV":
                     for (let j = 0; j < topLevelInputs.item(i).children.length; j++) {
@@ -322,52 +357,124 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
+     * Checks if input field has a correct value and displays an error message if needed.
+     *
+     * @param input The input field that needs to be checked.
+     */
+    checkField(input: HTMLInputElement): void {
+        const errorField = document.getElementById(`${input.id}Error`) as HTMLParagraphElement;
+        const values = document.getElementById(`${input.id}Values`);
+        errorField.innerText = "";
+
+        if (input.required && input.nodeName === "INPUT") {
+            switch (input.type) {
+                case "text":
+                    if (input.getAttribute("customType") === "search-select") {
+                        if (!(Array.from(values!.querySelectorAll("li>ul>li")) as HTMLLIElement[]).map((e: HTMLLIElement) => e.innerText).includes(input.value) && !(input.value === "" && input.parentElement!.className === "infiniteFieldsGroup")) {
+                            errorField.innerText = "Please choose a correct value from the provided list.";
+                        }
+                    } else if (input.value === "") {
+                        errorField.innerText = "Please provide a value.";
+                    } else if (input.pattern !== "" && !input.value.match(input.pattern)) {
+                        errorField.innerText = "Please provide a valid value.";
+                    }
+                    break;
+                case "number":
+                    if (isNaN(parseFloat(input.value)) && !(input.value === "" && input.parentElement!.className === "infiniteFieldsGroup")) {
+                        errorField.innerText = "The given value must be a number.";
+                    } else if (input.getAttribute("customType") === "search-select") {
+                        if (!(Array.from(values!.querySelectorAll("li>ul>li")) as HTMLLIElement[]).map((e: HTMLLIElement) => e.innerText).includes(input.value) && !(input.value === "" && input.parentElement!.className === "infiniteFieldsGroup")) {
+                            errorField.innerText = "Please choose a value from the provided list.";
+                        }
+                    } else if (parseFloat(input.value) < parseFloat(input.min)) {
+                        errorField.innerText = `The value must be higher or equal to ${input.min}.`;
+                    } else if (parseFloat(input.value) > parseFloat(input.max)) {
+                        errorField.innerText = `The value must be lower or equal to ${input.max}.`;
+                    }
+            }
+        }
+
+        if (errorField.innerText !== "") {
+            errorField.className = errorField.className.replace("hidden", "block");
+            input.className = input.className.replace(" border-3 border-green-600", "");
+            input.className = input.className.replace("mb-4", "mb-0.5 border-3 border-red-600");
+            if (values !== null) {
+                values.style.marginTop = "0";
+            }
+            // remove the margin of the error field and the padding of the input field
+            errorField.style.maxWidth = `${input.offsetWidth - 40}px`;
+        } else {
+            errorField.className = errorField.className.replace("block", "hidden");
+            input.className = input.className.replace("mb-0.5 border-3 border-red-600", "mb-4");
+            input.className += " border-3 border-green-600";
+            if (values !== null) {
+                values.style.marginTop = "calc(-.9rem)";
+            }
+        }
+    }
+
+    /**
+     * Trigger the onChange event for all input fields.
+     */
+    checkAllFields(): void {
+        for (const inputField of Array.from(document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("input"))) {
+            inputField.dispatchEvent(new Event("change", {bubbles: true}));
+        }
+        for (const select of Array.from(document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("select"))) {
+            select.dispatchEvent(new Event("change", {bubbles: true}));
+        }
+    }
+
+    /**
      * Closes the dialog box and executes the confirmAction function that is given to this component.
      */
     successfullyCloseDialog(): void {
-        const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div, #${this.action}InputsFloor${this.floor}>select`);
-        switch (this.action) {
-            case "createPolygonWithNVertices":
-                this.confirmAction(null, (topLevelChildren[0] as HTMLInputElement).value, this.params.vertices, (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[2] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                break;
-            case "createPolygon":
-                if (!isNaN(parseInt((topLevelChildren[2] as HTMLInputElement).value))) {
-                    this.confirmAction(null, (topLevelChildren[0] as HTMLInputElement).value, parseInt((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                }
-                break;
-            case "updatePolygon":
-                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[2] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                break;
-            case "createDoor":
-                this.confirmAction(null, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.emergency, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                break;
-            case "updateDoor":
-                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)));
-                break;
-            case "createNode":
-                this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
-                break;
-            case "createPointOfInterest":
-                this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], [], this.params.self);
-                break;
-            case "createLabel":
-                this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                break;
-            case "updateLabel":
-                this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
-                break;
-            case "setNeighbors":
-                this.confirmAction(parseInt(this.params.id),
-                    Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div"))
-                        .filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value)))
-                        .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
-                break;
-            case "updateMap":
-                this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
-                break;
-            default:
-                console.error(`The dialog action ${this.action} is currently not supported`);
+        this.checkAllFields();
+        if (document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.querySelector(".error.block") === null) {
+            const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div, #${this.action}InputsFloor${this.floor}>select`);
+            switch (this.action) {
+                case "createPolygonWithNVertices":
+                    this.confirmAction(null, (topLevelChildren[0] as HTMLInputElement).value, this.params.vertices, (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[2] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    break;
+                case "createPolygon":
+                    if (!isNaN(parseInt((topLevelChildren[2] as HTMLInputElement).value))) {
+                        this.confirmAction(null, (topLevelChildren[0] as HTMLInputElement).value, parseInt((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    }
+                    break;
+                case "updatePolygon":
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value, (topLevelChildren[2] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    break;
+                case "createDoor":
+                    this.confirmAction(null, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.emergency, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    break;
+                case "updateDoor":
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)));
+                    break;
+                case "createNode":
+                    this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
+                    break;
+                case "createPointOfInterest":
+                    this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], [], this.params.self);
+                    break;
+                case "createLabel":
+                    this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    break;
+                case "updateLabel":
+                    this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    break;
+                case "setNeighbors":
+                    this.confirmAction(parseInt(this.params.id),
+                        Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div"))
+                            .filter((elem: HTMLDivElement) => elem.getElementsByTagName("input")[0].value.trim().length !== 0 && !isNaN(parseInt(elem.getElementsByTagName("input")[0].value)))
+                            .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
+                    break;
+                case "updateMap":
+                    this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
+                    break;
+                default:
+                    console.error(`The dialog action ${this.action} is currently not supported`);
+            }
+            this.hideDialog();
         }
-        this.hideDialog();
     }
 }

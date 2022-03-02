@@ -57,46 +57,53 @@
                 class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
             Point of interest
         </button>
+        <button (click)="displayDialogBox('createLabel', {})"
+                class="bg-blue-400 rounded-md py-2 px-3 m-2 addFigureButton">
+            Label
+        </button>
     </div>
-    <app-dialog-box [confirmAction]="createPolygon" [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', defaultValue: '204,204,204'}]"
+    <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', defaultValue: '204,204,204'}]"
                     [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices"
-                    confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the room's info:" title="Create polygon">
+                    confirmButtonText="OK" dialogText="Enter the room's info:" title="Create polygon">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createPolygon"
+    <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
                     [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}, {name: 'RGB color', defaultValue: '204,204,204'}]"
                     [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Please fill in the following form:" title="Create polygon">
+                    dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createDoor"
-                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', name: 'Door height'}, {defaultValue: 5, inputType: 'number', name: 'Door width'}, {defaultValue: '139,69,19', name: 'RGB color'}]"
+    <app-dialog-box [confirmAction]="updatePolygon" [floor]="floor"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color'}]"
+                    [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon" confirmButtonText="OK"
+                    dialogText="Update this room: " title="Update room">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="createDoor" [floor]="floor"
+                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', min: 0, name: 'Door height', step: 0.01}, {defaultValue: 5, inputType: 'number', min: 0, name: 'Door width', step: 0.01}, {defaultValue: '139,69,19', name: 'RGB color'}]"
                     [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Enter the door's info:" title="Create door">
+                    dialogText="Enter the door's info:" title="Create door">
     </app-dialog-box>
-    <app-dialog-box [confirmAction]="createNode" [floor]="floor"
-                    [formElements]="[{name: 'Node name'}]" [params]="paramsToGiveToDialogBoxes.createNode"
-                    action="createNode"
-                    confirmButtonText="OK" dialogText="Enter the node's name:" title="Create node">
+    <app-dialog-box [confirmAction]="updateDoor" [floor]="floor"
+                    [formElements]="[{name: 'Door name'}, {inputType: 'number', min: 0, name: 'Door height', step: 0.01}, {inputType: 'number', min: 0, name: 'Door width', step: 0.01}, {name: 'RGB color'}]"
+                    [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
+                    dialogText="Update this door: " title="Update door">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="createNode" [floor]="floor" [formElements]="[{name: 'Node name'}]"
+                    [params]="paramsToGiveToDialogBoxes.createNode" action="createNode" confirmButtonText="OK"
+                    dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPointOfInterest" [floor]="floor"
                     [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]"
-                    [params]="paramsToGiveToDialogBoxes.createPointOfInterest"
-                    action="createPointOfInterest" confirmButtonText="OK" dialogText=""
-                    title="Create Point of Interest">
+                    [params]="paramsToGiveToDialogBoxes.createPointOfInterest" action="createPointOfInterest"
+                    confirmButtonText="OK" dialogText="" title="Create Point of Interest">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="createLabel" [floor]="floor"
+                    [formElements]="[{name: 'Description'}, {name: 'RGB color', defaultValue: '163,133,82'}]"
+                    [params]="paramsToGiveToDialogBoxes.createLabel" action="createLabel" confirmButtonText="OK"
+                    dialogText="" title="Create label">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors" [floor]="floor"
                     [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors"
                     confirmButtonText="OK" dialogText="Enter the neighbor's id's:" title="Set neighbors">
-    </app-dialog-box>
-    <app-dialog-box [confirmAction]="updateDoor"
-                    [formElements]="[{name: 'Door name'}, {inputType: 'number', name: 'Door height'}, {inputType: 'number', name: 'Door width'}, {name: 'RGB color'}]"
-                    [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
-                    [floor]="floor" dialogText="Update this door: " title="Update door">
-    </app-dialog-box>
-    <app-dialog-box [confirmAction]="updatePolygon"
-                    [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color'}]" [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon"
-                    confirmButtonText="OK" dialogText="Update this room: " title="Update room">
     </app-dialog-box>
 </div>

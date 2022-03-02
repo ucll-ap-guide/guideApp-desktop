@@ -738,25 +738,22 @@ export class CreateFloorComponent implements AfterViewInit {
                     values: [[[
                         {
                             group: "Stairs",
-                            values: elem.getAttribute("type") === NodeType.STAIRS ?
-                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor - 1 || f.floor === this.floor + 1)
-                                    .map((f: Floor) => f.overlays.nodes)[0].flat(1)
-                                    .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
-                                    .map((g: GuidoNode) => g.id) : []
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.getAttribute("type") === NodeType.STAIRS) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
+                                .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                                .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
+                                .map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Lifts",
-                            values: elem.getAttribute("type") === NodeType.LIFT ?
-                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor - 1 || f.floor === this.floor + 1)
-                                    .map((f: Floor) => f.overlays.nodes)[0].flat(1)
-                                    .filter((g: GuidoNode) => g.type === NodeType.LIFT)
-                                    .map((g: GuidoNode) => g.id) : []
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.getAttribute("type") === NodeType.LIFT) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
+                                .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                                .filter((g: GuidoNode) => g.type === NodeType.LIFT)
+                                .map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Points of interest",
-                            values: ![NodeType.STAIRS, NodeType.LIFT].includes(elem.getAttribute("type") as NodeType) ?
-                                this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
-                                    .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id) : []
+                            values: this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
+                                .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Doors",

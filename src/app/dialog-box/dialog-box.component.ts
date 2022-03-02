@@ -71,7 +71,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                     if (this.formElements[i].infinite !== undefined) {
                         // For all input/select field GROUPS in top level children
                         for (let j = 0; j < topLevelChildren[i].children.length; j++) {
-                            this.formElements[i].infinite[j].values = values[i][j] ? values[i][j] : [];
+                            this.formElements[i].infinite[i].values = values[i][j] ? values[i][j] : [];
                             // For all input/select fields in groups
                             for (let k = 0; k < topLevelChildren[i].children[j].getElementsByTagName("input").length; k++) {
                                 if (values[i][k] !== undefined) {
@@ -261,8 +261,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
         const ul = document.createElement("ul");
         ul.id = input.id + "Values"
-        ul.className = "bg-white border-px absolute shadow-lg rounded-md hidden overflow-auto max-h-fit my-px";
-        ul.style.width = "calc(100% - 3rem)";
+        ul.className = "bg-white border-px absolute shadow-lg rounded-md hidden overflow-auto w-full max-h-fit my-px";
         ul.style.maxHeight = "25vh";
         ul.style.marginTop = "calc(-.9rem)";
         values = values.filter((g: { group: string, values: any[] }) => g.values.length !== 0);

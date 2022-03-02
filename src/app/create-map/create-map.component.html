@@ -69,8 +69,8 @@
 
 
     <div [hidden]="!initializedMap" class="bg-white dark:bg-black rounded-lg m-10">
-        <div class="flex justify-center sticky top-0 z-50 w-full">
-            <div [class]="(jsonData.floors.length === 0 ? 'rounded-br-md' : '') + ' text-white bg-gray-800 rounded-bl-md flex gap-y-2 gap-x-4'">
+        <div class="flex justify-center top-0 z-50 w-full" id="editMapNav">
+            <div class="text-white bg-gray-800 rounded-b-md flex flex-wrap gap-y-2 gap-x-4">
                 <button (click)="saveMapLocally()"
                         class="flex gap-2 p-4 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white hover:shadow">
                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 290 290"
@@ -89,7 +89,7 @@
                             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                                   stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                         </svg>
-                        <span>Get map from computer</span>
+                        <span class="text-center">Get map from computer</span>
                     </span>
                 </label>
                 <button (click)="displayDialogBox('updateMap', {values: [[{group: '', values: mapNames}]]})"
@@ -109,40 +109,43 @@
                     </svg>
                     <span id="submitMap">Upload map</span>
                 </button>
-            </div>
-            <div *ngIf="jsonData.floors.length !== 0" class="text-white bg-gray-800 rounded-br-md flex gap-y-2 gap-x-4">
-                <button (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()"
-                        [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
-                        id="setNeighbordModeButton">
-                    <svg class="svg-icon h-8 w-8" fill="currentColor" viewBox="0 0 1024 1024"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M236.1 757.3l533.6-524 25.9 26.6-533.7 524z" stroke="currentColor" stroke-width="10"/>
-                        <path d="M837.2 66.4c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.5c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7zM185 717.3c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.6c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7z"
-                              stroke="currentColor" stroke-width="10"/>
-                    </svg>
-                </button>
-                <button (click)="editMode = !editMode"
-                        [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'">
-                    <svg class="svg-icon h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                              stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-                    </svg>
-                </button>
-                <button (click)="toggleDeleteMode()" [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
-                        id="deleteModeButton">
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M290.422,79.244L220.034,8.857c-11.794-11.795-30.986-11.795-42.78,0C175.866,10.245,12.971,173.14,8.867,177.244 c-11.822,11.821-11.824,30.957,0,42.78l70.388,70.388c11.821,11.822,30.957,11.824,42.78,0 c1.046-1.046,165.357-165.357,168.388-168.388C302.244,110.203,302.246,91.066,290.422,79.244z M110.367,278.744 c-5.374,5.373-14.071,5.373-19.446,0l-70.388-70.388c-5.373-5.374-5.375-14.071,0-19.446l34.61-34.61l89.834,89.834 L110.367,278.744z M278.755,110.357l-122.111,122.11l-89.833-89.833l122.11-122.111c5.374-5.374,14.071-5.374,19.446,0 l70.388,70.388C284.129,96.285,284.129,104.983,278.755,110.357z"/>
-                    </svg>
-                </button>
-                <button (click)="clearMap()" class="text-red-500 flex gap-2 p-4">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                    </svg>
-                    Clear whole map
-                </button>
+                <ng-container *ngIf="jsonData.floors.length !== 0"
+                              class="text-white bg-gray-800 flex gap-y-2 gap-x-4">
+                    <button (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()"
+                            [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
+                            id="setNeighbordModeButton">
+                        <svg class="svg-icon h-8 w-8" fill="currentColor" viewBox="0 0 1024 1024"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M236.1 757.3l533.6-524 25.9 26.6-533.7 524z" stroke="currentColor"
+                                  stroke-width="10"/>
+                            <path d="M837.2 66.4c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.5c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7zM185 717.3c-66.8 0-121 54.2-121 121s54.2 121 121 121 121-54.2 121-121-54.2-121-121-121z m-0.1 203.6c-45.7 0-82.7-37-82.7-82.7s37-82.7 82.7-82.7 82.7 37 82.7 82.7-37 82.7-82.7 82.7z"
+                                  stroke="currentColor" stroke-width="10"/>
+                        </svg>
+                    </button>
+                    <button (click)="editMode = !editMode"
+                            [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'">
+                        <svg class="svg-icon h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+                        </svg>
+                    </button>
+                    <button (click)="toggleDeleteMode()" [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
+                            id="deleteModeButton">
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M290.422,79.244L220.034,8.857c-11.794-11.795-30.986-11.795-42.78,0C175.866,10.245,12.971,173.14,8.867,177.244 c-11.822,11.821-11.824,30.957,0,42.78l70.388,70.388c11.821,11.822,30.957,11.824,42.78,0 c1.046-1.046,165.357-165.357,168.388-168.388C302.244,110.203,302.246,91.066,290.422,79.244z M110.367,278.744 c-5.374,5.373-14.071,5.373-19.446,0l-70.388-70.388c-5.373-5.374-5.375-14.071,0-19.446l34.61-34.61l89.834,89.834 L110.367,278.744z M278.755,110.357l-122.111,122.11l-89.833-89.833l122.11-122.111c5.374-5.374,14.071-5.374,19.446,0 l70.388,70.388C284.129,96.285,284.129,104.983,278.755,110.357z"/>
+                        </svg>
+                    </button>
+                    <button (click)="clearMap()" class="text-red-500 flex gap-2 p-4">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"
+                                  stroke-width="2"/>
+                        </svg>
+                        Clear whole map
+                    </button>
+                </ng-container>
             </div>
         </div>
         <h1 class="text-black dark:text-white text-3xl mx-2 md:mx-4 mt-2 font-semibold">{{jsonData.name}}</h1>

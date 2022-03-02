@@ -14,10 +14,8 @@ declare var d3: any;
 
 @Component({
     selector: 'create-map',
-    templateUrl: './create-map.component.html',
-    styles: [`
-        @import "https://dciarletta.github.io/d3-floorplan/d3.floorplan.css";
-    `]
+    templateUrl: 'create-map.component.html',
+    styleUrls: ['create-map.component.css']
 })
 export class CreateMapComponent implements AfterViewInit {
     jsonData = new GuidoMap("UCLL", 0, 0);

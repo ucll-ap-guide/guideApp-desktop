@@ -1,0 +1,7 @@
+@import "https://dciarletta.github.io/d3-floorplan/d3.floorplan.css";
+
+@media (min-width: 725px) {
+    #editMapNav {
+        position: sticky;
+    }
+}

@@ -10,7 +10,7 @@ export class GuidoNode {
         public displayPoints: Point[],
         public neighbors: number[],
         public type: NodeType,
-        public color: number[] = [0,0,0]
+        public color: number[]
     ) {
     }
 

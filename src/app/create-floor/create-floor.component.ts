@@ -104,7 +104,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
                     let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, this);
+                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -174,9 +174,9 @@ export class CreateFloorComponent implements AfterViewInit {
                                 let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
                                 let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
                                 self.displayDialogBox("updatePolygon", {
-                                    defaultValues: [polygons[index].name, polygons[index].description],
+                                    defaultValues: [polygons[index].name, polygons[index].description, polygons[index].color.join(",")],
                                     id: elem.id
-                                })
+                                });
                             }
                         });
                     }
@@ -197,12 +197,15 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
     }
 
-    updateDoor(id: number, name: string, height: number, width: number) {
+    updateDoor(id: number, name: string, height: number, width: number, color: number[]) {
         let door = document.querySelector(`[id='${String(id)}']`)!;
+        console.log(id, name, height, width, color)
+        console.log(door);
         let previousPoints = CreateFloorComponent.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
         door.setAttribute("height", String(height));
         door.setAttribute("width", String(width));
+        door.setAttribute("fill", "rgb(" + color.join(",") + ")");
 
         //Point used in reconstructing the polygon after dragging
         let toBuildFrom = previousPoints[0];
@@ -224,11 +227,12 @@ export class CreateFloorComponent implements AfterViewInit {
         door.setAttribute("points", pointsString);
     }
 
-    updatePolygon(id: number, name: string, description: string, self: CreateFloorComponent = this) {
+    updatePolygon(id: number, name: string, description: string, color: number[], self: CreateFloorComponent = this) {
         let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
         let index = polygons.map(elem => elem.id).indexOf(id);
         polygons[index].name = name;
         polygons[index].description = description;
+        polygons[index].color = color;
 
         self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
@@ -325,9 +329,10 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param name The name of the polygon
      * @param amountOfVertices The amount of vertices each room has
      * @param description The description of rooms purpose
+     * @param color The color of the polygon
      * @param self The instance of the CreateFloorComponent class
      */
-    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, self: CreateFloorComponent = this) {
+    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, color: number[] = [204, 204, 204], self: CreateFloorComponent = this) {
         let radius = 30;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
@@ -339,7 +344,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices));
+        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices, color));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }
@@ -588,7 +593,7 @@ export class CreateFloorComponent implements AfterViewInit {
         const origin = new Point(25, 25);
 
         const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, origin, [], [], nodeType));
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, origin, [], [], nodeType, []));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
@@ -597,7 +602,8 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a door
      */
-    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139,69,19], self: CreateFloorComponent = this): void {
+        let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
         let origin = new Point(25, 25);
 
         if (previousPoints === null) {
@@ -611,7 +617,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let door = d3.select("#doors" + self.floor)
             .append("polygon")
-            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
+            .attr("id", id)
             .attr("points", previousPoints)
             .attr("width", width)
             .attr("height", height)
@@ -623,6 +629,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("removable", "")
             .attr("floor", self.floor)
             .attr("degreesRotated", 0)
+            .attr("fill", "rgb(" + color.join(",") + ")")
             .on("contextmenu", self.rotateDoor)
             .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode) {
@@ -634,11 +641,9 @@ export class CreateFloorComponent implements AfterViewInit {
         door.node().addEventListener("click", (e: Event) => {
             if (self.editMode) {
                 self.deleteMode = false;
-                self.displayDialogBox("updateDoor", {
-                    defaultValues: [
-                        door.attr("name"), door.attr("height"), door.attr("width")
-                    ], id: previousId === null ? self.jsonData.lastId + 1 : previousId
-                })
+                self.displayDialogBox("updateDoor", {defaultValues: [
+                        door.attr("name"), door.attr("height"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
+                    ], id: id})
             } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }

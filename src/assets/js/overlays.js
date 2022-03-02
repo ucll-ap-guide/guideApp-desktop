@@ -151,6 +151,10 @@ d3.floorplan.overlays = function () {
                     elem.setAttribute("fill", "#0004ff");
                 } else {
                     elem.setAttribute("removable", "");
+                    const index = data.polygons.map(elem => parseInt(elem.id)).indexOf(parseInt(polygons[0][i].id));
+                    if (data.polygons[index].color) {
+                        elem.setAttribute("fill", "rgb(" +  data.polygons[index].color.join(",") + ")");
+                    }
                 }
             }
 

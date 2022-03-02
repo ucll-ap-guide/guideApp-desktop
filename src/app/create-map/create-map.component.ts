@@ -312,7 +312,8 @@ export class CreateMapComponent implements AfterViewInit {
                 new Point(cx, cy),
                 [new Point(cx + r, cy + r)],
                 neighbors === null ? [] : neighbors,
-                NodeType.NODE
+                NodeType.NODE,
+                []
             );
             handledNodes.push(handledDoor);
             this.jsonData.lastId++;
@@ -347,6 +348,7 @@ export class CreateMapComponent implements AfterViewInit {
                 const neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
                 const neighbors = neighborsStr.filter((e: string) => e !== "").map(elem => parseInt(elem));
                 const id = parseInt(String(doors[i].getAttribute("id")));
+                const color = String(doors[i].getAttribute("fill")).substring(4).slice(0,-1).split(",").map(elem => parseFloat(elem));
 
                 let handledDoor = new GuidoNode(
                     id,
@@ -355,7 +357,8 @@ export class CreateMapComponent implements AfterViewInit {
                     new Point(doorCoords.middle.x, doorCoords.middle.y),
                     doorCoords.displayPoints,
                     neighborsStr.length === 0 ? [] : neighbors,
-                    nodeType
+                    nodeType,
+                    color
                 );
                 handledDoors.push(handledDoor);
                 this.jsonData.lastId++;

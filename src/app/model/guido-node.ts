@@ -9,7 +9,8 @@ export class GuidoNode {
         public point: Point,
         public displayPoints: Point[],
         public neighbors: number[],
-        public type: NodeType
+        public type: NodeType,
+        public color: number[]
     ) {
     }
 
@@ -21,7 +22,8 @@ export class GuidoNode {
             this.point.copy(),
             this.displayPoints.map((point: Point) => point.copy()),
             this.neighbors.map((neighbor: number) => neighbor),
-            this.type
+            this.type,
+            this.color
         );
     }
 }

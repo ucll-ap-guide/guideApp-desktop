@@ -71,6 +71,10 @@ const pointsOfInterest = {
     "Hand sanitizer": {
         d: "M17 2v2l-4-.001V6h3v2c2.21 0 4 1.79 4 4v8c0 1.105-.895 2-2 2H6c-1.105 0-2-.895-2-2v-8c0-2.21 1.79-4 4-4V6h3V3.999L7.5 4c-.63 0-1.37.49-2.2 1.6L3.7 4.4C4.87 2.84 6.13 2 7.5 2H17zm-1 8H8c-1.105 0-2 .895-2 2v8h12v-8c0-1.105-.895-2-2-2zm-3 2v2h2v2h-2.001L13 18h-2l-.001-2H9v-2h2v-2h2z",
         viewBox: [0, 0, 24, 24]
+    },
+    "Info": {
+        d: "M230,0C102.975,0,0,102.975,0,230s102.975,230,230,230s230-102.974,230-230S357.025,0,230,0z M268.333,377.36 c0,8.676-7.034,15.71-15.71,15.71h-43.101c-8.676,0-15.71-7.034-15.71-15.71V202.477c0-8.676,7.033-15.71,15.71-15.71h43.101 c8.676,0,15.71,7.033,15.71,15.71V377.36z M230,157c-21.539,0-39-17.461-39-39s17.461-39,39-39s39,17.461,39,39 S251.539,157,230,157z",
+        viewBox: [0, 0, 460, 460]
     }
 }
 
@@ -124,7 +128,7 @@ d3.floorplan.overlays = function () {
                 .attr("height", y.range()[1] - y.range()[0])
                 .attr("width", x.range()[1] - x.range()[0]);
 
-            // draw polygons (currently only type supported)
+            // draw polygons
             var polygons = g.selectAll("path.polygon")
                 .data(data.polygons || [], function (d) {
                     return d.id;
@@ -175,7 +179,7 @@ d3.floorplan.overlays = function () {
                     return d.name || d.id;
                 });
 
-            // draw nodes (currently only type supported)
+            // draw nodes
             var nodes = g.selectAll("svg.pointOfInterest")
                 .data(data.nodes || [], function (d) {
                     return d.id;
@@ -246,6 +250,77 @@ d3.floorplan.overlays = function () {
             }
 
             nodes.exit().transition().style("opacity", 1e-6).remove();
+            g.attr("id", function (a) {
+                return a.id;
+            });
+            g.attr("floor", function (a) {
+                return a.floor;
+            })
+
+            var labels = g.selectAll("svg.label")
+                .data(data.labels || [], function (d) {
+                    return d.id;
+                });
+
+            const labelGroup = labels.enter().append("svg")
+                .attr("height", "30px")
+                .attr("width", "30px")
+                .attr("removable", "")
+                .attr("label", "")
+                .attr("type", "Label")
+                .attr("class", "label")
+                .attr("vector-effect", "non-scaling-stroke")
+                .attr("pointer-events", "all")
+                .on("mousedown", function (d) {
+                    selectCallbacks.forEach(function (cb) {
+                        cb(d.id);
+                    });
+                })
+                .call(d3.behavior.drag().on("drag", function () {
+                    const label = data.labels.find((elem) => elem.id === parseInt(this.id));
+                    let x = d3.event.x - (parseInt(d3.select(this).attr("width").split("px")) / 2);
+                    let y = d3.event.y - (parseInt(d3.select(this).attr("height").split("px")) / 2);
+
+                    label.point = new Point(x, y);
+
+                    // Apply the translation to the shape:
+                    d3.select(this)
+                        .attr("x", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        .attr("y", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
+                }));
+
+            for (let i = 0; i < labels[0].length; i++) {
+                labels[0][i].id = data.labels[i].id;
+                const elem = document.querySelector("[id='" + data.labels[i].id + "']");
+                elem.setAttribute("id", data.labels[i].id);
+                elem.setAttribute("pointsOfInterestId", data.labels[i].id);
+                elem.setAttribute("x", data.labels[i].point.x + 15);
+                elem.setAttribute("y", data.labels[i].point.y + 15);
+            }
+
+            labelGroup.append("rect")
+                .attr("height", "100%")
+                .attr("width", "100%")
+                .attr("rx", "7");
+
+            labelGroup.append("svg")
+                .attr("height", "100%")
+                .attr("width", "100%")
+                .append("path")
+                .attr("fill", "#fff");
+
+            for (let i = 0; i < labels[0].length; i++) {
+                const pointOfInterest = document.querySelector("[id='" + data.labels[i].id + "']");
+                const logo = pointsOfInterest["Info"];
+                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
+                pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
+                // Needed for when user selects child instead of parent for remove element
+                pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
+                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
+                pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
+            }
+
+            labels.exit().transition().style("opacity", 1e-6).remove();
             g.attr("id", function (a) {
                 return a.id;
             });

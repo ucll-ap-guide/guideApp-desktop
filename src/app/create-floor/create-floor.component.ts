@@ -7,6 +7,7 @@ import {Floor} from "../model/floor";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 import {ToastrService} from "ngx-toastr";
+import {Label} from "../model/label";
 
 declare var d3: any;
 
@@ -61,6 +62,8 @@ export class CreateFloorComponent implements AfterViewInit {
         updateDoor: {},
         createNode: {},
         createPointOfInterest: {},
+        createLabel: {},
+        updateLabel: {},
         setNeighbors: {}
     };
 
@@ -69,7 +72,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         this.regenerateFloorMap(true);
-        let floor = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor) as Floor;
+        let floor = this.jsonData.floors.find((f: Floor) => f.floor === this.floor) as Floor;
         this.mapData[this.overlays.id()] = floor.overlays;
 
         let svg = d3.select("#demo" + this.floor).append("svg")
@@ -117,7 +120,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     getFloorName(): string {
-        return this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.name;
+        return this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.name;
     }
 
     getPointsOfInterest(): string[] {
@@ -160,7 +163,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         Array.from(document.querySelectorAll(`[removable]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
-                if ((elem.getAttribute("type")) && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
+                if (elem.getAttribute("type") && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
                     elem.addEventListener("click", (e: Event) => {
                         if (self.deleteMode && !self.setNeighborMode) {
                             this.removeElement(e);
@@ -175,6 +178,19 @@ export class CreateFloorComponent implements AfterViewInit {
                                 let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
                                 self.displayDialogBox("updatePolygon", {
                                     defaultValues: [polygons[index].name, polygons[index].description, polygons[index].color.join(",")],
+                                    id: elem.id
+                                });
+                            }
+                        });
+                    } else if (elem.getAttribute("type") === "Label") {
+                        console.log("eeeeeeeeeee")
+                        elem.addEventListener("click", () => {
+                            if (self.editMode) {
+                                self.deleteMode = false;
+                                let labels = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+                                let index = labels.map(elem => elem.id).indexOf(parseInt(elem.id));
+                                self.displayDialogBox("updateLabel", {
+                                    defaultValues: [labels[index].description, labels[index].color.join(",")],
                                     id: elem.id
                                 });
                             }
@@ -197,10 +213,8 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
     }
 
-    updateDoor(id: number, name: string, height: number, width: number, color: number[]) {
+    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number]) {
         let door = document.querySelector(`[id='${String(id)}']`)!;
-        console.log(id, name, height, width, color)
-        console.log(door);
         let previousPoints = CreateFloorComponent.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
         door.setAttribute("height", String(height));
@@ -227,7 +241,7 @@ export class CreateFloorComponent implements AfterViewInit {
         door.setAttribute("points", pointsString);
     }
 
-    updatePolygon(id: number, name: string, description: string, color: number[], self: CreateFloorComponent = this) {
+    updatePolygon(id: number, name: string, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
         let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
         let index = polygons.map(elem => elem.id).indexOf(id);
         polygons[index].name = name;
@@ -235,6 +249,16 @@ export class CreateFloorComponent implements AfterViewInit {
         polygons[index].color = color;
 
         self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
+        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+    }
+
+    updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
+        let labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+        let index = labels.map(elem => elem.id).indexOf(id);
+        labels[index].description = description;
+        labels[index].color = color;
+
+        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels = labels;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
     }
 
@@ -249,7 +273,7 @@ export class CreateFloorComponent implements AfterViewInit {
             let type: string = document.querySelector(`[id='${String(id)}']`)!.getAttribute("type")!;
             switch (type) {
                 case PolygonType.ROOM:
-                    let array: Polygon[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
+                    let array: Polygon[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
                     let index = array.map(function (x: Polygon) {
                         return x.id;
                     }).indexOf(id);
@@ -268,8 +292,18 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
                     break;
 
+                case "Label":
+                    let labelsArray: Label[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.labels;
+                    let j = labelsArray.map(function (x: Label) {
+                        return x.id;
+                    }).indexOf(id);
+                    if (j > -1) {
+                        labelsArray.splice(j, 1);
+                    }
+                    break;
+
                 default:
-                    let nodesArray: GuidoNode[] = this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
+                    let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
                     let i = nodesArray.map(function (x: GuidoNode) {
                         return x.id;
                     }).indexOf(id);
@@ -278,7 +312,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
             }
         }
-        this.loadData(this.jsonData["floors"].find((f: Floor) => f.floor === this.floor)!);
+        this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
     }
 
     removeNodeFromNeighborData(id: number) {
@@ -451,7 +485,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 .addLayer(this.overlays);
 
             if (!force)
-                this.loadData(this.jsonData["floors"].find((f: any) => f.floor === this.floor)!);
+                this.loadData(this.jsonData.floors.find((f: any) => f.floor === this.floor)!);
         }
     }
 
@@ -590,10 +624,16 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     createPointOfInterest(nodeType: NodeType, neighbors: number[] = [], self: CreateFloorComponent = this): void {
-        const origin = new Point(25, 25);
-
         const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, origin, [], [], nodeType, []));
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, []));
+
+        self.jsonData.lastId += 1;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+    }
+
+    createLabel(description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
+        const labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+        labels.push(new Label(self.jsonData.lastId + 1, description, new Point(25, 25), color));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
@@ -602,7 +642,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a door
      */
-    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139,69,19], self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], self: CreateFloorComponent = this): void {
         let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
         let origin = new Point(25, 25);
 
@@ -641,9 +681,11 @@ export class CreateFloorComponent implements AfterViewInit {
         door.node().addEventListener("click", (e: Event) => {
             if (self.editMode) {
                 self.deleteMode = false;
-                self.displayDialogBox("updateDoor", {defaultValues: [
+                self.displayDialogBox("updateDoor", {
+                    defaultValues: [
                         door.attr("name"), door.attr("height"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
-                    ], id: id})
+                    ], id: id
+                })
             } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }

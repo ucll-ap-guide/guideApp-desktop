@@ -183,7 +183,6 @@ export class CreateFloorComponent implements AfterViewInit {
                             }
                         });
                     } else if (elem.getAttribute("type") === "Label") {
-                        console.log("eeeeeeeeeee")
                         elem.addEventListener("click", () => {
                             if (self.editMode) {
                                 self.deleteMode = false;

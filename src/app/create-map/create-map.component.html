@@ -206,7 +206,7 @@
     </div>
 
     <app-dialog-box [confirmAction]="editMap" [floor]="0"
-                    [formElements]="[{name: 'Map', tagType: 'search-select', values: []}]"
+                    [formElements]="[{name: 'Map', required: true, tagType: 'search-select', values: []}]"
                     [params]="paramsToGiveToDialogBoxes.updateMap" action="updateMap" confirmButtonText="OK"
                     dialogText="Which of the following maps do you want to edit?" title="Edit map">
     </app-dialog-box>

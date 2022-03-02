@@ -63,27 +63,27 @@
         </button>
     </div>
     <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', defaultValue: '204,204,204'}]"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', defaultValue: '100,100,100', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.createPolygonWithNVertices" action="createPolygonWithNVertices"
                     confirmButtonText="OK" dialogText="Enter the room's info:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createPolygon" [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}, {name: 'RGB color', defaultValue: '204,204,204'}]"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {inputType: 'number', min: 2, required: true, name: 'Number of vertices'}, {name: 'RGB color', defaultValue: '100,100,100', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.createPolygon" action="createPolygon" confirmButtonText="OK"
                     dialogText="Please fill in the following form:" title="Create polygon">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updatePolygon" [floor]="floor"
-                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color'}]"
+                    [formElements]="[{name: 'Room name'}, {name: 'Room description'}, {name: 'RGB color', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.updatePolygon" action="updatePolygon" confirmButtonText="OK"
                     dialogText="Update this room: " title="Update room">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor" [floor]="floor"
-                    [formElements]="[{name: 'Door name'}, {defaultValue: 25, inputType: 'number', min: 0, name: 'Door height', step: 0.01}, {defaultValue: 5, inputType: 'number', min: 0, name: 'Door width', step: 0.01}, {defaultValue: '139,69,19', name: 'RGB color'}]"
+                    [formElements]="[{name: 'Door name', required: true}, {defaultValue: 25, inputType: 'number', min: 0, name: 'Door height', required: true, step: 0.01}, {defaultValue: 5, inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {defaultValue: '139,69,19', name: 'RGB color', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor" confirmButtonText="OK"
                     dialogText="Enter the door's info:" title="Create door">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updateDoor" [floor]="floor"
-                    [formElements]="[{name: 'Door name'}, {inputType: 'number', min: 0, name: 'Door height', step: 0.01}, {inputType: 'number', min: 0, name: 'Door width', step: 0.01}, {name: 'RGB color'}]"
+                    [formElements]="[{name: 'Door name', required: true}, {inputType: 'number', min: 0, name: 'Door height', required: true, step: 0.01}, {inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {name: 'RGB color', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
                     dialogText="Update this door: " title="Update door">
     </app-dialog-box>
@@ -97,17 +97,17 @@
                     confirmButtonText="OK" dialogText="" title="Create Point of Interest">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createLabel" [floor]="floor"
-                    [formElements]="[{name: 'Description'}, {name: 'RGB color', defaultValue: '163,133,82'}]"
+                    [formElements]="[{name: 'Description', required: true}, {name: 'RGB color', defaultValue: '163,133,82', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.createLabel" action="createLabel" confirmButtonText="OK"
                     dialogText="Enter the label's description" title="Create label">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updateLabel" [floor]="floor"
-                    [formElements]="[{name: 'Description'}, {name: 'RGB color'}]"
+                    [formElements]="[{name: 'Description', required: true}, {name: 'RGB color', pattern: '^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true}]"
                     [params]="paramsToGiveToDialogBoxes.updateLabel" action="updateLabel" confirmButtonText="OK"
                     dialogText="Update the label:" title="Update label">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors" [floor]="floor"
-                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
+                    [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, required: true, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors"
                     confirmButtonText="OK" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>

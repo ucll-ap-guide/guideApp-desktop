@@ -336,7 +336,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 }
                 break;
             case "createDoor":
-                this.confirmAction(null, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.emergency, this.params.self);
+                this.confirmAction(null, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.emergency, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseFloat(elem)), this.params.self);
                 break;
             case "createNode":
                 this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
@@ -351,7 +351,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                         .map((group: HTMLDivElement) => Array.from(group.getElementsByTagName("input")).map((elem: HTMLInputElement) => elem.type === "checkbox" ? elem.checked : elem.value)), this.params.self);
                 break;
             case "updateDoor":
-                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value));
+                this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseFloat(elem)));
                 break;
             case "updatePolygon":
                 this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value,  (topLevelChildren[2] as HTMLInputElement).value.split(",").map(elem => parseFloat(elem)), this.params.self);

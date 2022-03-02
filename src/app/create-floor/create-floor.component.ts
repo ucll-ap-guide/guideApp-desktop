@@ -104,7 +104,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
                     let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, this);
+                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, CreateFloorComponent.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -197,12 +197,15 @@ export class CreateFloorComponent implements AfterViewInit {
         this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
     }
 
-    updateDoor(id: number, name: string, height: number, width: number) {
+    updateDoor(id: number, name: string, height: number, width: number, color: number[]) {
         let door = document.querySelector(`[id='${String(id)}']`)!;
+        console.log(id, name, height, width, color)
+        console.log(door);
         let previousPoints = CreateFloorComponent.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
         door.setAttribute("height", String(height));
         door.setAttribute("width", String(width));
+        door.setAttribute("fill", "rgb(" + color.join(",") + ")");
 
         //Point used in reconstructing the polygon after dragging
         let toBuildFrom = previousPoints[0];
@@ -599,7 +602,8 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a door
      */
-    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139,69,19], self: CreateFloorComponent = this): void {
+        let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
         let origin = new Point(25, 25);
 
         if (previousPoints === null) {
@@ -613,7 +617,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         let door = d3.select("#doors" + self.floor)
             .append("polygon")
-            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
+            .attr("id", id)
             .attr("points", previousPoints)
             .attr("width", width)
             .attr("height", height)
@@ -625,6 +629,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("removable", "")
             .attr("floor", self.floor)
             .attr("degreesRotated", 0)
+            .attr("fill", "rgb(" + color.join(",") + ")")
             .on("contextmenu", self.rotateDoor)
             .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode) {
@@ -636,11 +641,9 @@ export class CreateFloorComponent implements AfterViewInit {
         door.node().addEventListener("click", (e: Event) => {
             if (self.editMode) {
                 self.deleteMode = false;
-                self.displayDialogBox("updateDoor", {
-                    defaultValues: [
-                        door.attr("name"), door.attr("height"), door.attr("width")
-                    ], id: previousId === null ? self.jsonData.lastId + 1 : previousId
-                })
+                self.displayDialogBox("updateDoor", {defaultValues: [
+                        door.attr("name"), door.attr("height"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
+                    ], id: id})
             } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }

@@ -267,6 +267,7 @@ d3.floorplan.overlays = function () {
                 .attr("width", "30px")
                 .attr("removable", "")
                 .attr("label", "")
+                .attr("type", "Label")
                 .attr("class", "label")
                 .attr("vector-effect", "non-scaling-stroke")
                 .attr("pointer-events", "all")
@@ -293,7 +294,6 @@ d3.floorplan.overlays = function () {
                 const elem = document.querySelector("[id='" + data.labels[i].id + "']");
                 elem.setAttribute("id", data.labels[i].id);
                 elem.setAttribute("pointsOfInterestId", data.labels[i].id);
-                elem.setAttribute("type", data.labels[i].type);
                 elem.setAttribute("x", data.labels[i].point.x + 15);
                 elem.setAttribute("y", data.labels[i].point.y + 15);
             }
@@ -311,7 +311,6 @@ d3.floorplan.overlays = function () {
 
             for (let i = 0; i < labels[0].length; i++) {
                 const pointOfInterest = document.querySelector("[id='" + data.labels[i].id + "']");
-                pointOfInterest.setAttribute("floor", data.labels[i].floor);
                 const logo = pointsOfInterest["Info"];
                 pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
                 pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);

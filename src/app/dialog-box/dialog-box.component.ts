@@ -353,6 +353,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             case "createLabel":
                 this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
                 break;
+            case "updateLabel":
+                this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                break;
             case "setNeighbors":
                 this.confirmAction(parseInt(this.params.id),
                     Array.from((topLevelChildren[0] as HTMLDivElement).getElementsByTagName("div"))

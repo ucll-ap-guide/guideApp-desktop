@@ -99,7 +99,12 @@
     <app-dialog-box [confirmAction]="createLabel" [floor]="floor"
                     [formElements]="[{name: 'Description'}, {name: 'RGB color', defaultValue: '163,133,82'}]"
                     [params]="paramsToGiveToDialogBoxes.createLabel" action="createLabel" confirmButtonText="OK"
-                    dialogText="" title="Create label">
+                    dialogText="Enter the label's description" title="Create label">
+    </app-dialog-box>
+    <app-dialog-box [confirmAction]="updateLabel" [floor]="floor"
+                    [formElements]="[{name: 'Description'}, {name: 'RGB color'}]"
+                    [params]="paramsToGiveToDialogBoxes.updateLabel" action="updateLabel" confirmButtonText="OK"
+                    dialogText="Update the label:" title="Update label">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors" [floor]="floor"
                     [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"

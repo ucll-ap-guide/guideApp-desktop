@@ -164,8 +164,8 @@ export class CreateFloorComponent implements AfterViewInit {
         Array.from(document.querySelectorAll(`[removable]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 if (elem.getAttribute("type") && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
-                    elem.addEventListener("click", (e: Event) => {
-                        if (self.deleteMode && !self.setNeighborMode && !d3.event.ctrlKey) {
+                    elem.addEventListener("click", (e: Event) => {// @ts-ignore
+                        if (self.deleteMode && !self.setNeighborMode && !e.ctrlKey) {
                             this.removeElement(e);
                         }
                     });
@@ -312,6 +312,10 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
             }
         }
+        document.getElementById("demo" + this.floor + "lineGroup")!.setAttribute("transform", "");
+        document.getElementById("doors" + this.floor)!.setAttribute("transform", "");
+        document.getElementById("nodes" + this.floor)!.setAttribute("transform", "");
+        document.getElementById("pointsOfInterest" + this.floor)!.setAttribute("transform", "");
         this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
     }
 

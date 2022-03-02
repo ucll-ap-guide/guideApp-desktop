@@ -208,8 +208,8 @@ d3.floorplan.overlays = function () {
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("x", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                        .attr("y", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
+                        .attr("x", x)
+                        .attr("y", y)
                 }));
 
             for (let i = 0; i < nodes[0].length; i++) {
@@ -218,8 +218,8 @@ d3.floorplan.overlays = function () {
                 elem.setAttribute("id", data.nodes[i].id);
                 elem.setAttribute("pointsOfInterestId", data.nodes[i].id);
                 elem.setAttribute("type", data.nodes[i].type);
-                elem.setAttribute("x", data.nodes[i].point.x + 15);
-                elem.setAttribute("y", data.nodes[i].point.y + 15);
+                elem.setAttribute("x", data.nodes[i].point.x);
+                elem.setAttribute("y", data.nodes[i].point.y);
             }
 
             nodeGroup.append("rect")
@@ -285,8 +285,8 @@ d3.floorplan.overlays = function () {
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("x", x + (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                        .attr("y", y + (parseInt(d3.select(this).attr("height").split("px")) / 2))
+                        .attr("x", x)
+                        .attr("y", y)
                 }));
 
             for (let i = 0; i < labels[0].length; i++) {
@@ -294,8 +294,8 @@ d3.floorplan.overlays = function () {
                 const elem = document.querySelector("[id='" + data.labels[i].id + "']");
                 elem.setAttribute("id", data.labels[i].id);
                 elem.setAttribute("pointsOfInterestId", data.labels[i].id);
-                elem.setAttribute("x", data.labels[i].point.x + 15);
-                elem.setAttribute("y", data.labels[i].point.y + 15);
+                elem.setAttribute("x", data.labels[i].point.x);
+                elem.setAttribute("y", data.labels[i].point.y);
             }
 
             labelGroup.append("rect")

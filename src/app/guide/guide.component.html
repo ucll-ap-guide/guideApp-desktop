@@ -1,0 +1,17 @@
+<main class="flex flex-col bg-cover bg-[url('src/assets/img/scattered-forcefields.svg')] dark:bg-[url('src/assets/img/scattered-forcefields-dark.svg')] text-black dark:text-white object-fill h-screen bg-blue-50 overflow-auto relative pb-5">
+    <div class="container mx-auto px-5">
+        <div class="mt-32 xl:mt-auto content-center">
+            <h1 class="text-4xl sm:text-5xl xl:text-7xl font-semibold mt-20 text-center">Guido guide</h1>
+        </div>
+    </div>
+
+    <button (click)="router.navigate(['/createMap'])"
+            class="bg-white dark:bg-[#000] ml-10 mt-3 w-fit flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg px-4 py-3 font-semibold my-auto">
+        <svg class="h-6 w-6 pr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        Go back
+    </button>
+</main>

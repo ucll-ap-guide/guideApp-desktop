@@ -41,6 +41,9 @@ export class CreateMapComponent implements AfterViewInit {
                 let tempName = self.jsonData.name;
                 self.jsonData = JSON.parse(<string>event.target!.result);
                 self.jsonData.name = tempName;
+                self.editMode = false;
+                self.deleteMode = false;
+                self.setNeighborMode = false;
             }
             if ((event.target as HTMLInputElement)!.files!.length > 0) {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
@@ -173,6 +176,9 @@ export class CreateMapComponent implements AfterViewInit {
      * @param self The instance of the CreateMapComponent.
      */
     editMap(name: string, self: CreateMapComponent): void {
+        self.editMode = false;
+        self.setNeighborMode = false;
+        self.deleteMode = false;
         document.getElementById("submitMap")!.innerText = "Update map";
         self.clearMap(false);
         self.mapService.getMap(name).subscribe((map: GuidoMap) => {
@@ -189,6 +195,8 @@ export class CreateMapComponent implements AfterViewInit {
     toggleDeleteMode(): void {
         this.deleteMode = !this.deleteMode;
         if (this.deleteMode) {
+            this.disableSetNeighborMode()
+            this.editMode = false;
             this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
         } else {
             this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
@@ -208,6 +216,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     enableSetNeighborMode() {
         this.deleteMode = false;
+        this.editMode = false;
         document.querySelectorAll('.map-layers').forEach(elem => elem.setAttribute("transform", "translate(0,0)scale(1)"));
         this.setNeighborMode = true;
         let floors = document.querySelectorAll('.floor');
@@ -282,6 +291,16 @@ export class CreateMapComponent implements AfterViewInit {
         document.querySelectorAll("[setNeighborModeTextGroup]").forEach(elem => elem.remove());
         document.querySelectorAll("[setNeighborModeLineGroup]").forEach(elem => elem.innerHTML = "");
         this.setNeighborMode = false;
+    }
+
+    changeEditMode() {
+        if (this.editMode) {
+            this.editMode = false;
+        } else {
+            this.editMode = true;
+            this.deleteMode = false;
+            this.disableSetNeighborMode()
+        }
     }
 
     /**

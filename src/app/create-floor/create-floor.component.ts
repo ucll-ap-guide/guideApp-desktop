@@ -584,6 +584,7 @@ export class CreateFloorComponent implements AfterViewInit {
             }
 
             neighbors.map((neighborId: number) => {
+                const neighborElement = document.getElementById(String(neighborId))!;
                 const connectableNeighborPoint = self.getConnectablePoint(neighborId);
                 const neighborNode = document.querySelector(`[id='${neighborId}']`);
 
@@ -592,10 +593,10 @@ export class CreateFloorComponent implements AfterViewInit {
                     isReciprical = true;
 
                 group.append("line")
-                    .attr("x1", origin.x)
-                    .attr("y1", origin.y)
-                    .attr("x2", connectableNeighborPoint.x)
-                    .attr("y2", connectableNeighborPoint.y)
+                    .attr("x1", origin.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("width")!.split("px")[0]) / 2))
+                    .attr("y1", origin.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("height")!.split("px")[0]) / 2))
+                    .attr("x2", connectableNeighborPoint.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("width")!.split("px")[0]) / 2))
+                    .attr("y2", connectableNeighborPoint.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("height")!.split("px")[0]) / 2))
                     .attr("stroke", isReciprical ? "green" : "orange")
                     .attr("stroke-width", "5px")
                     .attr("marker-end", isReciprical ? "" : "url(#arrow)");

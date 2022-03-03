@@ -200,16 +200,15 @@ d3.floorplan.overlays = function () {
                 })
                 .call(d3.behavior.drag().on("drag", function () {
                     const node = data.nodes.find((elem) => elem.id === parseInt(this.id));
-                    let x = d3.event.x - (parseInt(d3.select(this).attr("width").split("px")) / 2);
-                    let y = d3.event.y - (parseInt(d3.select(this).attr("height").split("px")) / 2);
+                    let x = d3.event.x;
+                    let y = d3.event.y;
 
                     node.point = new Point(x, y);
-                    node.displayPoints = [];
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("x", x)
-                        .attr("y", y)
+                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
                 }));
 
             for (let i = 0; i < nodes[0].length; i++) {
@@ -218,8 +217,8 @@ d3.floorplan.overlays = function () {
                 elem.setAttribute("id", data.nodes[i].id);
                 elem.setAttribute("pointsOfInterestId", data.nodes[i].id);
                 elem.setAttribute("type", data.nodes[i].type);
-                elem.setAttribute("x", data.nodes[i].point.x);
-                elem.setAttribute("y", data.nodes[i].point.y);
+                elem.setAttribute("x", data.nodes[i].point.x - 15);
+                elem.setAttribute("y", data.nodes[i].point.y - 15);
             }
 
             nodeGroup.append("rect")
@@ -278,15 +277,15 @@ d3.floorplan.overlays = function () {
                 })
                 .call(d3.behavior.drag().on("drag", function () {
                     const label = data.labels.find((elem) => elem.id === parseInt(this.id));
-                    let x = d3.event.x - (parseInt(d3.select(this).attr("width").split("px")) / 2);
-                    let y = d3.event.y - (parseInt(d3.select(this).attr("height").split("px")) / 2);
+                    let x = d3.event.x;
+                    let y = d3.event.y;
 
                     label.point = new Point(x, y);
 
                     // Apply the translation to the shape:
                     d3.select(this)
-                        .attr("x", x)
-                        .attr("y", y)
+                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
                 }));
 
             for (let i = 0; i < labels[0].length; i++) {
@@ -294,8 +293,8 @@ d3.floorplan.overlays = function () {
                 const elem = document.querySelector("[id='" + data.labels[i].id + "']");
                 elem.setAttribute("id", data.labels[i].id);
                 elem.setAttribute("pointsOfInterestId", data.labels[i].id);
-                elem.setAttribute("x", data.labels[i].point.x);
-                elem.setAttribute("y", data.labels[i].point.y);
+                elem.setAttribute("x", data.labels[i].point.x - 15);
+                elem.setAttribute("y", data.labels[i].point.y - 15);
             }
 
             labelGroup.append("rect")

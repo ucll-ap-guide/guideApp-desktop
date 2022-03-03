@@ -64,7 +64,8 @@ export class CreateFloorComponent implements AfterViewInit {
         createPointOfInterest: {},
         createLabel: {},
         updateLabel: {},
-        setNeighbors: {}
+        setNeighbors: {},
+        updateNode: {}
     };
 
     constructor(private toastr: ToastrService) {
@@ -130,7 +131,7 @@ export class CreateFloorComponent implements AfterViewInit {
     setEventListeners(floor: Floor) {
         let self = this;
 
-        Array.from(document.querySelectorAll(`[removable]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.querySelectorAll(`[removable], [type=${PolygonType.FLOOR}]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 if (elem.getAttribute("type") && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
                     elem.addEventListener("click", (e: Event) => {// @ts-ignore
@@ -139,7 +140,7 @@ export class CreateFloorComponent implements AfterViewInit {
                         }
                     });
 
-                    if (elem.getAttribute("type") === PolygonType.ROOM) {
+                    if (elem.getAttribute("type") === PolygonType.ROOM || elem.getAttribute("type") === PolygonType.FLOOR) {
                         elem.addEventListener("click", () => {
                             if (self.editMode) {
                                 self.deleteMode = false;
@@ -239,6 +240,11 @@ export class CreateFloorComponent implements AfterViewInit {
 
         self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+    }
+
+    updateNode(id: number, name: string) {
+        let node = document.querySelector(`[id='${String(id)}']`)!;
+        node.setAttribute("name", name);
     }
 
     updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
@@ -676,10 +682,11 @@ export class CreateFloorComponent implements AfterViewInit {
     createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: CreateFloorComponent = this): void {
         let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
         let radius = 5;
+        let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
 
         let node = d3.select("#nodes" + self.floor)
             .append("circle")
-            .attr("id", previousId === null ? self.jsonData.lastId + 1 : previousId)
+            .attr("id", id)
             .attr('cx', origin.x)
             .attr('cy', origin.y)
             .attr('r', radius)
@@ -721,7 +728,14 @@ export class CreateFloorComponent implements AfterViewInit {
             }));
 
         node.node().addEventListener("click", (e: Event) => {
-            if (self.deleteMode && !self.setNeighborMode) {
+            if (self.editMode) {
+                self.deleteMode = false;
+                self.displayDialogBox("updateNode", {
+                    defaultValues: [
+                        node.attr("name")
+                    ], id: id
+                });
+            } else if (self.deleteMode && !self.setNeighborMode) {
                 self.removeElement(e);
             }
         });

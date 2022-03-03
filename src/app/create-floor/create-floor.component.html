@@ -111,4 +111,9 @@
                     [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors"
                     confirmButtonText="OK" dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
+    <app-dialog-box [confirmAction]="updateNode" [floor]="floor"
+                    [formElements]="[{name: 'Name', required: true}]"
+                    [params]="paramsToGiveToDialogBoxes.updateNode" action="updateNode" confirmButtonText="OK"
+                    dialogText="Update the node:" title="Update node">
+    </app-dialog-box>
 </div>

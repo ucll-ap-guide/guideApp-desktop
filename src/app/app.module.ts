@@ -11,6 +11,7 @@ import {DialogBoxComponent} from './dialog-box/dialog-box.component';
 import {ToastrModule} from "ngx-toastr";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import { LandingPageComponent } from './landing-page/landing-page.component';
+import { GuideComponent } from './guide/guide.component';
 
 @NgModule({
     declarations: [
@@ -18,7 +19,8 @@ import { LandingPageComponent } from './landing-page/landing-page.component';
         CreateMapComponent,
         CreateFloorComponent,
         DialogBoxComponent,
-        LandingPageComponent
+        LandingPageComponent,
+        GuideComponent
     ],
     imports: [
         BrowserModule,

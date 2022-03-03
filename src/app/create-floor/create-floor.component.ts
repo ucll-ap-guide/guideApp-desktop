@@ -544,6 +544,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 self.saveNeighborsInJson(parseInt(neighbor[0]), neighborsNeighbors, self);
             }
         }
+        newNeighbors = newNeighbors.filter((neighbor: number, index: number) => newNeighbors.indexOf(neighbor) === index);
         elem.attr("neighbors", newNeighbors.join(","));
         self.saveNeighborsInJson(id, newNeighbors, self);
 
@@ -796,6 +797,7 @@ export class CreateFloorComponent implements AfterViewInit {
                                 .map((f: Floor) => f.overlays.nodes)[0].flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
                                 .map((g: GuidoNode) => g.id)
+                                .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Lifts",
@@ -803,20 +805,26 @@ export class CreateFloorComponent implements AfterViewInit {
                                 .map((f: Floor) => f.overlays.nodes)[0].flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.LIFT)
                                 .map((g: GuidoNode) => g.id)
+                                .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Points of interest",
                             values: this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
                                 .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id)
+                                .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Doors",
-                            values: Array.from(document.getElementById(`doors${this.floor}`)!.getElementsByTagName("polygon")).map((p: SVGPolygonElement) => p.id)
+                            values: Array.from(document.getElementById(`doors${this.floor}`)!.getElementsByTagName("polygon"))
+                                .map((p: SVGPolygonElement) => p.id)
+                                .filter((i: string) => i !== id)
                             //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && (g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)).map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Nodes",
-                            values: Array.from(document.getElementById(`nodes${this.floor}`)!.getElementsByTagName("circle")).map((c: SVGCircleElement) => c.id)
+                            values: Array.from(document.getElementById(`nodes${this.floor}`)!.getElementsByTagName("circle"))
+                                .map((c: SVGCircleElement) => c.id)
+                                .filter((i: string) => i !== id)
                             //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && g.type === NodeType.NODE).map((g: GuidoNode) => g.id)
                         }
                     ]]]

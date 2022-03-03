@@ -14,16 +14,16 @@ export class GuidoNode {
     ) {
     }
 
-    copy(): GuidoNode {
+    public static copy(node: GuidoNode): GuidoNode {
         return new GuidoNode(
-            this.id,
-            this.name,
-            this.floor,
-            this.point.copy(),
-            this.displayPoints.map((point: Point) => point.copy()),
-            this.neighbors.map((neighbor: number) => neighbor),
-            this.type,
-            this.color
+            node.id,
+            node.name,
+            node.floor,
+            Point.copy(node.point),
+            node.displayPoints.map((point: Point) => Point.copy(point)),
+            node.neighbors.map((neighbor: number) => neighbor),
+            node.type,
+            node.color.map((n: number) => n)
         );
     }
 }

@@ -12,14 +12,14 @@ export class GuidoMap {
     ) {
     }
 
-    copy(): GuidoMap {
+    public static copy(guidoMap: GuidoMap): GuidoMap {
         return new GuidoMap(
-            this.name,
-            this.length,
-            this.width,
-            this.lastId,
-            this.floors.map((floor: Floor) => floor.copy()),
-            this.nodes.map((node: GuidoNode) => node.copy())
+            guidoMap.name,
+            guidoMap.length,
+            guidoMap.width,
+            guidoMap.lastId,
+            guidoMap.floors.map((floor: Floor) => Floor.copy(floor)),
+            guidoMap.nodes.map((node: GuidoNode) => GuidoNode.copy(node))
         );
     }
 }

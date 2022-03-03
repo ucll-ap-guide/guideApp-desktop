@@ -258,20 +258,19 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Removes an element based upon its type, given the click event that triggered the remove function
-     * @param e
+     * Removes an element based upon its type, given the click event that triggered the remove function.
+     *
+     * @param event The event that triggered the delete action.
      */
-    removeElement(e: Event) {
-        if (e.target) {
+    removeElement(event: Event): void {
+        if (event.target) {
             // @ts-ignore
-            let id: number = parseInt(e.target.getAttribute(isNaN(parseInt(e.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
+            let id: number = parseInt(event.target.getAttribute(isNaN(parseInt(event.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
             let type: string = document.querySelector(`[id='${String(id)}']`)!.getAttribute("type")!;
             switch (type) {
                 case PolygonType.ROOM:
                     let array: Polygon[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
-                    let index = array.map(function (x: Polygon) {
-                        return x.id;
-                    }).indexOf(id);
+                    let index = array.map((polygon: Polygon) => polygon.id).indexOf(id);
                     if (index > -1) {
                         array.splice(index, 1);
                     }
@@ -289,29 +288,33 @@ export class CreateFloorComponent implements AfterViewInit {
 
                 case "Label":
                     let labelsArray: Label[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.labels;
-                    let j = labelsArray.map(function (x: Label) {
-                        return x.id;
-                    }).indexOf(id);
+                    let j = labelsArray.map((label: Label) => label.id).indexOf(id);
                     if (j > -1) {
                         labelsArray.splice(j, 1);
                     }
                     break;
 
+                case PolygonType.FLOOR:
+                    // You can't remove the floor
+                    break;
+
+                // For all the points of interests
                 default:
                     let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
-                    let i = nodesArray.map(function (x: GuidoNode) {
-                        return x.id;
-                    }).indexOf(id);
+                    let i = nodesArray.map((guidoNode: GuidoNode) => guidoNode.id).indexOf(id);
                     if (i > -1) {
                         nodesArray.splice(i, 1);
                     }
             }
+
+            document.getElementById("demo" + this.floor + "lineGroup")!.setAttribute("transform", "");
+            document.getElementById("doors" + this.floor)!.setAttribute("transform", "");
+            document.getElementById("nodes" + this.floor)!.setAttribute("transform", "");
+            document.getElementById("pointsOfInterest" + this.floor)!.setAttribute("transform", "");
+            if (type !== PolygonType.FLOOR) {
+                this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
+            }
         }
-        document.getElementById("demo" + this.floor + "lineGroup")!.setAttribute("transform", "");
-        document.getElementById("doors" + this.floor)!.setAttribute("transform", "");
-        document.getElementById("nodes" + this.floor)!.setAttribute("transform", "");
-        document.getElementById("pointsOfInterest" + this.floor)!.setAttribute("transform", "");
-        this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
     }
 
     removeNodeFromNeighborData(id: number) {
@@ -528,7 +531,7 @@ export class CreateFloorComponent implements AfterViewInit {
             newNeighbors.push(parseInt(neighbor[0]));
             const neighborElement = document.querySelector(`[id='${neighbor[0]}']`);
             if (neighborElement === null) {
-                console.error(`The neighbor with id ${neighbor[0]} does not exist.`)
+                console.error(`The neighbor with id ${neighbor[0]} does not exist.`);
             } else {
                 let neighborsNeighbors: number[] = neighborElement!.getAttribute("neighbors")!.split(",").filter((n: string) => n !== "").map((n: string) => parseInt(n));
                 if (neighbor[1] && !neighborsNeighbors.includes(id)) {
@@ -656,23 +659,24 @@ export class CreateFloorComponent implements AfterViewInit {
     getConnectablePoint(id: number): Point {
         let elem = d3.select(`[id='${id}']`);
         if (elem === null) {
-            console.error(`The node with id ${id} does not exist.`);
-        }
-        switch (elem.attr("type")) {
-            case NodeType.DOOR:
-            case NodeType.EMERGENCY_EXIT:
-                let points = Point.arrayOfPointsFromPointString(elem.attr("points"));
-                let middleX = (points[0].x + points[2].x) / 2;
-                let middleY = (points[0].y + points[2].y) / 2;
-                return new Point(middleX, middleY);
+            throw `The node with id ${id} does not exist.`;
+        } else {
+            switch (elem.attr("type")) {
+                case NodeType.DOOR:
+                case NodeType.EMERGENCY_EXIT:
+                    let points = Point.arrayOfPointsFromPointString(elem.attr("points"));
+                    let middleX = (points[0].x + points[2].x) / 2;
+                    let middleY = (points[0].y + points[2].y) / 2;
+                    return new Point(middleX, middleY);
 
-            case PolygonType.ROOM:
-            case PolygonType.FLOOR:
-            case NodeType.NODE:
-                return new Point(parseFloat(elem.attr("cx")), parseFloat(elem.attr("cy")));
+                case PolygonType.ROOM:
+                case PolygonType.FLOOR:
+                case NodeType.NODE:
+                    return new Point(parseFloat(elem.attr("cx")), parseFloat(elem.attr("cy")));
 
-            default:
-                return new Point(parseFloat(elem.attr("x")), parseFloat(elem.attr("y")));
+                default:
+                    return new Point(parseFloat(elem.attr("x")), parseFloat(elem.attr("y")));
+            }
         }
     }
 
@@ -721,7 +725,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 }
             })
             .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode) {
+                if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
                     // @ts-ignore
                     self.moveNodeCoordinates(this);
                 }
@@ -735,7 +739,7 @@ export class CreateFloorComponent implements AfterViewInit {
                         node.attr("name")
                     ], id: id
                 });
-            } else if (self.deleteMode && !self.setNeighborMode) {
+            } else if (self.deleteMode) {
                 self.removeElement(e);
             }
         });
@@ -853,7 +857,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("fill", "rgb(" + color.join(",") + ")")
             .on("contextmenu", self.rotateDoor)
             .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode) {
+                if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
                     // @ts-ignore
                     self.moveDoorCoordinates(this)
                 }
@@ -867,7 +871,7 @@ export class CreateFloorComponent implements AfterViewInit {
                         door.attr("name"), door.attr("height"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
                     ], id: id
                 })
-            } else if (self.deleteMode && !self.setNeighborMode) {
+            } else if (self.deleteMode) {
                 self.removeElement(e);
             }
         });

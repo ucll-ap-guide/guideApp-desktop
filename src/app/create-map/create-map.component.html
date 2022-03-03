@@ -67,7 +67,6 @@
         </div>
     </div>
 
-
     <div [hidden]="!initializedMap" class="bg-white dark:bg-black rounded-lg m-10">
         <div class="flex justify-center top-0 z-50 w-full" id="editMapNav">
             <div class="text-white bg-gray-800 rounded-b-md flex flex-wrap gap-y-2 gap-x-4">
@@ -113,7 +112,7 @@
                               class="text-white bg-gray-800 flex gap-y-2 gap-x-4">
                     <button (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()"
                             [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
-                            id="setNeighbordModeButton">
+                            id="setNeighborModeButton">
                         <svg class="svg-icon h-8 w-8" fill="currentColor" viewBox="0 0 1024 1024"
                              xmlns="http://www.w3.org/2000/svg">
                             <path d="M236.1 757.3l533.6-524 25.9 26.6-533.7 524z" stroke="currentColor"
@@ -123,7 +122,8 @@
                         </svg>
                     </button>
                     <button (click)="changeEditMode()"
-                            [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'">
+                            [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'"
+                            id="editModeButton">
                         <svg class="svg-icon h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                              xmlns="http://www.w3.org/2000/svg">
                             <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
@@ -153,7 +153,9 @@
             <button (click)="router.navigate(['/guide'])"
                     class="mr-2 ml-auto order-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    <path clip-rule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                          fill-rule="evenodd"/>
                 </svg>
             </button>
         </div>
@@ -168,7 +170,7 @@
 
             <div *ngIf="!setNeighborMode" class="shadow bg-blue-100 dark:bg-[#37373b] rounded-lg p-2 mt-5 mb-2">
                 <h2 class="text-black dark:text-white text-xl">Add floor</h2>
-                <div class="max-w-md m-2 text-black dark:text-white" id="addFloorForm">
+                <div class="max-w-md text-black dark:text-white m-2" id="addFloorForm">
                     <label class="block text-sm font-bold mb-2" for="floorNumber">Floor number:</label>
                     <input (keydown.enter)="addFloor()" [(ngModel)]="createFloorForm.floor"
                            class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
@@ -185,8 +187,7 @@
                     <input (keydown.enter)="addFloor()"
                            [(ngModel)]="createFloorForm.height"
                            class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
-                           id="floorHeight" min="0"
-                           placeholder="Floor height" step="0.01" type="number">
+                           id="floorHeight" min="0" placeholder="Floor height" step="0.01" type="number">
                     <p class="text-red-500 mx-3 mb-1" id="floorHeightError"></p>
 
                     <ng-container *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">

@@ -151,24 +151,16 @@ d3.floorplan.overlays = function () {
                 const elem = document.querySelector("[id='" + data.polygons[i].id + "']");
                 elem.setAttribute("id", data.polygons[i].id);
                 elem.setAttribute("type", data.polygons[i].type);
-                if (data.polygons[i].type === "Floor") {
-                    elem.setAttribute("fill", "#0004ff");
-                } else {
+                if (data.polygons[i].type !== "Floor") {
                     elem.setAttribute("removable", "");
                 }
                 const index = data.polygons.map(elem => parseInt(elem.id)).indexOf(parseInt(polygons[0][i].id));
                 if (data.polygons[index].color) {
-                    elem.setAttribute("fill", "rgb(" +  data.polygons[index].color.join(",") + ")");
+                    elem.setAttribute("fill", "rgb(" + data.polygons[index].color.join(",") + ")");
                 }
             }
 
             polygons.exit().transition().style("opacity", 1e-6).remove();
-            g.attr("id", function (a) {
-                return a.id;
-            });
-            g.attr("floor", function (a) {
-                return a.floor;
-            })
             polygons
                 .attr("d", function (d) {
                     return line(d.points) + "Z";
@@ -199,16 +191,18 @@ d3.floorplan.overlays = function () {
                     });
                 })
                 .call(d3.behavior.drag().on("drag", function () {
-                    const node = data.nodes.find((elem) => elem.id === parseInt(this.id));
-                    let x = d3.event.x;
-                    let y = d3.event.y;
+                    if (document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
+                        const node = data.nodes.find((elem) => elem.id === parseInt(this.id));
+                        let x = d3.event.x;
+                        let y = d3.event.y;
 
-                    node.point = new Point(x, y);
+                        node.point = new Point(x, y);
 
-                    // Apply the translation to the shape:
-                    d3.select(this)
-                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                        // Apply the translation to the shape:
+                        d3.select(this)
+                            .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                            .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                    }
                 }));
 
             for (let i = 0; i < nodes[0].length; i++) {
@@ -249,12 +243,6 @@ d3.floorplan.overlays = function () {
             }
 
             nodes.exit().transition().style("opacity", 1e-6).remove();
-            g.attr("id", function (a) {
-                return a.id;
-            });
-            g.attr("floor", function (a) {
-                return a.floor;
-            })
 
             var labels = g.selectAll("svg.label")
                 .data(data.labels || [], function (d) {
@@ -276,16 +264,18 @@ d3.floorplan.overlays = function () {
                     });
                 })
                 .call(d3.behavior.drag().on("drag", function () {
-                    const label = data.labels.find((elem) => elem.id === parseInt(this.id));
-                    let x = d3.event.x;
-                    let y = d3.event.y;
+                    if (document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
+                        const label = data.labels.find((elem) => elem.id === parseInt(this.id));
+                        let x = d3.event.x;
+                        let y = d3.event.y;
 
-                    label.point = new Point(x, y);
+                        label.point = new Point(x, y);
 
-                    // Apply the translation to the shape:
-                    d3.select(this)
-                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                        // Apply the translation to the shape:
+                        d3.select(this)
+                            .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                            .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                    }
                 }));
 
             for (let i = 0; i < labels[0].length; i++) {
@@ -320,12 +310,6 @@ d3.floorplan.overlays = function () {
             }
 
             labels.exit().transition().style("opacity", 1e-6).remove();
-            g.attr("id", function (a) {
-                return a.id;
-            });
-            g.attr("floor", function (a) {
-                return a.floor;
-            })
 
             if (editMode) {
                 var pointData = [];
@@ -432,8 +416,11 @@ d3.floorplan.overlays = function () {
         if (editMode) dragged = d;
     }
 
+    /**
+     * Drag polygons (room & floors)
+     */
     function __mousemove() {
-        if (dragged) {
+        if (dragged && document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
             var dx = x.invert(d3.event.dx) - x.invert(0);
             var dy = y.invert(d3.event.dy) - y.invert(0);
             if (dragged.parent) { // a point

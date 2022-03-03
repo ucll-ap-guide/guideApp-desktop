@@ -305,6 +305,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     if (i > -1) {
                         nodesArray.splice(i, 1);
                     }
+                    this.removeNodeFromNeighborData(id);
             }
 
             document.getElementById("demo" + this.floor + "lineGroup")!.setAttribute("transform", "");
@@ -317,20 +318,33 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    removeNodeFromNeighborData(id: number) {
+    /**
+     * Removes the given id from the attribute neighbors for all nodes, and removes the neighbors from the points of
+     * interests in the jsonData
+     *
+     * @param id The id of the node that needs to be removed in all his neighbors.
+     */
+    removeNodeFromNeighborData(id: number): void {
         let nodes = document.querySelectorAll("[node]");
-        nodes.forEach(node => {
+        nodes.forEach((node: Element) => {
             let neighbors = String(node.getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
             let removeIndex = neighbors.indexOf(id);
 
-            if (removeIndex !== -1)
+            if (removeIndex !== -1) {
                 neighbors.splice(removeIndex, 1);
+            }
 
             node.setAttribute("neighbors", neighbors.join(","));
         });
+        const nodesJSONData: GuidoNode[] = this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes;
+        nodesJSONData.forEach((node: GuidoNode) => {
+            if (node.neighbors.includes(id)) {
+                node.neighbors = node.neighbors.filter((neighbor: number) => neighbor !== id);
+            }
+        });
     }
 
-    displayDialogBox(action: string, params: {}) {
+    displayDialogBox(action: string, params: {}): void {
         this.paramsToGiveToDialogBoxes[action] = params;
         this.paramsToGiveToDialogBoxes[action].self = this;
         document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
@@ -358,7 +372,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number]) {
+    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number]): void {
         let door = document.querySelector(`[id='${String(id)}']`)!;
         let previousPoints = Point.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
@@ -389,7 +403,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Adds an extra vertice to a polygon.
      */
-    changeVerticeCountOfPolygon(event: any, self: CreateFloorComponent = this, adding: boolean) {
+    changeVerticeCountOfPolygon(event: any, self: CreateFloorComponent = this, adding: boolean): void {
         if (d3.event.ctrlKey || d3.event.metaKey) {
             const mouseCoordinates = d3.mouse(event);
             let clickedPolygon = d3.select(event);
@@ -436,7 +450,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    determineDistanceBetweenCoords(coords1: [number, number], coords2: [number, number]) {
+    determineDistanceBetweenCoords(coords1: [number, number], coords2: [number, number]): number {
         return Math.sqrt(Math.pow(coords2[0] - coords1[0], 2) + Math.pow(coords2[1] - coords1[1], 2));
     }
 
@@ -603,7 +617,7 @@ export class CreateFloorComponent implements AfterViewInit {
         })
     }
 
-    removeConnectingNeighbors(self: CreateFloorComponent = this) {
+    removeConnectingNeighbors(self: CreateFloorComponent = this): void {
         let group = d3.select("#demo" + self.floor + "lineGroup");
         group.selectAll("line").remove();
     }

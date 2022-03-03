@@ -510,6 +510,10 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
                     self.regenerateFloorMap(true);
+                    document.getElementById("demo" + self.floor + "lineGroup")!.setAttribute("transform", "");
+                    document.getElementById("doors" + self.floor)!.setAttribute("transform", "");
+                    document.getElementById("nodes" + self.floor)!.setAttribute("transform", "");
+                    document.getElementById("pointsOfInterest" + self.floor)!.setAttribute("transform", "");
                     self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor)!)
                 }
             }

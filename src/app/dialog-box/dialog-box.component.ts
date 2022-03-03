@@ -471,6 +471,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 case "updateMap":
                     this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
+                case "updateNode":
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value);
+                    break;
                 default:
                     console.error(`The dialog action ${this.action} is currently not supported`);
             }

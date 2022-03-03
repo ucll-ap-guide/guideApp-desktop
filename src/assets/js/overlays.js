@@ -417,10 +417,11 @@ d3.floorplan.overlays = function () {
     }
 
     /**
-     * Drag polygons (room & floors)
+     * Drag rooms and floor (polygon) except if in editMode deleteMode or setNeighborMode.
+     * Floors can also only be dragged if the attribute "draggable" is set to true
      */
     function __mousemove() {
-        if (dragged && document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
+        if (dragged && (this.getAttribute("type") === "Floor" && !document.getElementById("lockFloor" + this.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]).checked) && document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
             var dx = x.invert(d3.event.dx) - x.invert(0);
             var dy = y.invert(d3.event.dy) - y.invert(0);
             if (dragged.parent) { // a point

@@ -7,8 +7,8 @@ import {GuidoNode} from "../model/guido-node";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 import {ToastrService} from "ngx-toastr";
-import {CreateFloorComponent} from "../create-floor/create-floor.component";
 import {Router} from "@angular/router";
+import {Polygon} from "../model/polygon";
 
 declare var d3: any;
 
@@ -106,7 +106,7 @@ export class CreateMapComponent implements AfterViewInit {
             this.createFloorForm.floor++;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
             if (importFloorFrom !== null) {
-                const groundFloor = this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons[0].copy();
+                const groundFloor = Polygon.copy(this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons.find((p: Polygon) => p.type === PolygonType.FLOOR)!);
                 groundFloor.id = this.jsonData.lastId + 1;
                 groundFloor.type = PolygonType.ROOM;
                 this.jsonData.floors[this.jsonData.floors.length - 1].overlays.polygons.push(groundFloor);
@@ -238,7 +238,7 @@ export class CreateMapComponent implements AfterViewInit {
             switch (elem.getAttribute("type")) {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
-                    let points = CreateFloorComponent.arrayOfPointsFromPointString(node.attr("points"));
+                    let points = Point.arrayOfPointsFromPointString(node.attr("points"));
                     let middleX = (points[0].x + points[2].x) / 2;
                     let middleY = (points[0].y + points[2].y) / 2;
                     let point = new Point(middleX, middleY);
@@ -324,7 +324,7 @@ export class CreateMapComponent implements AfterViewInit {
             let id = parseInt(String(nodes[i].getAttribute("id")));
             let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").filter((e: string) => e !== "").map(elem => parseInt(elem));
 
-            let handledDoor = new GuidoNode(
+            let handledNode = new GuidoNode(
                 id,
                 String(nodes[i].getAttribute("name")),
                 parseInt(String(nodes[i].getAttribute("floor"))),
@@ -334,7 +334,7 @@ export class CreateMapComponent implements AfterViewInit {
                 NodeType.NODE,
                 []
             );
-            handledNodes.push(handledDoor);
+            handledNodes.push(handledNode);
             this.jsonData.lastId++;
         }
 

@@ -9,12 +9,12 @@ export class Label {
     ) {
     }
 
-    copy(): Label {
+    public static copy(label: Label): Label {
         return new Label(
-            this.id,
-            this.description,
-            this.point.copy(),
-            this.color
+            label.id,
+            label.description,
+            Point.copy(label.point),
+            [label.color[0], label.color[1], label.color[2]]
         );
     }
 }

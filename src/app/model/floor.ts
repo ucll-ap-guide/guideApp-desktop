@@ -15,15 +15,15 @@ export class Floor {
     ) {
     }
 
-    copy(): Floor {
+    public static copy(floor: Floor): Floor {
         return new Floor(
-            this.floor,
-            this.name,
-            this.height,
+            floor.floor,
+            floor.name,
+            floor.height,
             {
-                polygons: this.overlays.polygons.map((polygon: Polygon) => polygon.copy()),
-                nodes: this.overlays.nodes.map((node: GuidoNode) => node.copy()),
-                labels: this.overlays.labels.map((label: Label) => label.copy())
+                polygons: floor.overlays.polygons.map((polygon: Polygon) => Polygon.copy(polygon)),
+                nodes: floor.overlays.nodes.map((node: GuidoNode) => GuidoNode.copy(node)),
+                labels: floor.overlays.labels.map((label: Label) => Label.copy(label))
             }
         );
     }

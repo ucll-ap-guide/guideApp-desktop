@@ -18,7 +18,7 @@ d3.floorplan.imagelayer = function () {
     var x = d3.scale.linear(),
         y = d3.scale.linear(),
         id = "fp-imagelayer-" + new Date().valueOf(),
-        name = "imagelayer";
+        name = "Image";
 
     function images(g) {
         g.each(function (data) {

@@ -9,19 +9,19 @@ export class Polygon {
         public type: PolygonType,
         public description: string,
         public points: Point[],
-        public color: number[] = [204,204,204]
+        public color: [number, number, number] = [204, 204, 204]
     ) {
     }
 
-    copy(): Polygon {
+    public static copy(polygon: Polygon): Polygon {
         return new Polygon(
-            this.id,
-            this.name,
-            this.floor,
-            this.type,
-            this.description,
-            this.points.map((point: Point) => point.copy()),
-            this.color
-    );
+            polygon.id,
+            polygon.name,
+            polygon.floor,
+            polygon.type,
+            polygon.description,
+            polygon.points.map((point: Point) => Point.copy(point)),
+            [polygon.color[0], polygon.color[1], polygon.color[2]]
+        );
     }
 }

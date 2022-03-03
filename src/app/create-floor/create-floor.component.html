@@ -19,6 +19,10 @@
             </svg>
             Remove floor
         </button>
+        <label *ngIf="!editMode && !deleteMode" [for]="'lockFloor' + floor">
+            <input [defaultChecked]="true" [id]="'lockFloor' + floor" type="checkbox">
+            Lock the floor
+        </label>
     </div>
     <div class="flex justify-center">
         <div class="text-white bg-white overflow-auto floor" id="demo{{floor}}"></div>

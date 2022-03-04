@@ -10,8 +10,8 @@ import {FormsModule} from "@angular/forms";
 import {DialogBoxComponent} from './dialog-box/dialog-box.component';
 import {ToastrModule} from "ngx-toastr";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
-import { LandingPageComponent } from './landing-page/landing-page.component';
-import { GuideComponent } from './guide/guide.component';
+import {LandingPageComponent} from './landing-page/landing-page.component';
+import {GuideComponent} from './guide/guide.component';
 
 @NgModule({
     declarations: [
@@ -29,7 +29,7 @@ import { GuideComponent } from './guide/guide.component';
         HttpClientModule,
         FormsModule,
         BrowserAnimationsModule,
-        ToastrModule.forRoot(),
+        ToastrModule.forRoot()
     ],
     providers: [MapService],
     bootstrap: [AppComponent]

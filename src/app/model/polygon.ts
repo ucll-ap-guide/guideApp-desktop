@@ -1,7 +1,20 @@
 import {Point} from "./point";
 import {PolygonType} from "./polygon-type";
 
+/**
+ * Class representing a polygon of a certain {@link PolygonType} on a {@link Floor}.
+ */
 export class Polygon {
+    /**
+     * @constructor
+     * @param id
+     * @param name
+     * @param floor
+     * @param type
+     * @param description
+     * @param points
+     * @param color
+     */
     constructor(
         public id: number,
         public name: string,
@@ -13,6 +26,12 @@ export class Polygon {
     ) {
     }
 
+    /**
+     * The **copy()** function makes a copy of the given {@link Polygon}.
+     *
+     * @param polygon The {@link Polygon} to copy.
+     * @return A copy (by value) of the {@link Polygon}.
+     */
     public static copy(polygon: Polygon): Polygon {
         return new Polygon(
             polygon.id,

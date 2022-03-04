@@ -19,6 +19,7 @@ declare var d3: any;
 })
 export class CreateMapComponent implements AfterViewInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
+    newMap: boolean = false;
     deleteMode = false;
     setNeighborMode = false;
     editMode = false;
@@ -39,8 +40,13 @@ export class CreateMapComponent implements AfterViewInit {
             self.clearMap(false);
             reader.onload = function (event: ProgressEvent<FileReader>) {
                 let tempName = self.jsonData.name;
-                self.jsonData = JSON.parse(<string>event.target!.result);
-                self.jsonData.name = tempName;
+                let parsed = JSON.parse(<string>event.target!.result);
+
+                if (self.newMap) {
+                    parsed.name = tempName;
+                }
+
+                self.jsonData = parsed;
                 self.editMode = false;
                 self.deleteMode = false;
                 self.setNeighborMode = false;
@@ -75,6 +81,7 @@ export class CreateMapComponent implements AfterViewInit {
         //     this.jsonData.length < 0 ? "The floor width can't be negative" : "";
 
         if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
+            this.newMap = true;
             this.initializedMap = true;
             this.moveFileInputField();
         }

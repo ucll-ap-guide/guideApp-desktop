@@ -219,7 +219,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
                     let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.height, doorProperties.width, Point.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, this);
+                    this.createDoor(elem.id, doorProperties.length, doorProperties.width, Point.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -382,11 +382,11 @@ export class CreateFloorComponent implements AfterViewInit {
         d3.select("#demo" + self.floor).select("svg").select(".map-layers").attr("transform", "")
     }
 
-    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
+    updateDoor(id: number, name: string, length: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
         let door = document.querySelector(`[id='${String(id)}']`)!;
         let previousPoints = Point.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
-        door.setAttribute("height", String(height));
+        door.setAttribute("length", String(length));
         door.setAttribute("width", String(width));
         door.setAttribute("fill", "rgb(" + color.join(",") + ")");
 
@@ -396,8 +396,8 @@ export class CreateFloorComponent implements AfterViewInit {
         let points = [
             toBuildFrom,
             new Point(toBuildFrom.x + width, toBuildFrom.y),
-            new Point(toBuildFrom.x + width, toBuildFrom.y + height),
-            new Point(toBuildFrom.x, toBuildFrom.y + height)
+            new Point(toBuildFrom.x + width, toBuildFrom.y + length),
+            new Point(toBuildFrom.x, toBuildFrom.y + length)
         ];
 
         let pointsString = Point.pointStringFromArrayOfPoints(points);
@@ -537,11 +537,11 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    getDoorDimensions(doorCoords: Point[]): { height: number, width: number } {
+    getDoorDimensions(doorCoords: Point[]): { length: number, width: number } {
         const distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
         const distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
         return {
-            height: distance1 > distance2 ? distance1 : distance2,
+            length: distance1 > distance2 ? distance1 : distance2,
             width: distance1 > distance2 ? distance2 : distance1
         }
     }
@@ -857,7 +857,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a door
      */
-    createDoor(previousId: number | null = null, height: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], self: CreateFloorComponent = this): void {
         let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
         let origin = new Point(25, 25);
 
@@ -865,8 +865,8 @@ export class CreateFloorComponent implements AfterViewInit {
             previousPoints = Point.pointStringFromArrayOfPoints([
                 origin,
                 new Point(origin.x + width, origin.y),
-                new Point(origin.x + width, origin.y + height),
-                new Point(origin.x, origin.y + height)
+                new Point(origin.x + width, origin.y + length),
+                new Point(origin.x, origin.y + length)
             ]);
         }
 
@@ -875,7 +875,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("id", id)
             .attr("points", previousPoints)
             .attr("width", width)
-            .attr("height", height)
+            .attr("length", length)
             .attr("type", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
             .attr("class", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
             .attr("node", "")
@@ -898,7 +898,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 self.deleteMode = false;
                 self.displayDialogBox("updateDoor", {
                     defaultValues: [
-                        door.attr("name"), door.attr("height"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
+                        door.attr("name"), door.attr("length"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
                     ], id: id
                 })
             } else if (self.deleteMode) {
@@ -933,7 +933,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
             let door = d3.select(self);
             let width = parseFloat(door.attr("width"));
-            let height = parseFloat(door.attr("height"));
+            let length = parseFloat(door.attr("length"));
 
             //Point used in reconstructing the polygon after dragging
             let toBuildFrom = new Point(parseFloat(d3.event.x), parseFloat(d3.event.y));
@@ -941,8 +941,8 @@ export class CreateFloorComponent implements AfterViewInit {
             let points = [
                 toBuildFrom,
                 new Point(toBuildFrom.x + width, toBuildFrom.y),
-                new Point(toBuildFrom.x + width, toBuildFrom.y + height),
-                new Point(toBuildFrom.x, toBuildFrom.y + height)
+                new Point(toBuildFrom.x + width, toBuildFrom.y + length),
+                new Point(toBuildFrom.x, toBuildFrom.y + length)
             ];
 
             let pointsString = Point.pointStringFromArrayOfPoints(points);

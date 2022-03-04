@@ -240,11 +240,13 @@ export class CreateFloorComponent implements AfterViewInit {
 
         self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
     }
 
-    updateNode(id: number, name: string) {
+    updateNode(id: number, name: string, self: CreateFloorComponent = this) {
         let node = document.querySelector(`[id='${String(id)}']`)!;
         node.setAttribute("name", name);
+        self.resetZoom(self);
     }
 
     updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
@@ -255,6 +257,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels = labels;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
     }
 
     /**
@@ -316,6 +319,9 @@ export class CreateFloorComponent implements AfterViewInit {
                 this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
             }
         }
+
+        this.resetZoom(this);
+        this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
     }
 
     /**
@@ -372,7 +378,11 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number]): void {
+    resetZoom(self: CreateFloorComponent = this) {
+        d3.select("#demo" + self.floor).select("svg").select(".map-layers").attr("transform", "")
+    }
+
+    updateDoor(id: number, name: string, height: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
         let door = document.querySelector(`[id='${String(id)}']`)!;
         let previousPoints = Point.arrayOfPointsFromPointString(String(door.getAttribute("points")));
         door.setAttribute("name", name);
@@ -398,6 +408,7 @@ export class CreateFloorComponent implements AfterViewInit {
         }
 
         door.setAttribute("points", pointsString);
+        self.resetZoom(self);
     }
 
     /**
@@ -519,10 +530,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.imageRatio = image.height / image.width;
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
                     self.regenerateFloorMap(true);
-                    document.getElementById("demo" + self.floor + "lineGroup")!.setAttribute("transform", "");
-                    document.getElementById("doors" + self.floor)!.setAttribute("transform", "");
-                    document.getElementById("nodes" + self.floor)!.setAttribute("transform", "");
-                    document.getElementById("pointsOfInterest" + self.floor)!.setAttribute("transform", "");
+                    self.resetZoom(self);
                     self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor)!)
                 }
             }
@@ -741,7 +749,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
                     // @ts-ignore
-                    self.moveNodeCoordinates(this);
+                    self.moveNodeCoordinates(this, self);
                 }
             }));
 
@@ -833,9 +841,17 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Moves passThrough node
      */
-    moveNodeCoordinates(self: this) {
+    moveNodeCoordinates(self: this, floorComp: CreateFloorComponent) {
+        let svg =  document.getElementById("demo" + floorComp.floor)!.getElementsByTagName("svg")[0];
+        let width = parseFloat(String(svg.getAttribute("width")));
+        let height = parseFloat(String(svg.getAttribute("height")));
+        let x = parseFloat(d3.event.x)
+        let y = parseFloat(d3.event.y);
+
         let node = d3.select(self);
-        node.attr('cx', d3.event.x).attr('cy', d3.event.y)
+        if (x > 0 && y > 0 && x < width && y < height)
+            node.attr('cx', d3.event.x).attr('cy', d3.event.y)
+
     }
 
     /**
@@ -873,7 +889,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
                     // @ts-ignore
-                    self.moveDoorCoordinates(this)
+                    self.moveDoorCoordinates(this, self)
                 }
             }));
 
@@ -909,8 +925,12 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Moves the door according to drag, only executes on left click drag
      */
-    moveDoorCoordinates(self: CreateFloorComponent): void {
+    moveDoorCoordinates(self: this, floorComp: CreateFloorComponent): void {
         if (d3.event.sourceEvent.which === 1) {
+            let svg =  document.getElementById("demo" + floorComp.floor)!.getElementsByTagName("svg")[0];
+            let svgWidth = parseFloat(String(svg.getAttribute("width")));
+            let svgHeight = parseFloat(String(svg.getAttribute("height")));
+
             let door = d3.select(self);
             let width = parseFloat(door.attr("width"));
             let height = parseFloat(door.attr("height"));
@@ -932,7 +952,13 @@ export class CreateFloorComponent implements AfterViewInit {
                 pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
             }
 
-            door.attr("points", pointsString);
+            let newPoints = Point.arrayOfPointsFromPointString(pointsString);
+
+            let middleX = (newPoints[0].x + newPoints[2].x) / 2;
+            let middleY = (newPoints[0].y + newPoints[2].y) / 2;
+
+            if (middleX > 0 && middleY > 0 && middleX < svgWidth && middleY < svgHeight)
+                door.attr("points", pointsString);
         }
     }
 }

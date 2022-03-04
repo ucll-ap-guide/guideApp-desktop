@@ -448,7 +448,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                     this.confirmAction(null, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.emergency, (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
                     break;
                 case "updateDoor":
-                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)));
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, parseFloat((topLevelChildren[1] as HTMLInputElement).value), parseFloat((topLevelChildren[2] as HTMLInputElement).value), (topLevelChildren[3] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
                     break;
                 case "createNode":
                     this.confirmAction(null, null, (topLevelChildren[0] as HTMLInputElement).value, [], this.params.self);
@@ -472,7 +472,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                     this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
                 case "updateNode":
-                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value);
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
                 default:
                     console.error(`The dialog action ${this.action} is currently not supported`);

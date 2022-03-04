@@ -193,15 +193,20 @@ d3.floorplan.overlays = function () {
                 .call(d3.behavior.drag().on("drag", function () {
                     if (document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
                         const node = data.nodes.find((elem) => elem.id === parseInt(this.id));
+                        let svg = document.getElementById("demo" + node.floor).getElementsByTagName("svg")[0];
+                        let width = parseFloat(String(svg.getAttribute("width")));
+                        let height = parseFloat(String(svg.getAttribute("height")));
                         let x = d3.event.x;
                         let y = d3.event.y;
 
-                        node.point = new Point(x, y);
+                        if (x > 0 && y > 0 && x < width && y < height) {
+                            node.point = new Point(x, y);
 
-                        // Apply the translation to the shape:
-                        d3.select(this)
-                            .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                            .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                            // Apply the translation to the shape:
+                            d3.select(this)
+                                .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                                .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                        }
                     }
                 }));
 
@@ -264,17 +269,24 @@ d3.floorplan.overlays = function () {
                     });
                 })
                 .call(d3.behavior.drag().on("drag", function () {
-                    if (document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
-                        const label = data.labels.find((elem) => elem.id === parseInt(this.id));
-                        let x = d3.event.x;
-                        let y = d3.event.y;
+                if (document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
+                    const label = data.labels.find((elem) => elem.id === parseInt(this.id));
+                    const floor = this.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]
 
+                    let svg =  document.getElementById("demo" + floor).getElementsByTagName("svg")[0];
+                    let width = parseFloat(String(svg.getAttribute("width")));
+                    let height = parseFloat(String(svg.getAttribute("height")));
+                    let x = d3.event.x;
+                    let y = d3.event.y;
+
+                    if (x > 0 && y > 0 && x < width && y < height) {
                         label.point = new Point(x, y);
 
                         // Apply the translation to the shape:
                         d3.select(this)
                             .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
                             .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                    }
                     }
                 }));
 
@@ -424,14 +436,26 @@ d3.floorplan.overlays = function () {
         if (dragged && (this.getAttribute("type") !== "Floor" || !document.getElementById("lockFloor" + this.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]).checked) && document.getElementById("setNeighborModeButton").className.includes("text-white") && document.getElementById("editModeButton").className.includes("text-white") && document.getElementById("deleteModeButton").className.includes("text-white")) {
             var dx = x.invert(d3.event.dx) - x.invert(0);
             var dy = y.invert(d3.event.dy) - y.invert(0);
-            if (dragged.parent) { // a point
-                dragged.parent.points[dragged.index].x += dx;
-                dragged.parent.points[dragged.index].y += dy;
-            } else if (dragged.points) { // a composite object
-                dragged.points.forEach(function (pt) {
-                    pt.x += dx;
-                    pt.y += dy;
-                });
+            if (dragged.parent && dragged.parent.points.every(elem => elem.x > 0 && elem.y > 0)) { // a point
+                let svg = document.getElementById("demo" + dragged.parent.floor).getElementsByTagName("svg")[0]
+                let width = parseFloat(svg.getAttribute("width"));
+                let height = parseFloat(svg.getAttribute("height"));
+
+                if (width > d3.event.x && height > d3.event.y) {
+                    dragged.parent.points[dragged.index].x += dx;
+                    dragged.parent.points[dragged.index].y += dy;
+                }
+            } else if (dragged.points && d3.event.x > 0 && d3.event.y >0) { // a composite object
+                let svg = document.getElementById("demo" + dragged.floor).getElementsByTagName("svg")[0];
+                let width = parseFloat(svg.getAttribute("width"));
+                let height = parseFloat(svg.getAttribute("height"));
+
+                if (width > d3.event.x && height > d3.event.y) {
+                    dragged.points.forEach(function (pt) {
+                        pt.x += dx;
+                        pt.y += dy;
+                    });
+                }
             }
             // parent is container for overlays
             overlays(d3.select(this.parentNode));

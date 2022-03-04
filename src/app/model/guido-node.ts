@@ -10,7 +10,8 @@ export class GuidoNode {
         public displayPoints: Point[],
         public neighbors: number[],
         public type: NodeType,
-        public color: number[]
+        public color: number[],
+        public degreesRotated: number
     ) {
     }
 
@@ -23,7 +24,8 @@ export class GuidoNode {
             node.displayPoints.map((point: Point) => Point.copy(point)),
             node.neighbors.map((neighbor: number) => neighbor),
             node.type,
-            node.color.map((n: number) => n)
+            node.color.map((n: number) => n),
+            node.degreesRotated
         );
     }
 }

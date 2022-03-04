@@ -316,7 +316,7 @@ export class CreateMapComponent implements AfterViewInit {
     setAllNodes() {
         this.jsonData.nodes = [];
 
-        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoorsAndPointsOfInterest());
+        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
         this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
     }
 
@@ -339,7 +339,8 @@ export class CreateMapComponent implements AfterViewInit {
                 [new Point(cx + r, cy + r)],
                 neighbors === null ? [] : neighbors,
                 NodeType.NODE,
-                []
+                [],
+                0
             );
             handledNodes.push(handledNode);
             this.jsonData.lastId++;
@@ -348,10 +349,10 @@ export class CreateMapComponent implements AfterViewInit {
         return handledNodes;
     }
 
-    getAllDoorsAndPointsOfInterest() {
+    getAllDoors() {
         const handledDoors: GuidoNode[] = [];
 
-        for (const nodeType of Object.values(NodeType).filter((nodeType: NodeType) => nodeType !== NodeType.NODE)) {
+        for (const nodeType of Object.values(NodeType).filter((nodeType: NodeType) => [NodeType.DOOR, NodeType.EMERGENCY_EXIT].includes(nodeType))) {
             const doors = document.getElementsByClassName(nodeType);
 
             function getDoorCoords(previousPoints: string) {
@@ -375,6 +376,7 @@ export class CreateMapComponent implements AfterViewInit {
                 const neighbors = neighborsStr.filter((e: string) => e !== "").map(elem => parseInt(elem));
                 const id = parseInt(String(doors[i].getAttribute("id")));
                 const color = String(doors[i].getAttribute("fill")).substring(4).slice(0,-1).split(",").map(elem => parseFloat(elem));
+                let degreesRotated = parseInt(String(doors[i].getAttribute("degreesRotated")));
 
                 let handledDoor = new GuidoNode(
                     id,
@@ -384,7 +386,8 @@ export class CreateMapComponent implements AfterViewInit {
                     doorCoords.displayPoints,
                     neighborsStr.length === 0 ? [] : neighbors,
                     nodeType,
-                    color
+                    color,
+                    degreesRotated
                 );
                 handledDoors.push(handledDoor);
                 this.jsonData.lastId++;

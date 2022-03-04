@@ -219,7 +219,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 case NodeType.DOOR:
                 case NodeType.EMERGENCY_EXIT:
                     let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.length, doorProperties.width, Point.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, this);
+                    this.createDoor(elem.id, doorProperties.length, doorProperties.width, Point.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, elem.degreesRotated, this);
                     break;
                 case NodeType.NODE:
                     this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
@@ -660,14 +660,16 @@ export class CreateFloorComponent implements AfterViewInit {
         if (previousId === null)
             self.jsonData.lastId += 1;
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
     }
 
     createPointOfInterest(nodeType: NodeType, neighbors: number[] = [], self: CreateFloorComponent = this): void {
         const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, []));
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, [], 0));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
     }
 
     createLabel(description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
@@ -676,6 +678,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self)
     }
 
     getConnectablePoint(id: number): Point {
@@ -724,6 +727,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("class", NodeType.NODE)
             .attr('stroke', 'black')
             .attr("removable", "")
+            .attr("degreesRotated", 0)
             .attr('fill', '#ff0000')
             .on("mouseover", function () {
                 // @ts-ignore
@@ -857,7 +861,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * Creates a door
      */
-    createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], self: CreateFloorComponent = this): void {
+    createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], degreesRotated: number = 0, self: CreateFloorComponent = this): void {
         let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
         let origin = new Point(25, 25);
 
@@ -883,7 +887,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .attr("name", name)
             .attr("removable", "")
             .attr("floor", self.floor)
-            .attr("degreesRotated", 0)
+            .attr("degreesRotated", degreesRotated)
             .attr("fill", "rgb(" + color.join(",") + ")")
             .on("contextmenu", self.rotateDoor)
             .call(d3.behavior.drag().on("drag", function () {

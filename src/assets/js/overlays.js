@@ -185,6 +185,7 @@ d3.floorplan.overlays = function () {
                 .attr("class", "pointOfInterest")
                 .attr("vector-effect", "non-scaling-stroke")
                 .attr("pointer-events", "all")
+                .attr("degreesRotated", 0)
                 .on("mousedown", function (d) {
                     selectCallbacks.forEach(function (cb) {
                         cb(d.id);
@@ -263,6 +264,7 @@ d3.floorplan.overlays = function () {
                 .attr("class", "label")
                 .attr("vector-effect", "non-scaling-stroke")
                 .attr("pointer-events", "all")
+                .attr("degreesRotated", 0)
                 .on("mousedown", function (d) {
                     selectCallbacks.forEach(function (cb) {
                         cb(d.id);

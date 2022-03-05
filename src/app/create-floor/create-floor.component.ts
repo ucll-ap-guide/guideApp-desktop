@@ -109,14 +109,14 @@ export class CreateFloorComponent implements AfterViewInit {
         let svg = d3.select("#demo" + this.floor).select("svg");
         this.mapData.set(this.overlays.getId(), floor.overlays);
 
-        svg.select("g.map-layers").remove();
+        svg.select("g.map-layers").select(".Objects").remove();
         svg.select("g.map-controls").remove();
 
         svg.attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
-            .datum(this.mapData)
+            .datum(this.mapData);
 
-        this.floorplan.generateMap(svg)
+        this.floorplan.generateMap(svg);
 
         // Place all figures on top layers of the svg
         let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0];
@@ -187,7 +187,7 @@ export class CreateFloorComponent implements AfterViewInit {
         this.floorplan = new Floorplan()
         this.mapData = new Map();
         this.imageLayer = new Imagelayer();
-        this.overlays = new Overlays(this.jsonData.floors[this.floor].overlays);
+        this.overlays = new Overlays();
 
         this.regenerateFloorMap(true);
         let floor = this.jsonData.floors.find((f: Floor) => f.floor === this.floor) as Floor;
@@ -196,9 +196,9 @@ export class CreateFloorComponent implements AfterViewInit {
         let svg = d3.select("#demo" + this.floor).append("svg")
             .attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
-            .datum(this.mapData)
+            .datum(this.mapData);
 
-        this.floorplan.generateMap(svg)
+        this.floorplan.generateMap(svg);
 
         svg.on("dblclick.zoom", null);
 

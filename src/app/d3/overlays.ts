@@ -1,9 +1,13 @@
 import {Point} from "../model/point";
 import {pointsOfInterest} from "./point-of-interest";
 import * as select from "ajv-keywords";
+import {Polygon} from "../model/polygon";
+import {Label} from "../model/label";
+import {GuidoNode} from "../model/guido-node";
 
 
 declare var d3: any;
+type OverlayData = {polygons: Polygon[], labels: Label[], nodes: GuidoNode[]}
 
 export class Overlays {
     x = d3.scale.linear();
@@ -17,9 +21,8 @@ export class Overlays {
     line: any;
     dragBehavior: any;
     dragged = null;
-    jsonData: any;
 
-    constructor(jsonData: any) {
+    constructor() {
         let self = this;
         this.line = d3.svg.line()
             .x(function (d: any) {
@@ -43,312 +46,27 @@ export class Overlays {
                 self.__mouseup(this, self)
             });
 
-        this.jsonData = jsonData;
     }
 
     createOverlays(groups: any) {
+        console.log(groups.data())
         let self = this;
-        groups.each(function (data: any) {
-            // @ts-ignore
+        groups.each(function (data: OverlayData) {
             if (!data) return;
             // @ts-ignore
             var g = d3.select(this);
 
             // setup rectangle for capturing events
-            var canvas = g.selectAll("rect.overlay-canvas").data([0]);
-
-            canvas.enter().append("rect")
-                .attr("class", "overlay-canvas")
-                .style("opacity", 0)
-                .attr("pointer-events", "all")
-                .on("click", function () {
-                    if (self.editMode) {
-                        // @ts-ignore
-                        var p = d3.mouse(this);
-                        self.canvasCallbacks.forEach(function (cb: any) {
-                            cb(self.x.invert(p[0]), self.y.invert(p[1]));
-                        });
-                    }
-                })
-                .on("mouseup.drag", function () {
-                    // @ts-ignore
-                    self.__mouseup(this, self)
-                })
-                .on("touchend.drag", function () {
-                    // @ts-ignore
-                    self.__mouseup(this, self)
-                });
-
-            canvas.attr("x", self.x.range()[0])
-                .attr("y", self.y.range()[0])
-                .attr("height", self.y.range()[1] - self.y.range()[0])
-                .attr("width", self.x.range()[1] - self.x.range()[0]);
+            setupCanvas(g, self);
 
             // draw polygons
-            var polygons = g.selectAll("path.polygon")
-                .data(data.polygons || [], function (d: any) {
-                    return d.id;
-                });
-
-            polygons.enter().append("path")
-                .attr("class", "polygon")
-                .attr("vector-effect", "non-scaling-stroke")
-                .attr("pointer-events", "all")
-                .on("mousedown", function (d: any) {
-                    self.selectCallbacks.forEach(function (cb: any) {
-                        cb(d.id);
-                    });
-                })
-                .call(self.dragBehavior)
-                .append("title");
-
-            for (let i = 0; i < polygons[0].length; i++) {
-                polygons[0][i].id = data.polygons[i].id;
-                const elem = document.querySelector("[id='" + data.polygons[i].id + "']")!;
-                elem.setAttribute("id", data.polygons[i].id);
-                elem.setAttribute("type", data.polygons[i].type);
-                if (data.polygons[i].type !== "Floor") {
-                    elem.setAttribute("removable", "");
-                }
-                const index = data.polygons.map((elem: any) => parseInt(elem.id)).indexOf(parseInt(polygons[0][i].id));
-                if (data.polygons[index].color) {
-                    elem.setAttribute("fill", "rgb(" + data.polygons[index].color.join(",") + ")");
-                }
-            }
-
-            polygons.exit().transition().style("opacity", 1e-6).remove();
-            polygons
-                .attr("d", function (d: any) {
-                    return self.line(d.points) + "Z";
-                })
-                .style("cursor", self.editMode ? "move" : "pointer")
-                .select("title")
-                .text(function (d: any) {
-                    return d.name
-                });
+            drawPolygons(data, g, self);
 
             // draw nodes
-            var nodes = g.selectAll("svg.pointOfInterest")
-                .data(data.nodes || [], function (d: any) {
-                    return d.id;
-                });
+            drawNodes(data, g, self);
 
-            const nodeGroup = nodes.enter().append("svg")
-                .attr("height", "30px")
-                .attr("width", "30px")
-                .attr("removable", "")
-                .attr("node", "")
-                .attr("class", "pointOfInterest")
-                .attr("vector-effect", "non-scaling-stroke")
-                .attr("pointer-events", "all")
-                .attr("degreesRotated", 0)
-                .on("mousedown", function (d: any) {
-                    self.selectCallbacks.forEach(function (cb: any) {
-                        cb(d.id);
-                    });
-                })
-                .call(d3.behavior.drag().on("drag", function () {
-                    if (document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
-                        // @ts-ignore
-                        let d3node = d3.select(this)
-                        const node = data.nodes.find((elem: any) => elem.id === parseInt(d3node.attr("id")));
-                        let svg = document.getElementById("demo" + node.floor)!.getElementsByTagName("svg")[0];
-                        let width = parseFloat(String(svg.getAttribute("width")));
-                        let height = parseFloat(String(svg.getAttribute("height")));
-                        let x = d3.event.x;
-                        let y = d3.event.y;
-
-                        if (x > 0 && y > 0 && x < width && y < height) {
-                            node.point = new Point(x, y);
-
-                            // Apply the translation to the shape:
-                            // @ts-ignore
-                            d3.select(this)
-                                // @ts-ignore
-                                .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                                // @ts-ignore
-                                .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
-                        }
-                    }
-                }));
-
-            for (let i = 0; i < nodes[0].length; i++) {
-                nodes[0][i].id = data.nodes[i].id;
-                const elem = document.querySelector("[id='" + data.nodes[i].id + "']")!;
-                elem.setAttribute("id", data.nodes[i].id);
-                elem.setAttribute("pointsOfInterestId", data.nodes[i].id);
-                elem.setAttribute("type", data.nodes[i].type);
-                elem.setAttribute("x", String(data.nodes[i].point.x - 15));
-                elem.setAttribute("y", String(data.nodes[i].point.y - 15));
-            }
-
-            nodeGroup.append("rect")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .attr("rx", "7");
-
-            nodeGroup.append("svg")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .append("path")
-                .attr("fill", "#fff");
-
-            for (let i = 0; i < nodes[0].length; i++) {
-                const pointOfInterest = document.querySelector("[id='" + data.nodes[i].id + "']")!;
-                pointOfInterest.setAttribute("floor", data.nodes[i].floor);
-                pointOfInterest.setAttribute("neighbors", data.nodes[i].neighbors.join(","));
-                // @ts-ignore
-                const logo = pointsOfInterest[data.nodes[i].type];
-                if (logo.backgroundColor !== undefined) {
-                    pointOfInterest.setAttribute("fill", logo.backgroundColor);
-                }
-                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
-                pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
-                // Needed for when user selects child instead of parent for remove element
-                pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
-                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
-                pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", data.nodes[i].id);
-            }
-
-            nodes.exit().transition().style("opacity", 1e-6).remove();
-
-            var labels = g.selectAll("svg.label")
-                .data(data.labels || [], function (d: any) {
-                    return d.id;
-                });
-
-            const labelGroup = labels.enter().append("svg")
-                .attr("height", "30px")
-                .attr("width", "30px")
-                .attr("removable", "")
-                .attr("label", "")
-                .attr("type", "Label")
-                .attr("class", "label")
-                .attr("vector-effect", "non-scaling-stroke")
-                .attr("pointer-events", "all")
-                .attr("degreesRotated", 0)
-                .on("mousedown", function (d: any) {
-                    self.selectCallbacks.forEach(function (cb: any) {
-                        cb(d.id);
-                    });
-                })
-                .call(d3.behavior.drag().on("drag", function () {
-                    if (document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
-                        // @ts-ignore
-                        let d3node = d3.select(this)
-                        const label = data.labels.find((elem: any) => elem.id === parseInt(d3node.attr("id")));
-                        // @ts-ignore
-                        const floor = this.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]
-
-                        let svg = document.getElementById("demo" + floor)!.getElementsByTagName("svg")[0];
-                        let width = parseFloat(String(svg.getAttribute("width")));
-                        let height = parseFloat(String(svg.getAttribute("height")));
-                        let x = d3.event.x;
-                        let y = d3.event.y;
-
-                        if (x > 0 && y > 0 && x < width && y < height) {
-                            label.point = new Point(x, y);
-
-                            // Apply the translation to the shape:
-                            // @ts-ignore
-                            d3.select(this)
-                                // @ts-ignore
-                                .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
-                                // @ts-ignore
-                                .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
-                        }
-                    }
-                }));
-
-            for (let i = 0; i < labels[0].length; i++) {
-                labels[0][i].id = data.labels[i].id;
-                const elem = document.querySelector("[id='" + data.labels[i].id + "']")!;
-                elem.setAttribute("id", data.labels[i].id);
-                elem.setAttribute("pointsOfInterestId", data.labels[i].id);
-                elem.setAttribute("x", String(data.labels[i].point.x - 15));
-                elem.setAttribute("y", String(data.labels[i].point.y - 15));
-            }
-
-            labelGroup.append("rect")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .attr("rx", "7");
-
-            labelGroup.append("svg")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .append("path")
-                .attr("fill", "#fff");
-
-            for (let i = 0; i < labels[0].length; i++) {
-                const pointOfInterest = document.querySelector("[id='" + data.labels[i].id + "']")!;
-                const logo = pointsOfInterest["Info"];
-                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
-                pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
-                // Needed for when user selects child instead of parent for remove element
-                pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
-                pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
-                pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", data.labels[i].id);
-            }
-
-            labels.exit().transition().style("opacity", 1e-6).remove();
-
-            if (self.editMode) {
-                let pointData: any[] = [];
-                if (data.polygons) {
-                    data.polygons.forEach(function (polygon: any) {
-                        if (polygon.type !== "Floor") {
-                            polygon.points.forEach(function (pt: any, i: any) {
-                                pointData.push({
-                                    "index": i,
-                                    "parent": polygon
-                                });
-                            });
-                        }
-                    });
-                }
-
-                // determine current view scale to make appropriately
-                // sized points to drag
-                var scale = 1;
-                var node = g.node();
-                while (node.parentNode) {
-                    node = node.parentNode;
-                    if (node.__scale__) {
-                        scale = node.__scale__;
-                        break;
-                    }
-                }
-
-                var points = g.selectAll("circle.vertex")
-                    .data(pointData, function (d: any) {
-                        return d.parent.id + "-" + d.index;
-                    });
-
-                points.exit().transition()
-                    .attr("r", 1e-6).remove();
-
-                points.enter().append("circle")
-                    .attr("class", "vertex")
-                    .attr("pointer-events", "all")
-                    .attr("vector-effect", "non-scaling-stroke")
-                    .style("cursor", "move")
-                    .attr("r", 1e-6)
-                    .call(self.dragBehavior);
-
-                points
-                    .attr("cx", function (d: any) {
-                        return self.x(d.parent.points[d.index].x);
-                    })
-                    .attr("cy", function (d: any) {
-                        return self.y(d.parent.points[d.index].y);
-                    })
-                    .attr("r", 4 / scale);
-            } else {
-                g.selectAll("circle.vertex").transition()
-                    .attr("r", 1e-6).remove();
-            }
-
+            //draw labels
+            drawLabels(data, g, self);
         })
     }
 
@@ -412,7 +130,7 @@ export class Overlays {
      */
     __mousemove(event: any, self: any) {
         // @ts-ignore
-        if (self.dragged && (event.getAttribute("type") !== "Floor")) { // || !document.getElementById("lockFloor" + event.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1])!.checked) && document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
+        if (self.dragged && (event.getAttribute("type") !== "Floor" || !document.getElementById("lockFloor" + event.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1])!.checked) && document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
             var dx = self.x.invert(d3.event.dx) - self.x.invert(0);
             var dy = self.y.invert(d3.event.dy) - self.y.invert(0);
 
@@ -453,4 +171,307 @@ export class Overlays {
         }
     }
 }
+
+function setupCanvas(g: any, self: Overlays) {
+    var canvas = g.selectAll("rect.overlay-canvas").data([0]);
+
+    canvas.enter().append("rect")
+        .attr("class", "overlay-canvas")
+        .style("opacity", 0)
+        .attr("pointer-events", "all")
+        .on("click", function () {
+            if (self.editMode) {
+                // @ts-ignore
+                var p = d3.mouse(this);
+                self.canvasCallbacks.forEach(function (cb: any) {
+                    cb(self.x.invert(p[0]), self.y.invert(p[1]));
+                });
+            }
+        })
+        .on("mouseup.drag", function () {
+            // @ts-ignore
+            self.__mouseup(this, self)
+        })
+        .on("touchend.drag", function () {
+            // @ts-ignore
+            self.__mouseup(this, self)
+        });
+
+    canvas.attr("x", self.x.range()[0])
+        .attr("y", self.y.range()[0])
+        .attr("height", self.y.range()[1] - self.y.range()[0])
+        .attr("width", self.x.range()[1] - self.x.range()[0]);
+
+}
+
+
+function drawPolygons(data: OverlayData, g: any, self: Overlays) {
+    var polygons = g.selectAll("path.polygon")
+        .data(data.polygons || [], function (d: any) {
+            return d.id;
+        });
+
+    polygons.enter().append("path")
+        .attr("class", "polygon")
+        .attr("vector-effect", "non-scaling-stroke")
+        .attr("pointer-events", "all")
+        .on("mousedown", function (d: any) {
+            self.selectCallbacks.forEach(function (cb: any) {
+                cb(d.id);
+            });
+        })
+        .call(self.dragBehavior)
+        .append("title");
+
+    for (let i = 0; i < polygons[0].length; i++) {
+        polygons[0][i].id = data.polygons[i].id;
+        const elem = document.querySelector("[id='" + data.polygons[i].id + "']")!;
+        elem.setAttribute("id", String(data.polygons[i].id));
+        elem.setAttribute("type", data.polygons[i].type);
+        if (data.polygons[i].type !== "Floor") {
+            elem.setAttribute("removable", "");
+        }
+        const index = data.polygons.map((elem: Polygon) => elem.id).indexOf(parseInt(polygons[0][i].id));
+        if (data.polygons[index].color) {
+            elem.setAttribute("fill", "rgb(" + data.polygons[index].color.join(",") + ")");
+        }
+    }
+
+    polygons.exit().transition().style("opacity", 1e-6).remove();
+    polygons
+        .attr("d", function (d: any) {
+            return self.line(d.points) + "Z";
+        })
+        .style("cursor", self.editMode ? "move" : "pointer")
+        .select("title")
+        .text(function (d: any) {
+            return d.name
+        });
+
+
+    //Set draggable points to change shape of polygon
+    type PointData = {index: number, parent: Polygon};
+    if (self.editMode) {
+        let pointData: PointData[] = [];
+        if (data.polygons) {
+            data.polygons.forEach(function (polygon: any) {
+                if (polygon.type !== "Floor") {
+                    polygon.points.forEach(function (pt: any, i: any) {
+                        pointData.push({
+                            "index": i,
+                            "parent": polygon
+                        });
+                    });
+                }
+            });
+        }
+
+        // determine current view scale to make appropriately
+        // sized points to drag
+        var scale = 1;
+        var node = g.node();
+        while (node.parentNode) {
+            node = node.parentNode;
+            if (node.__scale__) {
+                scale = node.__scale__;
+                break;
+            }
+        }
+
+        var points = g.selectAll("circle.vertex")
+            .data(pointData, function (d: PointData) {
+                return d.parent.id + "-" + d.index;
+            });
+
+        points.exit().transition()
+            .attr("r", 1e-6).remove();
+
+        points.enter().append("circle")
+            .attr("class", "vertex")
+            .attr("pointer-events", "all")
+            .attr("vector-effect", "non-scaling-stroke")
+            .style("cursor", "move")
+            .attr("r", 1e-6)
+            .call(self.dragBehavior);
+
+        points
+            .attr("cx", function (d: PointData) {
+                return self.x(d.parent.points[d.index].x);
+            })
+            .attr("cy", function (d: PointData) {
+                return self.y(d.parent.points[d.index].y);
+            })
+            .attr("r", 4 / scale);
+    } else {
+        g.selectAll("circle.vertex").transition()
+            .attr("r", 1e-6).remove();
+    }
+
+}
+
+function drawNodes(data: OverlayData, g: any, self: Overlays) {
+    var nodes = g.selectAll("svg.pointOfInterest")
+        .data(data.nodes || [], function (d: any) {
+            return d.id;
+        });
+
+    const nodeGroup = nodes.enter().append("svg")
+        .attr("height", "30px")
+        .attr("width", "30px")
+        .attr("removable", "")
+        .attr("node", "")
+        .attr("class", "pointOfInterest")
+        .attr("vector-effect", "non-scaling-stroke")
+        .attr("pointer-events", "all")
+        .attr("degreesRotated", 0)
+        .on("mousedown", function (d: any) {
+            self.selectCallbacks.forEach(function (cb: any) {
+                cb(d.id);
+            });
+        })
+        .call(d3.behavior.drag().on("drag", function () {
+            if (document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
+                // @ts-ignore
+                let d3node = d3.select(this)
+                const node = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(d3node.attr("id")))!;
+                let svg = document.getElementById("demo" + node.floor)!.getElementsByTagName("svg")[0];
+                let width = parseFloat(String(svg.getAttribute("width")));
+                let height = parseFloat(String(svg.getAttribute("height")));
+                let x = d3.event.x;
+                let y = d3.event.y;
+
+                if (x > 0 && y > 0 && x < width && y < height) {
+                    node.point = new Point(x, y);
+
+                    // Apply the translation to the shape:
+                    // @ts-ignore
+                    d3.select(this)
+                        // @ts-ignore
+                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        // @ts-ignore
+                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                }
+            }
+        }));
+
+    for (let i = 0; i < nodes[0].length; i++) {
+        nodes[0][i].id = data.nodes[i].id;
+        const elem = document.querySelector("[id='" + data.nodes[i].id + "']")!;
+        elem.setAttribute("id", String(data.nodes[i].id));
+        elem.setAttribute("pointsOfInterestId", String(data.nodes[i].id));
+        elem.setAttribute("type", data.nodes[i].type);
+        elem.setAttribute("x", String(data.nodes[i].point.x - 15));
+        elem.setAttribute("y", String(data.nodes[i].point.y - 15));
+    }
+
+    nodeGroup.append("rect")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .attr("rx", "7");
+
+    nodeGroup.append("svg")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("path")
+        .attr("fill", "#fff");
+
+    for (let i = 0; i < nodes[0].length; i++) {
+        const pointOfInterest = document.querySelector("[id='" + data.nodes[i].id + "']")!;
+        pointOfInterest.setAttribute("floor", String(data.nodes[i].floor));
+        pointOfInterest.setAttribute("neighbors", data.nodes[i].neighbors.join(","));
+        // @ts-ignore
+        const logo = pointsOfInterest[data.nodes[i].type];
+        if (logo.backgroundColor !== undefined) {
+            pointOfInterest.setAttribute("fill", logo.backgroundColor);
+        }
+        pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
+        pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
+        // Needed for when user selects child instead of parent for remove element
+        pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", String(data.nodes[i].id));
+        pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", String(data.nodes[i].id));
+        pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", String(data.nodes[i].id));
+    }
+}
+
+function drawLabels(data: OverlayData, g: any, self: Overlays) {
+    var labels = g.selectAll("svg.label")
+        .data(data.labels || [], function (d: any) {
+            return d.id;
+        });
+
+    const labelGroup = labels.enter().append("svg")
+        .attr("height", "30px")
+        .attr("width", "30px")
+        .attr("removable", "")
+        .attr("label", "")
+        .attr("type", "Label")
+        .attr("class", "label")
+        .attr("vector-effect", "non-scaling-stroke")
+        .attr("pointer-events", "all")
+        .attr("degreesRotated", 0)
+        .on("mousedown", function (d: any) {
+            self.selectCallbacks.forEach(function (cb: any) {
+                cb(d.id);
+            });
+        })
+        .call(d3.behavior.drag().on("drag", function () {
+            if (document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
+                // @ts-ignore
+                let d3node = d3.select(this)
+                const label = data.labels.find((elem: Label) => elem.id === parseInt(d3node.attr("id")))!;
+                // @ts-ignore
+                const floor = this.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]
+
+                let svg = document.getElementById("demo" + floor)!.getElementsByTagName("svg")[0];
+                let width = parseFloat(String(svg.getAttribute("width")));
+                let height = parseFloat(String(svg.getAttribute("height")));
+                let x = d3.event.x;
+                let y = d3.event.y;
+
+                if (x > 0 && y > 0 && x < width && y < height) {
+                    label.point = new Point(x, y);
+
+                    // Apply the translation to the shape:
+                    // @ts-ignore
+                    d3.select(this)
+                        // @ts-ignore
+                        .attr("x", x - (parseInt(d3.select(this).attr("width").split("px")) / 2))
+                        // @ts-ignore
+                        .attr("y", y - (parseInt(d3.select(this).attr("height").split("px")) / 2));
+                }
+            }
+        }));
+
+    for (let i = 0; i < labels[0].length; i++) {
+        labels[0][i].id = data.labels[i].id;
+        const elem = document.querySelector("[id='" + data.labels[i].id + "']")!;
+        elem.setAttribute("id", String(data.labels[i].id));
+        elem.setAttribute("pointsOfInterestId", String(data.labels[i].id));
+        elem.setAttribute("x", String(data.labels[i].point.x - 15));
+        elem.setAttribute("y", String(data.labels[i].point.y - 15));
+    }
+
+    labelGroup.append("rect")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .attr("rx", "7");
+
+    labelGroup.append("svg")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("path")
+        .attr("fill", "#fff");
+
+    for (let i = 0; i < labels[0].length; i++) {
+        const pointOfInterest = document.querySelector("[id='" + data.labels[i].id + "']")!;
+        const logo = pointsOfInterest["Info"];
+        pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
+        pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
+        // Needed for when user selects child instead of parent for remove element
+        pointOfInterest.getElementsByTagName("rect")[0].setAttribute("pointsOfInterestId", String(data.labels[i].id));
+        pointOfInterest.getElementsByTagName("svg")[0].setAttribute("pointsOfInterestId", String(data.labels[i].id));
+        pointOfInterest.getElementsByTagName("path")[0].setAttribute("pointsOfInterestId", String(data.labels[i].id));
+    }
+}
+
 

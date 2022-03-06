@@ -1,6 +1,6 @@
 <div class="w-full shadow rounded-lg p-2 bg-blue-100 dark:bg-[#37373b] mt-5 mb-2">
-    <h3 class="text-black dark:text-white text-xl mx-2 md:mx-4 mb-2">{{getFloorName()}}</h3>
-    <div *ngIf="!setNeighborMode" class="flex gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
+    <h3 class="text-black dark:text-white text-xl mx-2 md:mx-4 mb-2">{{floorName}}</h3>
+    <div *ngIf="!setNeighborMode" class="flex flex-wrap gap-y-2 gap-x-4 mx-4 md:mx-8 mb-2">
         <label class="text-black dark:text-white cursor-pointer">
             <input (change)="updateNewBackground($event)" accept="image/*" class="hidden" type="file"/>
             <span class="flex gap-2">
@@ -12,7 +12,7 @@
                 <span>Upload image</span>
             </span>
         </label>
-        <button (click)="removeFloor()" class="text-red-500 flex gap-2 px-2">
+        <button (click)="removeFloor()" class="text-red-500 flex gap-2">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                  xmlns="http://www.w3.org/2000/svg">
                 <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -20,7 +20,7 @@
             Remove floor
         </button>
         <label *ngIf="!editMode && !deleteMode" [for]="'lockFloor' + floor">
-            <input [defaultChecked]="true" [id]="'lockFloor' + floor" type="checkbox">
+            <input [defaultChecked]="true" [id]="'lockFloor' + floor" class="ml-1.5 mr-2" type="checkbox">
             Lock the floor
         </label>
     </div>
@@ -82,12 +82,12 @@
                     dialogText="Update this room: " title="Update room">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="createDoor" [floor]="floor"
-                    [formElements]="[{name: 'Door name', required: true}, {defaultValue: '25', inputType: 'number', min: 0, name: 'Door length', required: true, step: 0.01}, {defaultValue: '5', inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {defaultValue: '139,69,19', name: 'RGB color', pattern: '^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?){2}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true, tagType: 'color-picker'}]"
+                    [formElements]="[{name: 'Door name'}, {defaultValue: '25', inputType: 'number', min: 0, name: 'Door length', required: true, step: 0.01}, {defaultValue: '5', inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {defaultValue: '139,69,19', name: 'RGB color', pattern: '^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?){2}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true, tagType: 'color-picker'}]"
                     [params]="paramsToGiveToDialogBoxes.createDoor" action="createDoor" confirmButtonText="OK"
                     dialogText="Enter the door's info:" title="Create door">
     </app-dialog-box>
     <app-dialog-box [confirmAction]="updateDoor" [floor]="floor"
-                    [formElements]="[{name: 'Door name', required: true}, {inputType: 'number', min: 0, name: 'Door length', required: true, step: 0.01}, {inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {name: 'RGB color', pattern: '^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?){2}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true, tagType: 'color-picker'}]"
+                    [formElements]="[{name: 'Door name'}, {inputType: 'number', min: 0, name: 'Door length', required: true, step: 0.01}, {inputType: 'number', min: 0, name: 'Door width', required: true, step: 0.01}, {name: 'RGB color', pattern: '^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]),[ ]?){2}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$', required: true, tagType: 'color-picker'}]"
                     [params]="paramsToGiveToDialogBoxes.updateDoor" action="updateDoor" confirmButtonText="OK"
                     dialogText="Update this door: " title="Update door">
     </app-dialog-box>
@@ -95,8 +95,12 @@
                     [params]="paramsToGiveToDialogBoxes.createNode" action="createNode" confirmButtonText="OK"
                     dialogText="Enter the node's name:" title="Create node">
     </app-dialog-box>
+    <app-dialog-box [confirmAction]="updateNode" [floor]="floor" [formElements]="[{name: 'Node name'}]"
+                    [params]="paramsToGiveToDialogBoxes.updateNode" action="updateNode" confirmButtonText="OK"
+                    dialogText="Update the node:" title="Update node">
+    </app-dialog-box>
     <app-dialog-box [confirmAction]="createPointOfInterest" [floor]="floor"
-                    [formElements]="[{tagType: 'select', values: getPointsOfInterest(), name: 'Type'}]"
+                    [formElements]="[{tagType: 'select', values: getPointsOfInterestTypes(), name: 'Type'}]"
                     [params]="paramsToGiveToDialogBoxes.createPointOfInterest" action="createPointOfInterest"
                     confirmButtonText="OK" dialogText="" title="Create Point of Interest">
     </app-dialog-box>
@@ -112,12 +116,7 @@
     </app-dialog-box>
     <app-dialog-box [confirmAction]="setNeighbors" [floor]="floor"
                     [formElements]="[{infinite: [{inputType: 'number', name: 'Enter neighbors', min: 1, required: true, tagType: 'search-select', values: []}, {checked: true, inputType: 'checkbox', name: 'Bidirectional path'}]}]"
-                    [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors"
-                    confirmButtonText="OK" dialogText="Enter the neighbor's id's:" title="Set neighbors">
-    </app-dialog-box>
-    <app-dialog-box [confirmAction]="updateNode" [floor]="floor"
-                    [formElements]="[{name: 'Name', required: true}]"
-                    [params]="paramsToGiveToDialogBoxes.updateNode" action="updateNode" confirmButtonText="OK"
-                    dialogText="Update the node:" title="Update node">
+                    [params]="paramsToGiveToDialogBoxes.setNeighbors" action="setNeighbors" confirmButtonText="OK"
+                    dialogText="Enter the neighbor's id's:" title="Set neighbors">
     </app-dialog-box>
 </div>

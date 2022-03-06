@@ -12,7 +12,7 @@ export class GuidoMap {
      * @param width The width of the map (the height of the screen).
      * @param lastId The id of the last object that has been added to the map.
      * @param floors A list of all the {@link Floor}s of the map.
-     * @param nodes A list of all the {@link GuidoNode}s of the map (excluded points of interests, those are saved on
+     * @param nodes A list of all the {@link GuidoNode}s of the map (excluded points of interest, those are saved on
      *              each {@link Floor}).
      */
     constructor(

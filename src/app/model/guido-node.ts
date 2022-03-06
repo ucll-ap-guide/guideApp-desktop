@@ -7,7 +7,7 @@ import {NodeType} from "./node-type";
 export class GuidoNode {
     /**
      * @constructor
-     * @param id The (unique) id of the node.
+     * @param id The unique id of the node.
      * @param name The name of the node.
      * @param floor The floor number of the {@link Floor}.
      * @param point The {@link Point} with which the {@link displayPoints} are rendered.

@@ -325,16 +325,16 @@ export class CreateMapComponent implements AfterViewInit {
         let handledNodes: GuidoNode[] = [];
 
         for (let i = 0; i != nodes.length; i++) {
-            let cx = parseFloat(String(nodes[i].getAttribute("cx")));
-            let cy = parseFloat(String(nodes[i].getAttribute("cy")));
-            let r = parseFloat(String(nodes[i].getAttribute("r")));
-            let id = parseInt(String(nodes[i].getAttribute("id")));
-            let neighbors = String(nodes[i].getAttribute("neighbors")).split(",").filter((e: string) => e !== "").map(elem => parseInt(elem));
+            let cx = parseFloat(nodes[i].getAttribute("cx")!);
+            let cy = parseFloat(nodes[i].getAttribute("cy")!);
+            let r = parseFloat(nodes[i].getAttribute("r")!);
+            let id = parseInt(nodes[i].getAttribute("id")!);
+            let neighbors = nodes[i].getAttribute("neighbors")!.split(",").filter((id: string) => id !== "").map((id: string) => parseInt(id));
 
             let handledNode = new GuidoNode(
                 id,
-                String(nodes[i].getAttribute("name")),
-                parseInt(String(nodes[i].getAttribute("floor"))),
+                nodes[i].getAttribute("name")!,
+                parseInt(nodes[i].getAttribute("floor")!),
                 new Point(cx, cy),
                 [new Point(cx + r, cy + r)],
                 neighbors === null ? [] : neighbors,
@@ -371,17 +371,17 @@ export class CreateMapComponent implements AfterViewInit {
             }
 
             for (let i = 0; i != doors.length; i++) {
-                const doorCoords = getDoorCoords(String(doors[i].getAttribute("points")));
-                const neighborsStr = String(doors[i].getAttribute("neighbors")).split(",");
+                const doorCoords = getDoorCoords(doors[i].getAttribute("points")!);
+                const neighborsStr = doors[i].getAttribute("neighbors")!.split(",");
                 const neighbors = neighborsStr.filter((e: string) => e !== "").map(elem => parseInt(elem));
-                const id = parseInt(String(doors[i].getAttribute("id")));
-                const color = String(doors[i].getAttribute("fill")).substring(4).slice(0,-1).split(",").map(elem => parseFloat(elem));
+                const id = parseInt(doors[i].getAttribute("id")!);
+                const color = doors[i].getAttribute("fill")!.substring(4).slice(0, -1).split(",").map(elem => parseFloat(elem));
                 let degreesRotated = parseInt(String(doors[i].getAttribute("degreesRotated")));
 
                 let handledDoor = new GuidoNode(
                     id,
-                    String(doors[i].getAttribute("name")),
-                    parseInt(String(doors[i].getAttribute("floor"))),
+                    doors[i].getAttribute("name")!,
+                    parseInt(doors[i].getAttribute("floor")!),
                     new Point(doorCoords.middle.x, doorCoords.middle.y),
                     doorCoords.displayPoints,
                     neighborsStr.length === 0 ? [] : neighbors,

@@ -7,13 +7,14 @@ import {PolygonType} from "./polygon-type";
 export class Polygon {
     /**
      * @constructor
-     * @param id
-     * @param name
-     * @param floor
-     * @param type
-     * @param description
-     * @param points
-     * @param color
+     * @param id The unique identifier of the {@link Polygon}.
+     * @param name The name of the {@link Polygon}.
+     * @param floor The floor number the {@link Polygon} belongs to.
+     * @param type The {@link PolygonType} of the {@link Polygon}.
+     * @param description The description of the {@link Polygon}.
+     * @param points The vertices of the {@link Polygon}.
+     * @param color The color of the node, this is either an empty list or a list of `integers` consisting of 3 numbers
+     *              that are between 0-255.
      */
     constructor(
         public id: number,

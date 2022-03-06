@@ -55,12 +55,7 @@
               "src/styles/styles.css",
               "src/styles/toast.css"
             ],
-            "scripts": [
-              "src/assets/js/floorplan.js",
-              "src/assets/js/imagelayer.js",
-              "src/assets/js/overlays.js",
-              "src/assets/js/vectorfield.js"
-            ]
+            "scripts": [            ]
           },
           "configurations": {
             "production": {

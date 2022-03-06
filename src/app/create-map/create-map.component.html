@@ -96,8 +96,8 @@
                 </button>
                 <ng-container *ngIf="jsonData.floors.length !== 0"
                               class="text-white bg-gray-800 flex gap-y-2 gap-x-4">
-                    <button (click)="setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()"
-                            [class]=" (setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
+                    <button (click)="jsonData.setNeighborMode ? disableSetNeighborMode() : enableSetNeighborMode()"
+                            [class]=" (jsonData.setNeighborMode ? 'text-green-500' : 'text-white') + ' px-4 py-2'"
                             id="setNeighborModeButton">
                         <svg class="svg-icon h-8 w-8" fill="currentColor" viewBox="0 0 1024 1024"
                              xmlns="http://www.w3.org/2000/svg">
@@ -108,7 +108,7 @@
                         </svg>
                     </button>
                     <button (click)="toggleEditMode()"
-                            [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'"
+                            [class]=" (jsonData.editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'"
                             id="editModeButton">
                         <svg class="svg-icon h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                              xmlns="http://www.w3.org/2000/svg">
@@ -116,7 +116,7 @@
                                   stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
                         </svg>
                     </button>
-                    <button (click)="toggleDeleteMode()" [class]="(deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
+                    <button (click)="toggleDeleteMode()" [class]="(jsonData.deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
                             id="deleteModeButton">
                         <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                              xmlns="http://www.w3.org/2000/svg">
@@ -148,13 +148,13 @@
         <div class="mx-4 md:mx-8 pb-5 text-black dark:text-white">
             <h2 class="text-2xl mt-2">Floors</h2>
             <div id="floors">
-                <app-create-floor *ngFor="let floor of jsonData.floors" [changeEditMode]="editMode"
-                                  [changeSetNeighborMode]="setNeighborMode" [deleteMode]="deleteMode"
+                <app-create-floor *ngFor="let floor of jsonData.floors" [changeEditMode]="jsonData.editMode"
+                                  [changeSetNeighborMode]="jsonData.setNeighborMode" [deleteMode]="jsonData.deleteMode"
                                   [floor]="floor.floor" [jsonData]="jsonData">
                 </app-create-floor>
             </div>
 
-            <div *ngIf="!setNeighborMode" class="shadow bg-blue-100 dark:bg-[#37373b] rounded-lg p-2 mt-5 mb-2">
+            <div *ngIf="!jsonData.setNeighborMode" class="shadow bg-blue-100 dark:bg-[#37373b] rounded-lg p-2 mt-5 mb-2">
                 <h2 class="text-black dark:text-white text-xl">Add floor</h2>
                 <div class="max-w-md text-black dark:text-white m-2" id="addFloorForm">
                     <label class="block text-sm font-bold mb-2" for="floorNumber">Floor number:</label>

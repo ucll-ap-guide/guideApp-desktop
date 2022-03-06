@@ -8,6 +8,9 @@ import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
 import {ToastrService} from "ngx-toastr";
 import {Label} from "../model/label";
+import {Floorplan} from "../d3/floorplan";
+import {Imagelayer} from "../d3/imagelayer";
+import {Overlays} from "../d3/overlays";
 
 declare var d3: any;
 
@@ -24,7 +27,6 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
-
     @Input()
     set changeEditMode(value: boolean) {
         this.editMode = value;
@@ -54,10 +56,10 @@ export class CreateFloorComponent implements AfterViewInit {
 
     xScale: any;
     yScale: any;
-    map: any;
-    imageLayer = d3.floorplan.imagelayer();
-    overlays = d3.floorplan.overlays().editMode(true);
-    mapData: any = {};
+    imageLayer: any;
+    overlays: any;
+    mapData: any;
+    floorplan: any;
     observer!: MutationObserver;
     paramsToGiveToDialogBoxes: any = {
         createPolygonWithNVertices: {},
@@ -104,21 +106,20 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     loadData(floor: Floor): void {
         let svg = d3.select("#demo" + this.floor).select("svg");
-        this.mapData[this.overlays.id()] = floor.overlays;
+        this.mapData.set(this.overlays.getId(), floor.overlays);
 
-        svg.select("g.map-layers").remove();
+        svg.select("g.map-layers").select(".Objects").remove();
         svg.select("g.map-controls").remove();
 
         svg.attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
-            .datum(this.mapData)
-            .call(this.map);
+            .datum(this.mapData);
+
+        this.floorplan.generateMap(svg);
 
         // Place all figures on top layers of the svg
         let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0];
         orig.appendChild(document.getElementById("demo" + this.floor + "lineGroup")!);
-        orig.appendChild(document.getElementById("doors" + this.floor)!);
-        orig.appendChild(document.getElementById("nodes" + this.floor)!);
         orig.appendChild(document.getElementById("pointsOfInterest" + this.floor)!);
 
         svg.on("dblclick.zoom", null);
@@ -134,43 +135,74 @@ export class CreateFloorComponent implements AfterViewInit {
         let self = this;
         Array.from(document.querySelectorAll(`[removable], [type=${PolygonType.FLOOR}]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
-                if (elem.getAttribute("type") && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
-                    elem.addEventListener("click", (e: any) => {
-                        if (self.deleteMode && !self.setNeighborMode && !e.ctrlKey) {
-                            this.removeElement(e);
-                        }
-                    });
-
-                    if (elem.getAttribute("type") === PolygonType.ROOM || elem.getAttribute("type") === PolygonType.FLOOR) {
-                        elem.addEventListener("click", () => {
-                            if (self.editMode) {
-                                const polygon: Polygon = floor.overlays.polygons.find((polygon: Polygon) => polygon.id === parseInt(elem.id))!;
-                                self.displayDialogBox("updatePolygon", {
-                                    defaultValues: [polygon.name, polygon.description, polygon.color.join(",")],
-                                    id: elem.id
-                                });
-                            }
-                        });
-                    } else if (elem.getAttribute("type") === "Label") {
-                        elem.addEventListener("click", () => {
-                            if (self.editMode) {
-                                const label: Label = floor.overlays.labels.find((label: Label) => label.id === parseInt(elem.id))!;
-                                self.displayDialogBox("updateLabel", {
-                                    defaultValues: [label.description, label.color.join(",")],
-                                    id: elem.id
-                                });
-                            }
-                        });
+                elem.addEventListener("click", (e: any) => {
+                    if (self.deleteMode && !self.setNeighborMode && !e.ctrlKey) {
+                        self.removeElement(e);
                     }
+                });
+            });
+
+        Array.from(document.getElementsByClassName(".polygon")).forEach(elem => {
+            elem.addEventListener("click", () => {
+                if (self.editMode) {
+                    self.deleteMode = false;
+                    let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+                    let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
+                    self.displayDialogBox("updatePolygon", {
+                        defaultValues: [polygons[index].name, polygons[index].description, polygons[index].color.join(",")],
+                        id: elem.id
+                    });
                 }
             });
+        })
+
+        Array.from(document.getElementsByClassName("label")).forEach(elem => {
+            elem.addEventListener("click", () => {
+                if (self.editMode) {
+                    self.deleteMode = false;
+                    let labels = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+                    let index = labels.map(elem => elem.id).indexOf(parseInt(elem.id));
+                    self.displayDialogBox("updateLabel", {
+                        defaultValues: [labels[index].description, labels[index].color.join(",")],
+                        id: elem.id
+                    });
+                }
+            });
+        })
+
+        Array.from(document.getElementsByClassName(NodeType.DOOR)).concat(Array.from(document.getElementsByClassName(NodeType.EMERGENCY_EXIT))).forEach(elem => {
+            elem.addEventListener("click", () => {
+                if (self.editMode) {
+                    self.deleteMode = false;
+                    let door = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => parseInt(elem.id) === element.id)!;
+                    let dimensions = this.getDoorDimensions(door.displayPoints)
+                    self.displayDialogBox("updateDoor", {
+                        defaultValues: [door.name, dimensions.length, dimensions.width, door.color],
+                        id: elem.id
+                    });
+                }
+            });
+        });
+
+        Array.from(document.getElementsByClassName(NodeType.NODE)).forEach(elem => {
+            elem.addEventListener("click", () => {
+                if (self.editMode) {
+                    self.deleteMode = false;
+                    let node = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => parseInt(elem.id) === element.id)!;
+                    self.displayDialogBox("updateNode", {
+                        defaultValues: [node.name],
+                        id: elem.id
+                    });
+                }
+            });
+        });
 
         d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
             // @ts-ignore
             self.changeVerticeCountOfPolygon(this, !self.deleteMode, self);
         });
 
-        Array.from(document.getElementsByClassName("pointOfInterest")).filter((elem: Element) => parseInt(elem.getAttribute("floor")!) === floor.floor).forEach((elem: Element) =>
+        Array.from(document.querySelectorAll(`[node]`)).filter((elem: Element) => parseInt(elem.getAttribute("floor")!) === floor.floor).forEach(elem =>
             elem.addEventListener("dblclick", (e: Event) => {
                 this.openDisplayNeighborsDialog(e, self);
             }));
@@ -180,20 +212,24 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
+        this.floorplan = new Floorplan()
+        this.mapData = new Map();
+        this.imageLayer = new Imagelayer();
+        this.overlays = new Overlays(this.jsonData, this.floor);
+
         this.regenerateFloorMap(true);
         let floor = this.jsonData.floors.find((f: Floor) => f.floor === this.floor) as Floor;
-        this.mapData[this.overlays.id()] = floor.overlays;
+        this.mapData.set(this.overlays.getId(), floor.overlays);
 
         let svg = d3.select("#demo" + this.floor).append("svg")
             .attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
-            .datum(this.mapData)
-            .call(this.map);
+            .datum(this.mapData);
+
+        this.floorplan.generateMap(svg);
 
         svg.on("dblclick.zoom", null);
 
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "doors" + this.floor);
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "nodes" + this.floor);
         d3.select("#demo" + this.floor).select("svg").append("g").attr("id", "pointsOfInterest" + this.floor);
         d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
 
@@ -211,20 +247,6 @@ export class CreateFloorComponent implements AfterViewInit {
                 "L0,5 ")
             .attr("fill", "orange");
 
-        this.jsonData.nodes.filter((elem: GuidoNode) => elem.floor === this.floor).map((elem: GuidoNode) => {
-            switch (elem.type) {
-                case NodeType.DOOR:
-                case NodeType.EMERGENCY_EXIT:
-                    let doorProperties = this.getDoorDimensions(elem.displayPoints);
-                    this.createDoor(elem.id, doorProperties.length, doorProperties.width, Point.pointStringFromArrayOfPoints(elem.displayPoints), elem.name, elem.neighbors, elem.type === NodeType.EMERGENCY_EXIT, elem.color, elem.degreesRotated, this);
-                    break;
-                case NodeType.NODE:
-                    this.createNode(elem.id, elem.point, elem.name, elem.neighbors, this);
-                    break;
-                default:
-                    console.error(`Type ${elem.type} is currently not supported yet`);
-            }
-        });
         this.setEventListeners(floor);
     }
 
@@ -261,13 +283,11 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updateNode(id: number, name: string, self: CreateFloorComponent = this): void {
-        let node = document.querySelector(`[id='${id}']`)!;
-        if (node.getAttribute("type") === NodeType.NODE) {
-            node.setAttribute("name", name);
-            self.resetZoom(self);
-        } else {
-            throw `You need to use another update function for nodes of type ${node.getAttribute("type")}`;
-        }
+        let node = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === id)!;
+        node.name = name;
+
+        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
     }
 
     /**
@@ -311,16 +331,6 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
                     break;
 
-                case NodeType.DOOR:
-                case NodeType.EMERGENCY_EXIT:
-                case NodeType.NODE:
-                    let elem = document.querySelector(`[id='${id}']`);
-                    if (elem) {
-                        this.removeNodeFromNeighborData(id);
-                        elem.remove();
-                    }
-                    break;
-
                 case "Label":
                     let labelsArray: Label[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.labels;
                     let j = labelsArray.map((label: Label) => label.id).indexOf(id);
@@ -333,7 +343,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     // You can't remove the floor
                     break;
 
-                // For all the points of interest
+                // For all the nodes
                 default:
                     let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
                     let i = nodesArray.map((guidoNode: GuidoNode) => guidoNode.id).indexOf(id);
@@ -358,22 +368,16 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param id The id of the node that needs to be removed in all his neighbors.
      */
     removeNodeFromNeighborData(id: number): void {
-        let nodes = document.querySelectorAll("[node]");
-        nodes.forEach((node: Element) => {
-            let neighbors = node.getAttribute("neighbors")!.split(",").map((id: string) => parseInt(id));
+        let nodes = this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes;
+        nodes.forEach((node: GuidoNode) => {
+            let neighbors = node.neighbors;
             let removeIndex = neighbors.indexOf(id);
 
             if (removeIndex !== -1) {
                 neighbors.splice(removeIndex, 1);
             }
+        });
 
-            node.setAttribute("neighbors", neighbors.join(","));
-        });
-        this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes.forEach((node: GuidoNode) => {
-            if (node.neighbors.includes(id)) {
-                node.neighbors = node.neighbors.filter((neighbor: number) => neighbor !== id);
-            }
-        });
     }
 
     /**
@@ -435,15 +439,14 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updateDoor(id: number, name: string, length: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
-        let door = document.querySelector(`[id='${id}']`)!;
-        let previousPoints = Point.arrayOfPointsFromPointString(door.getAttribute("points")!);
-        door.setAttribute("name", name);
-        door.setAttribute("length", String(length));
-        door.setAttribute("width", String(width));
-        door.setAttribute("fill", `rgb(${color.join(",")})`);
+        let door = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === id)!;
+        door.name = name;
+        door.color = color;
 
-        // Point used in reconstructing the polygon after dragging
-        let toBuildFrom = previousPoints[0];
+        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
+
+        let toBuildFrom = door.point;
 
         let points = [
             toBuildFrom,
@@ -452,14 +455,16 @@ export class CreateFloorComponent implements AfterViewInit {
             new Point(toBuildFrom.x, toBuildFrom.y + length)
         ];
 
-        let pointsString = Point.pointStringFromArrayOfPoints(points);
-        let degreesRotated = parseFloat(door.getAttribute("degreesRotated")!);
+        let degreesRotated = door.degreesRotated;
 
         if (degreesRotated !== 0) {
-            pointsString = Point.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
+            points = Point.calculateNewCoordinatesForRotation(points, degreesRotated);
         }
 
-        door.setAttribute("points", pointsString);
+        door.displayPoints = points;
+        door.point = toBuildFrom;
+
+        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
         self.resetZoom(self);
     }
 
@@ -531,7 +536,6 @@ export class CreateFloorComponent implements AfterViewInit {
         }
         this.toastr.success(`Removed ${this.floorName}!`, "", {positionClass: "toast-bottom-right"});
         this.jsonData.floors = newFloors;
-        this.jsonData.nodes = this.jsonData.nodes.filter((node: GuidoNode) => this.floor !== node.floor);
     }
 
     previousWindowWidth = 0;
@@ -563,17 +567,19 @@ export class CreateFloorComponent implements AfterViewInit {
             this.xScale = d3.scale.linear().domain([0, this.mapWidth]).range([0, this.mapWidth]);
             this.yScale = d3.scale.linear().domain([0, this.mapHeight]).range([0, this.mapHeight]);
 
-            this.mapData[this.imageLayer.id()] = [{
+            this.mapData.set(this.imageLayer.getId(), [{
                 url: this.imageUrl,
                 x: 0,
                 y: 0,
                 width: this.mapWidth,
                 height: this.mapHeight
-            }];
+            }]);
+            this.mapData.set(this.overlays.getId(), this.overlays);
 
-            this.map = d3.floorplan().xScale(this.xScale).yScale(this.yScale);
-            this.map.addLayer(this.imageLayer)
-                .addLayer(this.overlays);
+            this.floorplan.getSetxScale(this.xScale);
+            this.floorplan.getSetyScale(this.yScale);
+            this.floorplan.addLayer(this.imageLayer, 0);
+            this.floorplan.addLayer(this.overlays, 1);
 
             if (!force)
                 this.loadData(this.jsonData.floors.find((f: any) => f.floor === this.floor)!);
@@ -630,8 +636,8 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param neighbors The {@link Array} of id's of all the neighbors.
      * @param self The instance of the {@link CreateFloorComponent}.
      */
+
     setNeighbors(id: number, neighbors: [string, boolean][], self: CreateFloorComponent = this): void {
-        const elem = d3.select(`[id='${id}']`);
         let newNeighbors: number[] = [];
         for (const neighbor of neighbors) {
             newNeighbors.push(parseInt(neighbor[0]));
@@ -639,20 +645,17 @@ export class CreateFloorComponent implements AfterViewInit {
             if (neighborElement === null) {
                 console.error(`The neighbor with id ${neighbor[0]} does not exist.`);
             } else {
-                let neighborsNeighbors: number[] = neighborElement!.getAttribute("neighbors")!.split(",").filter((n: string) => n !== "").map((n: string) => parseInt(n));
+                let neighborsNeighbors: number[] = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
                 if (neighbor[1] && !neighborsNeighbors.includes(id)) {
                     neighborsNeighbors.push(id);
                 } else if (!neighbor[1]) {
                     neighborsNeighbors = neighborsNeighbors.filter((n: number) => n !== id);
                 }
-                neighborElement.setAttribute("neighbors", neighborsNeighbors.join(","));
                 self.saveNeighborsInJson(parseInt(neighbor[0]), neighborsNeighbors, self);
             }
         }
         newNeighbors = newNeighbors.filter((neighbor: number, index: number) => newNeighbors.indexOf(neighbor) === index);
-        elem.attr("neighbors", newNeighbors.join(","));
         self.saveNeighborsInJson(id, newNeighbors, self);
-
         self.setConnectingNeighbors(self);
     }
 
@@ -665,13 +668,11 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     saveNeighborsInJson(id: number, neighbors: number[], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
-        if (![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.attr("type"))) {
-            self.jsonData.floors[parseInt(elem.attr("floor"))].overlays.nodes.forEach((node: GuidoNode) => {
-                if (node.id === id) {
-                    node.neighbors = neighbors;
-                }
-            });
-        }
+        self.jsonData.floors[parseInt(elem.attr("floor"))].overlays.nodes.forEach((node: GuidoNode) => {
+            if (node.id === id) {
+                node.neighbors = neighbors;
+            }
+        });
     }
 
     /**
@@ -683,27 +684,21 @@ export class CreateFloorComponent implements AfterViewInit {
     setConnectingNeighbors(self: CreateFloorComponent = this): void {
         this.removeConnectingNeighbors(self);
         let group = d3.select("#demo" + self.floor + "lineGroup");
+        let floorNodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
         let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
+
         nodes.forEach((elem: Element) => {
             const origin = self.getConnectablePoint(parseInt(elem.id));
-            const neighborsStr = elem.getAttribute("neighbors")!.split(",");
-
-            let neighbors: number[];
-            if (neighborsStr.length === 1 && neighborsStr[0] === "") {
-                neighbors = [];
-            } else {
-                neighbors = neighborsStr.map((elem: string) => parseInt(elem));
-            }
+            let neighbors = floorNodes.find(element => element.id === parseInt(elem.id))!.neighbors;
 
             neighbors.map((neighborId: number) => {
                 const neighborElement = document.getElementById(String(neighborId))!;
                 const connectableNeighborPoint = self.getConnectablePoint(neighborId);
-                const neighborNode = document.querySelector(`[id='${neighborId}']`);
+                let neighbor = floorNodes.find(elem => elem.id === neighborId)!;
 
                 let isReciprocal = false;
-                if (neighborNode && neighborNode.getAttribute("neighbors")!.split(",").some(neighborIdEntry => parseInt(neighborIdEntry) === parseInt(elem.id))) {
+                if (neighbor.neighbors.some(neighborIdEntry => neighborIdEntry === parseInt(elem.id)))
                     isReciprocal = true;
-                }
 
                 group.append("line")
                     .attr("x1", origin.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("width")!.split("px")[0]) / 2))
@@ -796,6 +791,59 @@ export class CreateFloorComponent implements AfterViewInit {
         self.resetZoom(self)
     }
 
+
+    //TODO
+    /**
+     * The **createNode()** function creates a {@link SVGCircleElement} with the given properties and appends it to the
+     * `#nodes + floorNumber` {@link SVGGElement}.
+     *
+     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
+     *             node, otherwise it will be seen as a start & end destination).
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    createNode(name: string, self: CreateFloorComponent): void {
+        const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes
+        nodes.push(new GuidoNode(self.jsonData.lastId + 1, name, self.floor, new Point(25, 25), [], [], NodeType.NODE, [], 0));
+
+        self.jsonData.lastId += 1;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
+
+        console.log(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays)
+    }
+
+    //TODO
+    /**
+     * The **createDoor()** function creates a {@link GuidoNode} of type {@link NodeType.DOOR} or
+     * {@link NodeType.EMERGENCY_EXIT}.
+     *
+     * @param length The length of the {@link GuidoNode}.
+     * @param width  The width of the {@link GuidoNode}.
+     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
+     *             node, otherwise it will be seen as a start & end destination).
+     * @param emergency The `boolean` who determines if the {@link GuidoNode} is either of type {@link NodeType.DOOR} or
+     *                  {@link NodeType.EMERGENCY_EXIT}.
+     * @param color The color of the {@link GuidoNode}, it is represented as an {@link Array} of `integers` between 0 and
+     *              255.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    createDoor(name: string, length: number, width: number, color: number[], emergency: boolean, self: CreateFloorComponent) {
+        const doors = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes
+        const origin = new Point(25,25)
+
+        let points = [
+            origin,
+            new Point(origin.x + width, origin.y),
+            new Point(origin.x + width, origin.y + length),
+            new Point(origin.x, origin.y + length)
+        ];
+
+        doors.push(new GuidoNode(self.jsonData.lastId + 1, name, self.floor, origin, points, [], emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR, color, 0));
+        self.jsonData.lastId += 1;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
+    }
+
     /**
      * The **getConnectablePoint()** function returns the {@link Point} to which the line must connect in the
      * {@link setNeighborMode}.
@@ -828,84 +876,6 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **createNode()** function creates a {@link SVGCircleElement} with the given properties and appends it to the
-     * `#nodes + floorNumber` {@link SVGGElement}.
-     *
-     * @param previousId The unique identifier of the {@link GuidoNode}. TODO can he still be null?
-     * @param previousOrigin The {@link Point} where the node must be located.
-     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
-     *             node, otherwise it will be seen as a start & end destination).
-     * @param neighbors The unique identifiers of all the neighbor {@link GuidoNode}s.
-     * @param self The instance of the {@link CreateFloorComponent}.
-     */
-    createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: CreateFloorComponent = this): void {
-        let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
-        let radius = 5;
-        let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
-
-        let node = d3.select("#nodes" + self.floor)
-            .append("circle")
-            .attr("id", id)
-            .attr('cx', origin.x)
-            .attr('cy', origin.y)
-            .attr('r', radius)
-            .attr("floor", this.floor)
-            .attr("name", name)
-            .attr("neighbors", neighbors.join(","))
-            .attr("node", "")
-            .attr("type", NodeType.NODE)
-            .attr("class", NodeType.NODE)
-            .attr('stroke', 'black')
-            .attr("removable", "")
-            .attr("degreesRotated", 0)
-            .attr('fill', '#ff0000')
-            .on("mouseover", function () {
-                // @ts-ignore
-                d3.select(this)
-                    .attr("r", 15);
-
-                if (!self.setNeighborMode) {
-                    // @ts-ignore
-                    d3.select(this)
-                        .style("opacity", 0.5);
-                }
-            })
-            .on("mouseout", function () {
-                // @ts-ignore
-                d3.select(this)
-                    .attr("r", 5);
-                if (!self.setNeighborMode) {
-                    // @ts-ignore
-                    d3.select(this)
-                        .style("opacity", 1);
-                }
-            })
-            .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
-                    // @ts-ignore
-                    self.moveNodeCoordinates(this, self);
-                }
-            }));
-
-        node.node().addEventListener("click", (e: Event) => {
-            if (self.editMode) {
-                self.displayDialogBox("updateNode", {
-                    defaultValues: [
-                        node.attr("name")
-                    ], id: id
-                });
-            } else if (self.deleteMode) {
-                self.removeElement(e);
-            }
-        });
-
-        node.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
-
-        if (previousId === null)
-            self.jsonData.lastId += 1;
-    }
-
-    /**
      * The **openDisplayNeighborsDialog()** function opens the {@link DialogBoxComponent} for the action `setNeighbors`
      * and passes the current neighbors of the {@link GuidoNode} and the possible neighbors to which he can connect.
      *
@@ -916,13 +886,13 @@ export class CreateFloorComponent implements AfterViewInit {
         if (self.setNeighborMode) {
             const id = (event.target as Element).id === "" ? (event.target as Element).getAttribute("pointsOfInterestId") : (event.target as Element).id;
             if (id != null && id !== "") {
-                const elem = document.getElementById(id)!;
-                const neighbors = document.querySelector(`[id='${id}']`)!.getAttribute("neighbors");
+                const elem = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === parseInt(id))!;
+                const neighbors = elem.neighbors;
                 self.displayDialogBox("setNeighbors", {
                     id: id,
                     defaultValues: [neighbors === null ? [] :
-                        neighbors!.split(",").filter((neighbor: string) => neighbor !== "")
-                            .map((neighbor: string) => [neighbor, document.querySelector(`[id='${neighbor}']`)!.getAttribute("neighbors")!.split(",").includes(String(id))])],
+                        neighbors
+                            .map((neighbor: number) => [neighbor, self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === neighbor)!.neighbors])],
                     /*
                      * The List of values has 3 [] because the first one is to group all possible input type fields
                      * (in this case there is only one), the second is to group all the input fields for the infinite
@@ -932,7 +902,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     values: [[[
                         {
                             group: "Stairs",
-                            values: this.jsonData.floors.filter((f: Floor) => (elem.getAttribute("type") === NodeType.STAIRS) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.STAIRS) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
                                 .map((f: Floor) => f.overlays.nodes)[0].flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
                                 .map((g: GuidoNode) => g.id)
@@ -940,7 +910,7 @@ export class CreateFloorComponent implements AfterViewInit {
                         },
                         {
                             group: "Lifts",
-                            values: this.jsonData.floors.filter((f: Floor) => (elem.getAttribute("type") === NodeType.LIFT) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.LIFT) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
                                 .map((f: Floor) => f.overlays.nodes)[0].flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.LIFT)
                                 .map((g: GuidoNode) => g.id)
@@ -948,179 +918,24 @@ export class CreateFloorComponent implements AfterViewInit {
                         },
                         {
                             group: "Points of interest",
-                            values: this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
                                 .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Doors",
-                            values: Array.from(document.getElementById(`doors${this.floor}`)!.getElementsByTagName("polygon"))
-                                .map((p: SVGPolygonElement) => p.id)
-                                .filter((i: string) => i !== id)
-                            //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && (g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)).map((g: GuidoNode) => g.id)
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                                .filter((g: GuidoNode) => g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)
+                                .map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Nodes",
-                            values: Array.from(document.getElementById(`nodes${this.floor}`)!.getElementsByTagName("circle"))
-                                .map((c: SVGCircleElement) => c.id)
-                                .filter((i: string) => i !== id)
-                            //values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && g.type === NodeType.NODE).map((g: GuidoNode) => g.id)
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                                .filter((g: GuidoNode) => g.type === NodeType.NODE)
+                                .map((g: GuidoNode) => g.id)
                         }
                     ]]]
                 });
-            }
-        }
-    }
-
-    /**
-     * The **moveNodeCoordinates()** function moves a {@link GuidoNode} of type {@link NodeType.NODE} to the location of
-     * the mouse.
-     *
-     * @param node The d3 instance of the node element.
-     * @param self The instance of the {@link CreateFloorComponent}.
-     */
-    moveNodeCoordinates(node: any, self: CreateFloorComponent): void {
-        let svg = document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
-        let width = parseFloat(svg.getAttribute("width")!);
-        let height = parseFloat(svg.getAttribute("height")!);
-        let x = parseFloat(d3.event.x);
-        let y = parseFloat(d3.event.y);
-
-        if (x > 0 && y > 0 && x < width && y < height) {
-            d3.select(node)
-                .attr('cx', d3.event.x)
-                .attr('cy', d3.event.y);
-        }
-    }
-
-    /**
-     * The **createDoor()** function creates a {@link GuidoNode} of type {@link NodeType.DOOR} or
-     * {@link NodeType.EMERGENCY_EXIT}.
-     *
-     * @param previousId The unique identifier of the {@link GuidoNode}.
-     * @param length The length of the {@link GuidoNode}.
-     * @param width  The width of the {@link GuidoNode}.
-     * @param previousPoints The {@link Array} of {@link Point} coordinates of the {@link GuidoNode}.
-     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
-     *             node, otherwise it will be seen as a start & end destination).
-     * @param neighbors The unique identifiers of all the neighbor {@link GuidoNode}s.
-     * @param emergency The `boolean` who determines if the {@link GuidoNode} is either of type {@link NodeType.DOOR} or
-     *                  {@link NodeType.EMERGENCY_EXIT}.
-     * @param color The color of the {@link GuidoNode}, it is represented as an {@link Array} of `integers` between 0 and
-     *              255.
-     * @param degreesRotated The amount of degrees the door is rotated.
-     * @param self The instance of the {@link CreateFloorComponent}.
-     */
-    createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], degreesRotated: number = 0, self: CreateFloorComponent = this): void {
-        let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
-        let origin = new Point(25, 25);
-
-        if (previousPoints === null) {
-            previousPoints = Point.pointStringFromArrayOfPoints([
-                origin,
-                new Point(origin.x + width, origin.y),
-                new Point(origin.x + width, origin.y + length),
-                new Point(origin.x, origin.y + length)
-            ]);
-        }
-
-        let door = d3.select("#doors" + self.floor)
-            .append("polygon")
-            .attr("id", id)
-            .attr("points", previousPoints)
-            .attr("width", width)
-            .attr("length", length)
-            .attr("type", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
-            .attr("class", emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR)
-            .attr("node", "")
-            .attr("neighbors", neighbors.join(","))
-            .attr("name", name)
-            .attr("removable", "")
-            .attr("floor", self.floor)
-            .attr("degreesRotated", degreesRotated)
-            .attr("fill", "rgb(" + color.join(",") + ")")
-            .on("contextmenu", self.rotateDoor)
-            .call(d3.behavior.drag().on("drag", function () {
-                if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
-                    // @ts-ignore
-                    self.moveDoorCoordinates(this, self);
-                }
-            }));
-
-        door.node().addEventListener("click", (e: Event) => {
-            if (self.editMode) {
-                self.deleteMode = false;
-                self.displayDialogBox("updateDoor", {
-                    defaultValues: [
-                        door.attr("name"), door.attr("length"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
-                    ], id: id
-                });
-            } else if (self.deleteMode) {
-                self.removeElement(e);
-            }
-        });
-
-        door.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
-
-        if (previousId === null) {
-            self.jsonData.lastId += 1;
-        }
-    }
-
-    /**
-     * The **rotateDoor()** function rotates {@link GuidoNode}s of type {@link NodeType.DOOR} and
-     * {@link NodeType.EMERGENCY_EXIT} with an angle of 15°.
-     */
-    rotateDoor(): void {
-        d3.event.preventDefault();
-
-        let previousPoints = d3.select(this).attr("points");
-        let result = Point.calculateNewCoordinatesForRotation(previousPoints, 15);
-        d3.select(this).attr("degreesRotated", parseFloat(d3.select(this).attr("degreesRotated")) + 15);
-
-        d3.select(this).attr("points", result);
-    }
-
-    /**
-     * The **moveDoorCoordinates()** function moves the door coordinates when they are being dragged by the user.
-     *
-     * @param door The d3 instance of the door element.
-     * @param self The instance of the {@link CreateFloorComponent}.
-     */
-    moveDoorCoordinates(door: any, self: CreateFloorComponent): void {
-        if (d3.event.sourceEvent.which === 1) {
-            let svg = document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
-            let svgWidth = parseFloat(svg.getAttribute("width")!);
-            let svgHeight = parseFloat(svg.getAttribute("height")!);
-
-            let d = d3.select(door);
-            let width = parseFloat(door.attr("width"));
-            let length = parseFloat(door.attr("length"));
-
-            // Point used in reconstructing the polygon after dragging
-            let toBuildFrom = new Point(parseFloat(d3.event.x), parseFloat(d3.event.y));
-
-            let points = [
-                toBuildFrom,
-                new Point(toBuildFrom.x + width, toBuildFrom.y),
-                new Point(toBuildFrom.x + width, toBuildFrom.y + length),
-                new Point(toBuildFrom.x, toBuildFrom.y + length)
-            ];
-
-            let pointsString = Point.pointStringFromArrayOfPoints(points);
-            let degreesRotated = parseFloat(d3.select(d).attr("degreesRotated"));
-
-            if (degreesRotated !== 0) {
-                pointsString = Point.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
-            }
-
-            let newPoints = Point.arrayOfPointsFromPointString(pointsString);
-
-            let middleX = (newPoints[0].x + newPoints[2].x) / 2;
-            let middleY = (newPoints[0].y + newPoints[2].y) / 2;
-
-            if (middleX > 0 && middleY > 0 && middleX < svgWidth && middleY < svgHeight) {
-                d.attr("points", pointsString);
             }
         }
     }

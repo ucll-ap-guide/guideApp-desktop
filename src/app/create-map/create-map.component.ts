@@ -237,6 +237,7 @@ export class CreateMapComponent implements AfterViewInit {
      * The **clearMap()** function removes all the floors from the current map by emptying the whole {@link Array} of {@link Floor}s.
      */
     clearMap(displayMessage: boolean = true): void {
+        this.jsonData.lastId = 0;
         this.jsonData.floors = [] as Floor[];
 
         if (displayMessage) {

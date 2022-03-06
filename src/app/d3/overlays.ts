@@ -6,8 +6,6 @@ import {Label} from "../model/label";
 import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
 import {NodeType} from "../model/node-type";
-import {CreateFloorComponent} from "../create-floor/create-floor.component";
-
 
 declare var d3: any;
 type OverlayData = {polygons: Polygon[], labels: Label[], nodes: GuidoNode[]}
@@ -79,11 +77,11 @@ export class Overlays {
 
             //draw labels
             drawLabels(data, g, self);
-        })
+        });
     }
 
 
-    getId() {
+    getId(): string {
         return this.id;
     }
 
@@ -400,7 +398,7 @@ function drawDoors(g: any, data: OverlayData, self: Overlays): void {
         .attr("floor", self.floor)
         .on("contextmenu", function () {
             // @ts-ignore
-            rotateDoor(this, data, self);
+            rotateDoor(this, data);
         })
         .call(d3.behavior.drag().on("drag", function () {
             if (!self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode) {
@@ -420,12 +418,14 @@ function drawDoors(g: any, data: OverlayData, self: Overlays): void {
     }
 }
 
-//TODO
 /**
  * The **rotateDoor()** function rotates {@link GuidoNode}s of type {@link NodeType.DOOR} and
- * {@link NodeType.EMERGENCY_EXIT} with an angle of 15°.
+ * {@link NodeType.EMERGENCY_EXIT} with an angle of `15°`.
+ *
+ * @param door The d3 instance of the door.
+ * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
  */
-function rotateDoor(door: any, data: OverlayData, self: Overlays): void {
+function rotateDoor(door: any, data: OverlayData): void {
     d3.event.preventDefault();
     let doorElem = d3.select(door);
     let doorData = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(doorElem.attr("id")))!;
@@ -440,7 +440,8 @@ function rotateDoor(door: any, data: OverlayData, self: Overlays): void {
  * The **moveDoorCoordinates()** function moves the door coordinates when they are being dragged by the user.
  *
  * @param door The d3 instance of the door element.
- * @param self The instance of the {@link CreateFloorComponent}.
+ * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
+ * @param floorComp TODO
  */
 function moveDoorCoordinates(door: any, data: OverlayData, floorComp: Overlays): void {
     if (d3.event.sourceEvent.which === 1) {
@@ -453,7 +454,7 @@ function moveDoorCoordinates(door: any, data: OverlayData, floorComp: Overlays):
 
         let dimensions = getDoorDimensions(doorData.displayPoints);
 
-        //Point used in reconstructing the polygon after dragging
+        // Point used in reconstructing the polygon after dragging
         let toBuildFrom = new Point(parseFloat(d3.event.x), parseFloat(d3.event.y));
 
         let points = [
@@ -474,12 +475,18 @@ function moveDoorCoordinates(door: any, data: OverlayData, floorComp: Overlays):
 
         if (middleX > 0 && middleY > 0 && middleX < svgWidth && middleY < svgHeight) {
             doorElem.attr("points", Point.pointStringFromArrayOfPoints(points));
-            doorData.displayPoints = points
-            doorData.point = toBuildFrom
+            doorData.displayPoints = points;
+            doorData.point = toBuildFrom;
         }
     }
 }
 
+/**
+ * The **getDoorDimensions()** function returns the door dimensions given his corners.
+ *
+ * @param doorCoords The {@link Array} containing the {@link Point}s of the door.
+ * @return A map containing the length and width of the door.
+ */
 function getDoorDimensions(doorCoords: Point[]): { length: number, width: number } {
     const distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
     const distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
@@ -488,7 +495,6 @@ function getDoorDimensions(doorCoords: Point[]): { length: number, width: number
         width: distance1 > distance2 ? distance2 : distance1
     }
 }
-
 
 function drawPointsOfInterest(data: OverlayData, g: any, self: Overlays) {
     let pointsOfInterestData = data.nodes.filter(elem => elem.type !== NodeType.NODE && elem.type !== NodeType.EMERGENCY_EXIT && elem.type !== NodeType.DOOR);
@@ -616,8 +622,7 @@ function drawLabels(data: OverlayData, g: any, self: Overlays) {
 
 function generalDragBehavior(figure: any, data: OverlayData,self: Overlays) {
     if (!self.jsonData.deleteMode && !self.jsonData.setNeighborMode && !self.jsonData.editMode) {
-        // @ts-ignore
-        let d3node = d3.select(figure)
+        let d3node = d3.select(figure);
         let elem: GuidoNode | Label;
         let floor: number ;
 
@@ -626,7 +631,7 @@ function generalDragBehavior(figure: any, data: OverlayData,self: Overlays) {
             floor = elem.floor;
         } else {
             elem = data.labels.find((elem: Label) => elem.id === parseInt(d3node.attr("id")))!;
-            floor = figure.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1]
+            floor = figure.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1];
         }
 
         let svg = document.getElementById("demo" + floor)!.getElementsByTagName("svg")[0];
@@ -639,14 +644,9 @@ function generalDragBehavior(figure: any, data: OverlayData,self: Overlays) {
             elem.point = new Point(x, y);
 
             // Apply the translation to the shape:
-            // @ts-ignore
             d3.select(figure)
-                // @ts-ignore
                 .attr("x", x - (parseInt(d3.select(figure).attr("width").split("px")) / 2))
-                // @ts-ignore
                 .attr("y", y - (parseInt(d3.select(figure).attr("height").split("px")) / 2));
         }
     }
 }
-
-

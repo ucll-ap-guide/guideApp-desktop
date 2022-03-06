@@ -23,8 +23,7 @@ export class GuidoMap {
         public length: number,
         public width: number,
         public lastId: number = 0,
-        public floors: Floor[] = [],
-        public nodes: GuidoNode[] = []
+        public floors: Floor[] = []
     ) {
     }
 
@@ -43,8 +42,7 @@ export class GuidoMap {
             guidoMap.length,
             guidoMap.width,
             guidoMap.lastId,
-            guidoMap.floors.map((floor: Floor) => Floor.copy(floor)),
-            guidoMap.nodes.map((node: GuidoNode) => GuidoNode.copy(node))
+            guidoMap.floors.map((floor: Floor) => Floor.copy(floor))
         );
     }
 }

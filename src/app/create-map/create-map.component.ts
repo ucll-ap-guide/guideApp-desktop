@@ -238,7 +238,7 @@ export class CreateMapComponent implements AfterViewInit {
      */
     clearMap(displayMessage: boolean = true): void {
         this.jsonData.floors = [] as Floor[];
-        this.jsonData.nodes = [];
+
         if (displayMessage) {
             this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});
         }

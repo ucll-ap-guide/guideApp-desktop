@@ -27,7 +27,6 @@ export class CreateFloorComponent implements AfterViewInit {
     @Input() jsonData!: GuidoMap;
     @Input() floor!: number;
     @Input() deleteMode: boolean = false;
-
     @Input()
     set changeEditMode(value: boolean) {
         this.editMode = value;
@@ -332,16 +331,6 @@ export class CreateFloorComponent implements AfterViewInit {
                     }
                     break;
 
-                case NodeType.DOOR:
-                case NodeType.EMERGENCY_EXIT:
-                case NodeType.NODE:
-                    let elem = document.querySelector(`[id='${id}']`);
-                    if (elem) {
-                        this.removeNodeFromNeighborData(id);
-                        elem.remove();
-                    }
-                    break;
-
                 case "Label":
                     let labelsArray: Label[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.labels;
                     let j = labelsArray.map((label: Label) => label.id).indexOf(id);
@@ -354,7 +343,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     // You can't remove the floor
                     break;
 
-                // For all the points of interest
+                // For all the nodes
                 default:
                     let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
                     let i = nodesArray.map((guidoNode: GuidoNode) => guidoNode.id).indexOf(id);
@@ -387,8 +376,8 @@ export class CreateFloorComponent implements AfterViewInit {
             if (removeIndex !== -1) {
                 neighbors.splice(removeIndex, 1);
             }
-            //TODO
         });
+
     }
 
     /**
@@ -547,7 +536,6 @@ export class CreateFloorComponent implements AfterViewInit {
         }
         this.toastr.success(`Removed ${this.floorName}!`, "", {positionClass: "toast-bottom-right"});
         this.jsonData.floors = newFloors;
-        this.jsonData.nodes = this.jsonData.nodes.filter((node: GuidoNode) => this.floor !== node.floor);
     }
 
     previousWindowWidth = 0;
@@ -930,18 +918,20 @@ export class CreateFloorComponent implements AfterViewInit {
                         },
                         {
                             group: "Points of interest",
-                            values: this.jsonData.floors.filter((f: Floor) => f.floor === this.floor)[0].overlays.nodes
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
                                 .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT].includes(p.type)).map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Doors",
-                            values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && (g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT))
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                                .filter((g: GuidoNode) => g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)
                                 .map((g: GuidoNode) => g.id)
                         },
                         {
                             group: "Nodes",
-                            values: this.jsonData.nodes.filter((g: GuidoNode) => g.floor === this.floor && g.type === NodeType.NODE)
+                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                                .filter((g: GuidoNode) => g.type === NodeType.NODE)
                                 .map((g: GuidoNode) => g.id)
                         }
                     ]]]

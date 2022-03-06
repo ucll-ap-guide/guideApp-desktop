@@ -16,6 +16,9 @@ declare var d3: any;
     templateUrl: 'create-floor.component.html',
     styleUrls: ['create-floor.component.css']
 })
+/**
+ * A component that can be used to edit a {@link Floor} of a {@link Map} using the D3 floorplan.
+ */
 export class CreateFloorComponent implements AfterViewInit {
 
     @Input() jsonData!: GuidoMap;
@@ -28,16 +31,7 @@ export class CreateFloorComponent implements AfterViewInit {
         this.deleteMode = false;
     }
 
-    @Input()
-    set changeSetNeighborMode(value: boolean) {
-        this.setNeighborMode = value;
-        this.deleteMode = false;
-        if (this.setNeighborMode) {
-            this.setConnectingNeighbors(this)
-        } else {
-            this.removeConnectingNeighbors(this);
-        }
-    }
+    imageUrl = "";
 
     setNeighborMode: boolean = false;
     editMode: boolean = false;
@@ -46,7 +40,18 @@ export class CreateFloorComponent implements AfterViewInit {
     imageRatio = this.imageHeight / this.imageWidth;
     mapWidth = 720;
     mapHeight = 487;
-    imageUrl = "https://vryghem.synology.me/maps/C0.png";
+
+    @Input()
+    set changeSetNeighborMode(value: boolean) {
+        this.setNeighborMode = value;
+        this.deleteMode = false;
+        if (this.setNeighborMode) {
+            this.setConnectingNeighbors(this);
+        } else {
+            this.removeConnectingNeighbors(this);
+        }
+    }
+
     xScale: any;
     yScale: any;
     map: any;
@@ -71,39 +76,31 @@ export class CreateFloorComponent implements AfterViewInit {
     constructor(private toastr: ToastrService) {
     }
 
-    static calculateNewCoordinatesForRotation(previousPoints: string, degreesRotated: number): string {
-        function rotatePoint(pointX: number, pointY: number, originX: number, originY: number, angle: number) {
-            angle = angle * Math.PI / 180.0;
-            return new Point(
-                Math.cos(angle) * (pointX - originX) - Math.sin(angle) * (pointY - originY) + originX,
-                Math.sin(angle) * (pointX - originX) + Math.cos(angle) * (pointY - originY) + originY
-            );
-        }
-
-        let poppedPoints: Point[] = Point.arrayOfPointsFromPointString(previousPoints);
-
-        let middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
-        let middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
-
-        let resultArray = poppedPoints.map((elem: Point) => rotatePoint(elem.x, elem.y, middleX, middleY, degreesRotated));
-        return Point.pointStringFromArrayOfPoints(resultArray);
-    }
-
-    getFloorName(): string {
+    /**
+     * The **floorName()** getter gets the name of the {@link Floor} with id {@link floor}.
+     *
+     * @return The name of the {@link Floor}.
+     */
+    get floorName(): string {
         return this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.name;
     }
 
-    getPointsOfInterest(): string[] {
-        const nodeTypes: string[] = [];
-        for (const nodeTypesKey of Object.values(NodeType)) {
-            nodeTypes.push(nodeTypesKey);
-        }
-        return nodeTypes.filter((nodeType: string) => nodeType != NodeType.DOOR && nodeType != NodeType.EMERGENCY_EXIT && nodeType != NodeType.NODE);
+    /**
+     * The **getPointsOfInterest()** function gets the name of all the {@link GuidoNode}s of type the points of interest
+     * (alle the types in {@link GuidoNode} except for {@link GuidoNode.DOOR}, {@link NodeType.EMERGENCY_EXIT} and
+     * {@link NodeType.NODE}).
+     *
+     * @return An {@link Array} of all the names of the points of interest.
+     */
+    getPointsOfInterestTypes(): string[] {
+        return Object.values(NodeType).map((nodeType: string) => nodeType).filter((nodeType: string) => nodeType != NodeType.DOOR && nodeType != NodeType.EMERGENCY_EXIT && nodeType != NodeType.NODE);
     }
 
     /**
-     * (Re)loads all elements displayed on the drawing area of the floor
-     * @param floor
+     * The **loadData()** function resets the whole map layer by removing all the D3 elements inside the
+     * {@link SVGElement} and then reloading all the elements with D3 floorplan.
+     *
+     * @param floor The {@link Floor} who needs to be reloaded.
      */
     loadData(floor: Floor): void {
         let svg = d3.select("#demo" + this.floor).select("svg");
@@ -117,7 +114,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .datum(this.mapData)
             .call(this.map);
 
-        //Place all figures on top layers of the svg
+        // Place all figures on top layers of the svg
         let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0];
         orig.appendChild(document.getElementById("demo" + this.floor + "lineGroup")!);
         orig.appendChild(document.getElementById("doors" + this.floor)!);
@@ -128,13 +125,17 @@ export class CreateFloorComponent implements AfterViewInit {
         this.setEventListeners(floor);
     }
 
-    setEventListeners(floor: Floor) {
+    /**
+     * The **setEventListeners()** function TODO.
+     *
+     * @param floor The {@link Floor} who needs to be reloaded.
+     */
+    setEventListeners(floor: Floor): void {
         let self = this;
-
         Array.from(document.querySelectorAll(`[removable], [type=${PolygonType.FLOOR}]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 if (elem.getAttribute("type") && ![NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType)) {
-                    elem.addEventListener("click", (e: Event) => {// @ts-ignore
+                    elem.addEventListener("click", (e: any) => {
                         if (self.deleteMode && !self.setNeighborMode && !e.ctrlKey) {
                             this.removeElement(e);
                         }
@@ -143,11 +144,9 @@ export class CreateFloorComponent implements AfterViewInit {
                     if (elem.getAttribute("type") === PolygonType.ROOM || elem.getAttribute("type") === PolygonType.FLOOR) {
                         elem.addEventListener("click", () => {
                             if (self.editMode) {
-                                self.deleteMode = false;
-                                let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-                                let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
+                                const polygon: Polygon = floor.overlays.polygons.find((polygon: Polygon) => polygon.id === parseInt(elem.id))!;
                                 self.displayDialogBox("updatePolygon", {
-                                    defaultValues: [polygons[index].name, polygons[index].description, polygons[index].color.join(",")],
+                                    defaultValues: [polygon.name, polygon.description, polygon.color.join(",")],
                                     id: elem.id
                                 });
                             }
@@ -155,11 +154,9 @@ export class CreateFloorComponent implements AfterViewInit {
                     } else if (elem.getAttribute("type") === "Label") {
                         elem.addEventListener("click", () => {
                             if (self.editMode) {
-                                self.deleteMode = false;
-                                let labels = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.labels;
-                                let index = labels.map(elem => elem.id).indexOf(parseInt(elem.id));
+                                const label: Label = floor.overlays.labels.find((label: Label) => label.id === parseInt(elem.id))!;
                                 self.displayDialogBox("updateLabel", {
-                                    defaultValues: [labels[index].description, labels[index].color.join(",")],
+                                    defaultValues: [label.description, label.color.join(",")],
                                     id: elem.id
                                 });
                             }
@@ -170,10 +167,10 @@ export class CreateFloorComponent implements AfterViewInit {
 
         d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
             // @ts-ignore
-            self.changeVerticeCountOfPolygon(this, self, !self.deleteMode);
+            self.changeVerticeCountOfPolygon(this, !self.deleteMode, self);
         });
 
-        Array.from(document.getElementsByClassName("pointOfInterest")).filter((elem: Element) => parseInt(String(elem.getAttribute("floor"))) === floor.floor).forEach(elem =>
+        Array.from(document.getElementsByClassName("pointOfInterest")).filter((elem: Element) => parseInt(elem.getAttribute("floor")!) === floor.floor).forEach((elem: Element) =>
             elem.addEventListener("dblclick", (e: Event) => {
                 this.openDisplayNeighborsDialog(e, self);
             }));
@@ -231,45 +228,80 @@ export class CreateFloorComponent implements AfterViewInit {
         this.setEventListeners(floor);
     }
 
-    updatePolygon(id: number, name: string, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
-        let polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        let index = polygons.map(elem => elem.id).indexOf(id);
+    /**
+     * The **updatePolygon()** function updates the {@link Polygon} with the given {@link id} with the given properties
+     * in the {@link jsonData} and will call the {@link loadData} function to refresh the view.
+     *
+     * @param id The unique identifier of the {@link Polygon}.
+     * @param name The (new) name of the {@link Polygon}.
+     * @param description The (new) description of the {@link Polygon}.
+     * @param color The (new) color of the {@link Polygon}, it is represented as an {@link Array} of `integers` between
+     *              0 and 255.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    updatePolygon(id: number, name: string, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
+        let polygons = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+        let index = polygons.map((polygon: Polygon) => polygon.id).indexOf(id);
         polygons[index].name = name;
         polygons[index].description = description;
         polygons[index].color = color;
 
-        self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
-        self.resetZoom(self);
-    }
-
-    updateNode(id: number, name: string, self: CreateFloorComponent = this) {
-        let node = document.querySelector(`[id='${String(id)}']`)!;
-        node.setAttribute("name", name);
-        self.resetZoom(self);
-    }
-
-    updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this) {
-        let labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
-        let index = labels.map(elem => elem.id).indexOf(id);
-        labels[index].description = description;
-        labels[index].color = color;
-
-        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels = labels;
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
         self.resetZoom(self);
     }
 
     /**
-     * Removes an element based upon its type, given the click event that triggered the remove function.
+     * The **updateNode()** function updates the {@link GuidoNode} (of type {@link NodeType.NODE}) with the given
+     * {@link id} with the given properties in the {@link SVGElement}. This function must only be used to update
+     * {@link GuidoNode}s of type {@link NodeType.NODE}!
      *
-     * @param event The event that triggered the delete action.
+     * @param id The unique identifier of the {@link GuidoNode}.
+     * @param name The (new) name of the {@link GuidoNode}.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    updateNode(id: number, name: string, self: CreateFloorComponent = this): void {
+        let node = document.querySelector(`[id='${id}']`)!;
+        if (node.getAttribute("type") === NodeType.NODE) {
+            node.setAttribute("name", name);
+            self.resetZoom(self);
+        } else {
+            throw `You need to use another update function for nodes of type ${node.getAttribute("type")}`;
+        }
+    }
+
+    /**
+     * The **updateLabel()** function updates the {@link Label} with the given {@link id} with the given properties in
+     * the {@link jsonData}. And reloads the floorplan with the new data.
+     *
+     * @param id The unique identifier of the {@link Label}.
+     * @param description The (new) description of the {@link Label}.
+     * @param color The (new) color of the {@link Label}, it is represented as an {@link Array} of `integers` between 0
+     *              and 255.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
+        let labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+        let index = labels.map((label: Label) => label.id).indexOf(id);
+        labels[index].description = description;
+        labels[index].color = color;
+
+        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels = labels;
+        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.resetZoom(self);
+    }
+
+    /**
+     * The **removeElement()** function removes the {@link Polygon}, {@link GuidoNode} or {@link Label} from the
+     * {@link jsonData} and then reloads the floorplan again with the new {@link Overlays}.
+     *
+     * @param event The {@link Event} that triggered the delete action.
      */
     removeElement(event: Event): void {
         if (event.target) {
             // @ts-ignore
             let id: number = parseInt(event.target.getAttribute(isNaN(parseInt(event.target.getAttribute("id"))) ? "pointsOfInterestId" : "id"));
-            let type: string = document.querySelector(`[id='${String(id)}']`)!.getAttribute("type")!;
+            let type: string = document.querySelector(`[id='${id}']`)!.getAttribute("type")!;
             switch (type) {
                 case PolygonType.ROOM:
                     let array: Polygon[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
@@ -301,7 +333,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     // You can't remove the floor
                     break;
 
-                // For all the points of interests
+                // For all the points of interest
                 default:
                     let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
                     let i = nodesArray.map((guidoNode: GuidoNode) => guidoNode.id).indexOf(id);
@@ -311,29 +343,24 @@ export class CreateFloorComponent implements AfterViewInit {
                     this.removeNodeFromNeighborData(id);
             }
 
-            document.getElementById("demo" + this.floor + "lineGroup")!.setAttribute("transform", "");
-            document.getElementById("doors" + this.floor)!.setAttribute("transform", "");
-            document.getElementById("nodes" + this.floor)!.setAttribute("transform", "");
-            document.getElementById("pointsOfInterest" + this.floor)!.setAttribute("transform", "");
             if (type !== PolygonType.FLOOR) {
+                this.resetZoom(this);
                 this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
             }
         }
-
-        this.resetZoom(this);
-        this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
     }
 
     /**
-     * Removes the given id from the attribute neighbors for all nodes, and removes the neighbors from the points of
-     * interests in the jsonData
+     * The **removeNodeFromNeighborData()** function removes the given {@link id} from the attribute neighbors for all
+     * the nodes {@link Element}s, it also removes the given {@link id} from the {@link GuidoNode.neighbors} for all the
+     * points of interest in the {@link jsonData}.
      *
      * @param id The id of the node that needs to be removed in all his neighbors.
      */
     removeNodeFromNeighborData(id: number): void {
         let nodes = document.querySelectorAll("[node]");
         nodes.forEach((node: Element) => {
-            let neighbors = String(node.getAttribute("neighbors")).split(",").map(elem => parseInt(elem));
+            let neighbors = node.getAttribute("neighbors")!.split(",").map((id: string) => parseInt(id));
             let removeIndex = neighbors.indexOf(id);
 
             if (removeIndex !== -1) {
@@ -342,14 +369,20 @@ export class CreateFloorComponent implements AfterViewInit {
 
             node.setAttribute("neighbors", neighbors.join(","));
         });
-        const nodesJSONData: GuidoNode[] = this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes;
-        nodesJSONData.forEach((node: GuidoNode) => {
+        this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes.forEach((node: GuidoNode) => {
             if (node.neighbors.includes(id)) {
                 node.neighbors = node.neighbors.filter((neighbor: number) => neighbor !== id);
             }
         });
     }
 
+    /**
+     * The **displayDialogBox()** function displays the {@link DialogBoxComponent} with the name {@link action} and
+     * updates the params (which will call the {@link DialogBoxComponent.ngOnChanges} function).
+     *
+     * @param action The name that identifies the action of the {@link DialogBoxComponent} that should be displayed.
+     * @param params The parameters that are passed to the {@link DialogBoxComponent.ngOnChanges} function.
+     */
     displayDialogBox(action: string, params: {}): void {
         this.paramsToGiveToDialogBoxes[action] = params;
         this.paramsToGiveToDialogBoxes[action].self = this;
@@ -357,10 +390,11 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Function used to zoom non floor plan objects to the same level as floor plan objects
-     * @param mutationsList
+     * The **setZoom()** function is used to zoom non floorplan objects to the same level as floor plan objects.
+     *
+     * @param mutationsList TODO
      */
-    setZoom = (mutationsList: MutationRecord[]) => {
+    setZoom = (mutationsList: MutationRecord[]): void => {
         for (const mutation of mutationsList) {
             if (mutation.type !== "attributes" || mutation.attributeName !== "transform") {
                 break;
@@ -378,19 +412,37 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    resetZoom(self: CreateFloorComponent = this) {
-        d3.select("#demo" + self.floor).select("svg").select(".map-layers").attr("transform", "")
+    /**
+     * The **resetZoom()** function resets the `transform` attribute of the `.map-layers` of the {@link Floor}s
+     * {@link SVGElement}.
+     *
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
+    resetZoom(self: CreateFloorComponent = this): void {
+        d3.select("#demo" + self.floor).select("svg").select(".map-layers").attr("transform", "");
     }
 
+    /**
+     * The **updateDoor()** function updates the {@link GuidoNode} (of type {@link NodeType.DOOR} &
+     * {@link NodeType.EMERGENCY_EXIT}) with the given {@link id} with the given properties. And reloads the floorplan
+     * with the new data.
+     *
+     * @param id The unique identifier of the door.
+     * @param name The (new) name of the door.
+     * @param length The (new) length of the door.
+     * @param width The (new) width of the door.
+     * @param color The (new) color of the {@link GuidoNode}, it is represented as an {@link Array} of integers between 0 and 255.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     updateDoor(id: number, name: string, length: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
-        let door = document.querySelector(`[id='${String(id)}']`)!;
-        let previousPoints = Point.arrayOfPointsFromPointString(String(door.getAttribute("points")));
+        let door = document.querySelector(`[id='${id}']`)!;
+        let previousPoints = Point.arrayOfPointsFromPointString(door.getAttribute("points")!);
         door.setAttribute("name", name);
         door.setAttribute("length", String(length));
         door.setAttribute("width", String(width));
-        door.setAttribute("fill", "rgb(" + color.join(",") + ")");
+        door.setAttribute("fill", `rgb(${color.join(",")})`);
 
-        //Point used in reconstructing the polygon after dragging
+        // Point used in reconstructing the polygon after dragging
         let toBuildFrom = previousPoints[0];
 
         let points = [
@@ -401,10 +453,10 @@ export class CreateFloorComponent implements AfterViewInit {
         ];
 
         let pointsString = Point.pointStringFromArrayOfPoints(points);
-        let degreesRotated = parseFloat(String(door.getAttribute("degreesRotated")));
+        let degreesRotated = parseFloat(door.getAttribute("degreesRotated")!);
 
         if (degreesRotated !== 0) {
-            pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
+            pointsString = Point.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
         }
 
         door.setAttribute("points", pointsString);
@@ -412,18 +464,23 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Adds an extra vertice to a polygon.
+     * The **changeVerticeCountOfPolygon()** function adds an extra vertice between the nearest {@link Polygon} point
+     * and the neighboring point that is the closest to the {@link MouseEvent} click OR removes the clicked vertice.
+     *
+     * @param event The {@link MouseEvent} that triggered this function.
+     * @param isAdding The `boolean` indicating if a vertice needs to be added or removed.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
-    changeVerticeCountOfPolygon(event: any, self: CreateFloorComponent = this, adding: boolean): void {
+    changeVerticeCountOfPolygon(event: MouseEvent, isAdding: boolean, self: CreateFloorComponent = this): void {
         if (d3.event.ctrlKey || d3.event.metaKey) {
             const mouseCoordinates = d3.mouse(event);
             let clickedPolygon = d3.select(event);
             const clickedPolygonId = parseInt(clickedPolygon.attr("id"));
-            let vertices: [number, number][] = clickedPolygon.attr("d").substring(1).split("L").map((elem: any) => elem.split(",").map((elem: any) => parseFloat(elem)));
-            let distances = vertices.map((elem: any) => self.determineDistanceBetweenCoords(elem, mouseCoordinates));
-            let indexOfClosestExistingPoint = distances.indexOf(Math.min(...distances));
+            let vertices: [number, number][] = clickedPolygon.attr("d").substring(1).split("L").map((elem: string) => elem.split(",").map((elem: string) => parseFloat(elem)));
+            const distances = vertices.map((elem: [number, number]) => Point.determineDistanceBetweenCoords(Point.toPoint(elem), Point.toPoint(mouseCoordinates)));
+            const indexOfClosestExistingPoint = distances.indexOf(Math.min(...distances));
 
-            if (adding) {
+            if (isAdding) {
                 const neighbor1Index = indexOfClosestExistingPoint === 0 ? distances.length - 1 : indexOfClosestExistingPoint - 1;
                 const neighbor2Index = indexOfClosestExistingPoint === distances.length - 1 ? 0 : indexOfClosestExistingPoint + 1;
 
@@ -449,9 +506,9 @@ export class CreateFloorComponent implements AfterViewInit {
             let floorNr: number = 0;
 
             for (let i = 0; i !== this.jsonData.floors.length; i++) {
-                const index = this.jsonData.floors[i].overlays.polygons.map(elem => elem.id).indexOf(clickedPolygonId);
+                const index = this.jsonData.floors[i].overlays.polygons.map((polygon: Polygon) => polygon.id).indexOf(clickedPolygonId);
                 if (index !== -1) {
-                    this.jsonData.floors[i].overlays.polygons[index].points = vertices.map((elem: [number, number]) => new Point(elem[0], elem[1]));
+                    this.jsonData.floors[i].overlays.polygons[index].points = vertices.map((elem: [number, number]) => Point.toPoint(elem));
                     floorNr = i;
                     break;
                 }
@@ -461,10 +518,9 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
-    determineDistanceBetweenCoords(coords1: [number, number], coords2: [number, number]): number {
-        return Math.sqrt(Math.pow(coords2[0] - coords1[0], 2) + Math.pow(coords2[1] - coords1[1], 2));
-    }
-
+    /**
+     * The **removeFloor()** function removes the {@link Floor} with the floor number {@link floor} from the {@link jsonData}.
+     */
     removeFloor(): void {
         const newFloors = this.jsonData.floors.slice();
         for (let i = 0; i < this.jsonData.floors.length; i++) {
@@ -473,13 +529,21 @@ export class CreateFloorComponent implements AfterViewInit {
                 break;
             }
         }
-        this.toastr.success(`Removed ${this.getFloorName()}!`, "", {positionClass: "toast-bottom-right"});
+        this.toastr.success(`Removed ${this.floorName}!`, "", {positionClass: "toast-bottom-right"});
         this.jsonData.floors = newFloors;
         this.jsonData.nodes = this.jsonData.nodes.filter((node: GuidoNode) => this.floor !== node.floor);
     }
 
     previousWindowWidth = 0;
 
+    /**
+     * The **regenerateFloorMap()** function manages the floorplan dimensions. It will resize the map if you switch to
+     * another screen with different dimensions. With these dimensions (with a max width of `1536` and a max height of
+     * `864`) the floorplan dimensions are calculated based on the image ratio and saved in the jsonData.
+     *
+     * @param force This will force the (re)calculation of the floorplan's dimensions even when the window hasn't been
+     * resized.
+     */
     @HostListener('window:resize')
     regenerateFloorMap(force: boolean = false): void {
         if (force || this.previousWindowWidth !== window.screen.width) {
@@ -516,6 +580,12 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * The **updateNewBackground()** function is triggered when a user uploads a new background image for a floor. It
+     * will add the image to floorplan's ImageLayer.
+     *
+     * @param event The event that triggered this function (when a user uploads a background image).
+     */
     updateNewBackground(event: any): void {
         if (event.target.files.length > 0) {
             const reader = new FileReader();
@@ -531,21 +601,35 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
                     self.regenerateFloorMap(true);
                     self.resetZoom(self);
-                    self.loadData(self.jsonData["floors"].find((f: any) => f.floor === self.floor)!)
+                    self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
                 }
             }
         }
     }
 
+    /**
+     * The **getDoorDimensions()** function returns the door dimensions given his corners.
+     *
+     * @param doorCoords The {@link Array} containing the {@link Point}s of the door.
+     * @return A map containing the length and width of the door.
+     */
     getDoorDimensions(doorCoords: Point[]): { length: number, width: number } {
         const distance1 = Math.round(Math.sqrt(Math.pow(doorCoords[1].x - doorCoords[0].x, 2) + Math.pow(doorCoords[1].y - doorCoords[0].y, 2)));
         const distance2 = Math.round(Math.sqrt(Math.pow(doorCoords[2].x - doorCoords[1].x, 2) + Math.pow(doorCoords[2].y - doorCoords[1].y, 2)));
         return {
             length: distance1 > distance2 ? distance1 : distance2,
             width: distance1 > distance2 ? distance2 : distance1
-        }
+        };
     }
 
+    /**
+     * The **setNeighbors()** function sets/updates the neighbors of the {@link GuidoNode} with the given {@link id} to
+     * the {@link Array} of {@link neighbors}.
+     *
+     * @param id The unique identifier of the {@link GuidoNode} for which the new {@link neighbors} need to be set.
+     * @param neighbors The {@link Array} of id's of all the neighbors.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     setNeighbors(id: number, neighbors: [string, boolean][], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
         let newNeighbors: number[] = [];
@@ -573,10 +657,11 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Saves the new neighbors list on the right place in the JSON
-     * @param id The id of the node that you want to update
-     * @param neighbors The new list of neighbors
-     * @param self The instance of the CreateFloorClass
+     * The **saveNeighborsInJson()** function saves the {@link Array} of new {@link neighbors} in the {@link jsonData}.
+     *
+     * @param id The unique identifier of the {@link GuidoNode} that you which to update.
+     * @param neighbors The new {@link Array} of neighbors.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
     saveNeighborsInJson(id: number, neighbors: number[], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
@@ -589,9 +674,15 @@ export class CreateFloorComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * The **setConnectingNeighbors()** function (re)draws all the lines between the different {@link GuidoNode}s when
+     * the {@link setNeighborMode} is enabled.
+     *
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     setConnectingNeighbors(self: CreateFloorComponent = this): void {
+        this.removeConnectingNeighbors(self);
         let group = d3.select("#demo" + self.floor + "lineGroup");
-        group.selectAll("line").remove();
         let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
         nodes.forEach((elem: Element) => {
             const origin = self.getConnectablePoint(parseInt(elem.id));
@@ -609,38 +700,46 @@ export class CreateFloorComponent implements AfterViewInit {
                 const connectableNeighborPoint = self.getConnectablePoint(neighborId);
                 const neighborNode = document.querySelector(`[id='${neighborId}']`);
 
-                let isReciprical = false;
-                if (neighborNode && String(neighborNode.getAttribute("neighbors")).split(",").some(neighborIdEntry => parseInt(neighborIdEntry) === parseInt(elem.id)))
-                    isReciprical = true;
+                let isReciprocal = false;
+                if (neighborNode && neighborNode.getAttribute("neighbors")!.split(",").some(neighborIdEntry => parseInt(neighborIdEntry) === parseInt(elem.id))) {
+                    isReciprocal = true;
+                }
 
                 group.append("line")
                     .attr("x1", origin.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("width")!.split("px")[0]) / 2))
                     .attr("y1", origin.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("height")!.split("px")[0]) / 2))
                     .attr("x2", connectableNeighborPoint.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("width")!.split("px")[0]) / 2))
                     .attr("y2", connectableNeighborPoint.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("height")!.split("px")[0]) / 2))
-                    .attr("stroke", isReciprical ? "green" : "orange")
+                    .attr("stroke", isReciprocal ? "green" : "orange")
                     .attr("stroke-width", "5px")
-                    .attr("marker-end", isReciprical ? "" : "url(#arrow)");
+                    .attr("marker-end", isReciprocal ? "" : "url(#arrow)");
             });
-        })
+        });
     }
 
+    /**
+     * The **removeConnectingNeighbors()** function removes all the lines between the different {@link GuidoNode}s.
+     *
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     removeConnectingNeighbors(self: CreateFloorComponent = this): void {
         let group = d3.select("#demo" + self.floor + "lineGroup");
         group.selectAll("line").remove();
     }
 
     /**
-     * Creates a polygon given the amountOfVertices to determine the amount of vertices or asks the user for input
+     * The **createPolygon()** function creates a {@link Polygon} with the given properties and saves it in the
+     * {@link jsonData} which will automatically reload the floorplan.
      *
-     * @param previousId id when reloading the svg elements
-     * @param name The name of the polygon
-     * @param amountOfVertices The amount of vertices each room has
-     * @param description The description of rooms purpose
-     * @param color The color of the polygon
-     * @param self The instance of the CreateFloorComponent class
+     * @param id The unique identifier of the {@link Polygon}. TODO can he still be null?
+     * @param name The name of the {@link Polygon}.
+     * @param amountOfVertices The amount of vertices of the {@link Polygon}.
+     * @param description The description of {@link Polygon}s purpose.
+     * @param color The color of the {@link Polygon}, it is represented as an {@link Array} of `integers` between 0 and
+     *              255.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
-    createPolygon(previousId: number | null = null, name: string, amountOfVertices: number, description: string, color: [number, number, number] = [204, 204, 204], self: CreateFloorComponent = this) {
+    createPolygon(id: number | null = null, name: string, amountOfVertices: number, description: string, color: [number, number, number] = [204, 204, 204], self: CreateFloorComponent = this): void {
         let radius = 30;
         let angle = Math.PI * 2 / amountOfVertices;
         let vertices: Point[] = [];
@@ -651,36 +750,59 @@ export class CreateFloorComponent implements AfterViewInit {
             vertices[i] = new Point(x, y);
         }
 
-        const polygons = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(previousId === null ? self.jsonData.lastId + 1 : previousId, name, self.floor, PolygonType.ROOM, description, vertices, color));
+        const polygons = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+        polygons.push(new Polygon(id === null ? self.jsonData.lastId + 1 : id, name, self.floor, PolygonType.ROOM, description, vertices, color));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }
 
-        if (previousId === null)
+        if (id === null) {
             self.jsonData.lastId += 1;
+        }
         self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
         self.resetZoom(self);
     }
 
+    /**
+     * The **createPointOfInterest()** function creates a Point of Interest ({@link GuidoNode}) with the given
+     * properties and saves it in the {@link jsonData} which will automatically reload the floorplan.
+     *
+     * @param nodeType The type of the {@link GuidoNode}.
+     * @param neighbors The unique identifiers of all the neighbor {@link GuidoNode}s.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     createPointOfInterest(nodeType: NodeType, neighbors: number[] = [], self: CreateFloorComponent = this): void {
-        const nodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, [], 0));
+        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, [], 0));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
         self.resetZoom(self);
     }
 
+    /**
+     * The **createLabel()** function creates a {@link Label} with the given properties and saves it in the
+     * {@link jsonData} which will automatically reload the floorplan.
+     *
+     * @param description The description of the label
+     * @param color The color of the {@link Label}, it is represented as an {@link Array} of `integers` between 0 and
+     *              255.
+     * @param self The instance of the {@link CreateFloorComponent}.
+     */
     createLabel(description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
-        const labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
-        labels.push(new Label(self.jsonData.lastId + 1, description, new Point(25, 25), color));
+        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels.push(new Label(self.jsonData.lastId + 1, description, new Point(25, 25), color));
 
         self.jsonData.lastId += 1;
         self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
         self.resetZoom(self)
     }
 
+    /**
+     * The **getConnectablePoint()** function returns the {@link Point} to which the line must connect in the
+     * {@link setNeighborMode}.
+     *
+     * @param id The unique identifier of the {@link Point} that needs to be found.
+     * @return The point to which the line needs to be connected.
+     */
     getConnectablePoint(id: number): Point {
         let elem = d3.select(`[id='${id}']`);
         if (elem === null) {
@@ -706,7 +828,15 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Creates passThrough node
+     * The **createNode()** function creates a {@link SVGCircleElement} with the given properties and appends it to the
+     * `#nodes + floorNumber` {@link SVGGElement}.
+     *
+     * @param previousId The unique identifier of the {@link GuidoNode}. TODO can he still be null?
+     * @param previousOrigin The {@link Point} where the node must be located.
+     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
+     *             node, otherwise it will be seen as a start & end destination).
+     * @param neighbors The unique identifiers of all the neighbor {@link GuidoNode}s.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
     createNode(previousId: number | null = null, previousOrigin: Point | null = null, name: string, neighbors: number[] = [], self: CreateFloorComponent = this): void {
         let origin = previousOrigin === null ? new Point(25, 25) : previousOrigin;
@@ -759,7 +889,6 @@ export class CreateFloorComponent implements AfterViewInit {
 
         node.node().addEventListener("click", (e: Event) => {
             if (self.editMode) {
-                self.deleteMode = false;
                 self.displayDialogBox("updateNode", {
                     defaultValues: [
                         node.attr("name")
@@ -777,12 +906,13 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Opens the DialogBox for setNeighbors.
+     * The **openDisplayNeighborsDialog()** function opens the {@link DialogBoxComponent} for the action `setNeighbors`
+     * and passes the current neighbors of the {@link GuidoNode} and the possible neighbors to which he can connect.
      *
-     * @param event The event which triggered this function
-     * @param self The instance of the class CreateFloorComponent
+     * @param event The {@link Event} which triggered this function.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
-    openDisplayNeighborsDialog(event: Event, self: CreateFloorComponent) {
+    openDisplayNeighborsDialog(event: Event, self: CreateFloorComponent): void {
         if (self.setNeighborMode) {
             const id = (event.target as Element).id === "" ? (event.target as Element).getAttribute("pointsOfInterestId") : (event.target as Element).id;
             if (id != null && id !== "") {
@@ -843,23 +973,43 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * Moves passThrough node
+     * The **moveNodeCoordinates()** function moves a {@link GuidoNode} of type {@link NodeType.NODE} to the location of
+     * the mouse.
+     *
+     * @param node The d3 instance of the node element.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
-    moveNodeCoordinates(self: this, floorComp: CreateFloorComponent) {
-        let svg =  document.getElementById("demo" + floorComp.floor)!.getElementsByTagName("svg")[0];
-        let width = parseFloat(String(svg.getAttribute("width")));
-        let height = parseFloat(String(svg.getAttribute("height")));
-        let x = parseFloat(d3.event.x)
+    moveNodeCoordinates(node: any, self: CreateFloorComponent): void {
+        let svg = document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
+        let width = parseFloat(svg.getAttribute("width")!);
+        let height = parseFloat(svg.getAttribute("height")!);
+        let x = parseFloat(d3.event.x);
         let y = parseFloat(d3.event.y);
 
-        let node = d3.select(self);
-        if (x > 0 && y > 0 && x < width && y < height)
-            node.attr('cx', d3.event.x).attr('cy', d3.event.y)
-
+        if (x > 0 && y > 0 && x < width && y < height) {
+            d3.select(node)
+                .attr('cx', d3.event.x)
+                .attr('cy', d3.event.y);
+        }
     }
 
     /**
-     * Creates a door
+     * The **createDoor()** function creates a {@link GuidoNode} of type {@link NodeType.DOOR} or
+     * {@link NodeType.EMERGENCY_EXIT}.
+     *
+     * @param previousId The unique identifier of the {@link GuidoNode}.
+     * @param length The length of the {@link GuidoNode}.
+     * @param width  The width of the {@link GuidoNode}.
+     * @param previousPoints The {@link Array} of {@link Point} coordinates of the {@link GuidoNode}.
+     * @param name The name of the {@link GuidoNode} (if omitted the {@link GuidoNode} will be seen as a pass through
+     *             node, otherwise it will be seen as a start & end destination).
+     * @param neighbors The unique identifiers of all the neighbor {@link GuidoNode}s.
+     * @param emergency The `boolean` who determines if the {@link GuidoNode} is either of type {@link NodeType.DOOR} or
+     *                  {@link NodeType.EMERGENCY_EXIT}.
+     * @param color The color of the {@link GuidoNode}, it is represented as an {@link Array} of `integers` between 0 and
+     *              255.
+     * @param degreesRotated The amount of degrees the door is rotated.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
     createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], degreesRotated: number = 0, self: CreateFloorComponent = this): void {
         let id = previousId === null ? self.jsonData.lastId + 1 : previousId;
@@ -893,7 +1043,7 @@ export class CreateFloorComponent implements AfterViewInit {
             .call(d3.behavior.drag().on("drag", function () {
                 if (!self.setNeighborMode && !self.editMode && !self.deleteMode) {
                     // @ts-ignore
-                    self.moveDoorCoordinates(this, self)
+                    self.moveDoorCoordinates(this, self);
                 }
             }));
 
@@ -904,7 +1054,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     defaultValues: [
                         door.attr("name"), door.attr("length"), door.attr("width"), door.attr("fill").substring(4).slice(0, -1)
                     ], id: id
-                })
+                });
             } else if (self.deleteMode) {
                 self.removeElement(e);
             }
@@ -912,34 +1062,42 @@ export class CreateFloorComponent implements AfterViewInit {
 
         door.node().addEventListener('dblclick', (event: Event) => self.openDisplayNeighborsDialog(event, self));
 
-        if (previousId === null)
+        if (previousId === null) {
             self.jsonData.lastId += 1;
+        }
     }
 
+    /**
+     * The **rotateDoor()** function rotates {@link GuidoNode}s of type {@link NodeType.DOOR} and
+     * {@link NodeType.EMERGENCY_EXIT} with an angle of 15°.
+     */
     rotateDoor(): void {
         d3.event.preventDefault();
 
         let previousPoints = d3.select(this).attr("points");
-        let result = CreateFloorComponent.calculateNewCoordinatesForRotation(previousPoints, 15);
+        let result = Point.calculateNewCoordinatesForRotation(previousPoints, 15);
         d3.select(this).attr("degreesRotated", parseFloat(d3.select(this).attr("degreesRotated")) + 15);
 
         d3.select(this).attr("points", result);
     }
 
     /**
-     * Moves the door according to drag, only executes on left click drag
+     * The **moveDoorCoordinates()** function moves the door coordinates when they are being dragged by the user.
+     *
+     * @param door The d3 instance of the door element.
+     * @param self The instance of the {@link CreateFloorComponent}.
      */
-    moveDoorCoordinates(self: this, floorComp: CreateFloorComponent): void {
+    moveDoorCoordinates(door: any, self: CreateFloorComponent): void {
         if (d3.event.sourceEvent.which === 1) {
-            let svg =  document.getElementById("demo" + floorComp.floor)!.getElementsByTagName("svg")[0];
-            let svgWidth = parseFloat(String(svg.getAttribute("width")));
-            let svgHeight = parseFloat(String(svg.getAttribute("height")));
+            let svg = document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
+            let svgWidth = parseFloat(svg.getAttribute("width")!);
+            let svgHeight = parseFloat(svg.getAttribute("height")!);
 
-            let door = d3.select(self);
+            let d = d3.select(door);
             let width = parseFloat(door.attr("width"));
             let length = parseFloat(door.attr("length"));
 
-            //Point used in reconstructing the polygon after dragging
+            // Point used in reconstructing the polygon after dragging
             let toBuildFrom = new Point(parseFloat(d3.event.x), parseFloat(d3.event.y));
 
             let points = [
@@ -950,10 +1108,10 @@ export class CreateFloorComponent implements AfterViewInit {
             ];
 
             let pointsString = Point.pointStringFromArrayOfPoints(points);
-            let degreesRotated = parseFloat(d3.select(self).attr("degreesRotated"));
+            let degreesRotated = parseFloat(d3.select(d).attr("degreesRotated"));
 
             if (degreesRotated !== 0) {
-                pointsString = CreateFloorComponent.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
+                pointsString = Point.calculateNewCoordinatesForRotation(pointsString, degreesRotated);
             }
 
             let newPoints = Point.arrayOfPointsFromPointString(pointsString);
@@ -961,8 +1119,9 @@ export class CreateFloorComponent implements AfterViewInit {
             let middleX = (newPoints[0].x + newPoints[2].x) / 2;
             let middleY = (newPoints[0].y + newPoints[2].y) / 2;
 
-            if (middleX > 0 && middleY > 0 && middleX < svgWidth && middleY < svgHeight)
-                door.attr("points", pointsString);
+            if (middleX > 0 && middleY > 0 && middleX < svgWidth && middleY < svgHeight) {
+                d.attr("points", pointsString);
+            }
         }
     }
 }

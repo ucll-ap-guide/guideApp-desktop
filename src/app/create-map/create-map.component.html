@@ -1,5 +1,5 @@
 <main class="flex flex-col bg-cover bg-[url('src/assets/img/scattered-forcefields.svg')] dark:bg-[url('src/assets/img/scattered-forcefields-dark.svg')] text-black dark:text-white object-fill h-screen bg-blue-50 overflow-auto relative pb-5">
-    <div class="container mx-auto px-5">
+    <div class="container mx-auto px-5 mb-3">
         <div class="mt-32 xl:mt-auto content-center">
             <div class="sm:col-span-1 space-y-5 md:space-y-8">
                 <h1 class="text-4xl sm:text-5xl xl:text-7xl font-semibold mt-20 text-center">Creating a map</h1>
@@ -19,20 +19,6 @@
                        class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
                        id="mapName" placeholder="Name" type="text">
                 <p class="text-red-500 mx-3 mb-1 error" id="mapNameError"></p>
-
-                <!--<label class="block text-gray-700 text-sm font-bold mb-2" for="floorLength">
-                    Floor length (meters):
-                </label>
-                <input (keydown.enter)="createMap()" [(ngModel)]="jsonData.length"
-                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
-                       id="floorLength" min="0" placeholder="Floor length" step="0.01" type="number">
-                <p class="text-red-500 mx-3 mb-1 error" id="floorLengthError"></p>
-
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="floorWidth">Floor width (meters):</label>
-                <input (keydown.enter)="createMap()" [(ngModel)]="jsonData.width"
-                       class="bg-white text-gray-700 border focus:outline-none focus:shadow-outline rounded-md shadow w-auto leading-tight py-2 px-3 mx-1.5"
-                       id="floorWidth" min="0" placeholder="Floor width" step="0.01" type="number">
-                <p class="text-red-500 mx-3 mb-1 error" id="floorWidthError"></p>-->
 
                 <button (click)="createMap()"
                         class="text-white bg-blue-400 focus:outline-none focus:ring-2 focus:ring-outset focus:ring-white shadow block rounded-md py-2 px-3 mt-4">
@@ -121,7 +107,7 @@
                                   stroke="currentColor" stroke-width="10"/>
                         </svg>
                     </button>
-                    <button (click)="changeEditMode()"
+                    <button (click)="toggleEditMode()"
                             [class]=" (editMode ? 'text-blue-500' : 'text-white') + ' px-4 py-2'"
                             id="editModeButton">
                         <svg class="svg-icon h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -190,7 +176,7 @@
                            id="floorHeight" min="0" placeholder="Floor height" step="0.01" type="number">
                     <p class="text-red-500 mx-3 mb-1" id="floorHeightError"></p>
 
-                    <ng-container *ngIf="jsonData.floors.length !== 0 && hasAFixedFloor()">
+                    <ng-container *ngIf="jsonData.floors.length !== 0 && hasAFloor()">
                         <label class="block text-sm font-bold mb-2" for="useGroundFloor">
                             Use previous ground floor:
                         </label>

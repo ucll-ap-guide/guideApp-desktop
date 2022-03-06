@@ -1,3 +1,9 @@
+/**
+ * Enum for the different kinds of {@link GuidoNode} types.
+ *
+ * @readonly
+ * @enum {string}
+ */
 export enum NodeType {
     DOOR = "Door",
     EMERGENCY_EXIT = "Emergency exit",

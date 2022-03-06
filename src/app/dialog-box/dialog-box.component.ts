@@ -6,6 +6,10 @@ import {Point} from "../model/point";
     templateUrl: 'dialog-box.component.html',
     styles: []
 })
+/**
+ * A component that can create dialog boxes with either {@link HTMLInputElement}, {@link HTMLSelectElement} fields
+ * and/or group(s) of infinite fields in a {@link HTMLDivElement}.
+ */
 export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
     @Input() action!: string;
@@ -21,10 +25,18 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Fills the inputs with their defaultValues (needs to be done like this because each node needs other neighbors
-     * that can be set dynamically).
+     * The **ngOnChanges()** function is automatically triggered by angular when the {@link DialogBoxComponent} is
+     * created/opened and that the defaultValues have been set dynamically or when values for a `search-select` are
+     * passed dynamically.
      *
-     * @param changes
+     * @param changes The changes since the last time the {@link DialogBoxComponent} has been created/opened.
+     * @param changes.params.currentValue.defaultValues The values of the {@link HTMLInputElement}s. *It's an
+     *                                                  {@link Array} of type `string`, `number`, `boolean` or another
+     *                                                  {@link Array} in case the field is an infinite fields group.*
+     * @param changes.params.currentValue.values The values who should be displayed for the {@link HTMLInputElement} of
+     *                                           tagType `search-select`. *It is an {@link Array} of type `string`,
+     *                                           `number`, `boolean` or another {@link Array} in case the field is an
+     *                                           infinite fields group.*
      */
     ngOnChanges(changes: SimpleChanges): void {
         const topLevelChildren = document.querySelectorAll(`#${this.action}InputsFloor${this.floor}>input, #${this.action}InputsFloor${this.floor}>div`);
@@ -39,7 +51,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                         let j;
                         // For all groups in top level children
                         for (j = 0; j < defaultValues[i].length; j++) {
-                            const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j);
+                            const group = this.createInfiniteFieldsGroup(this.formElements[i].infinite, j, i);
                             const groupInputFields = group.getElementsByTagName("input");
                             // For all fields in group
                             for (let k = 0; k < groupInputFields.length; k++) {
@@ -54,7 +66,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                             }
                             topLevelChildren.item(i).appendChild(group);
                         }
-                        topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j));
+                        // For all fields in group
+                        topLevelChildren.item(i).appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, j, i));
                     } else {
                         if (topLevelChildren.item(i).nodeName === "INPUT") {
                             (topLevelChildren.item(i) as HTMLInputElement).value = defaultValues[i];
@@ -66,16 +79,20 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
             // Set the search select
             const values = changes['params'].currentValue.values;
             if (values !== undefined) {
-                // For all top level children in values
-                for (let i = 0; i < topLevelChildren.length; i++) {
+                // For each top level children in values
+                for (let i = 0; i < values.length; i++) {
                     if (this.formElements[i].infinite !== undefined) {
-                        // For all input/select field GROUPS in top level children
-                        for (let j = 0; j < topLevelChildren[i].children.length; j++) {
-                            this.formElements[i].infinite[i].values = values[i][j] ? values[i][j] : [];
-                            // For all input/select fields in groups
-                            for (let k = 0; k < topLevelChildren[i].children[j].getElementsByTagName("input").length; k++) {
-                                if (values[i][k] !== undefined) {
-                                    this.appendSearchSelectField(topLevelChildren[i].children[j].getElementsByTagName("input")[k], values[i][k]);
+                        // For each input/select fields in the group
+                        for (let j = 0; j < values[i].length; j++) {
+                            if (values[i][j] !== undefined) {
+                                // Save the values so that automatic field creation can use them to generate the list
+                                this.formElements[i].infinite[j].values = values[i][j];
+                                // Create a search select field for every field inside the group for which values where provided
+                                for (const group of Array.from(topLevelChildren[i].children)) {
+                                    const fields = Array.from(group.querySelectorAll(`input, select`));
+                                    if (fields[j].nodeName === "INPUT") {
+                                        this.appendSearchSelectField(fields[j] as HTMLInputElement, values[i][j]);
+                                    }
                                 }
                             }
                         }
@@ -91,6 +108,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
 
     ngAfterViewInit(): void {
         const inputsDiv = <HTMLDivElement>document.getElementById(`${this.action}InputsFloor${this.floor}`);
+        // For all top level fields
         for (let i = 0; i < this.formElements.length; i++) {
             if (this.formElements[i].infinite !== undefined) {
                 // Container containing all the groups of input fields
@@ -99,17 +117,20 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 container.className = "flex flex-col";
                 container.setAttribute("infinite", String(i));
 
-                container.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, i));
+                container.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, 0, i));
 
                 inputsDiv.appendChild(container);
 
-                // Listen to changes in input fields and adds fields if necessary
-                inputsDiv.addEventListener("input", (event) => {
-                    const input = (event.target as HTMLInputElement);
-                    const inputsFields = Array.from(input.parentElement!.parentElement!.querySelectorAll("div:last-of-type>input"));
-                    for (let j = 0; j < inputsFields.length; j++) {
-                        if ((inputsFields[j] as HTMLInputElement).id === input.id) {
-                            input.parentElement!.parentElement!.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, inputsFields[j].parentElement!.parentElement!.children.length));
+                // Listen to changes in the last input field group and adds fields if necessary
+                inputsDiv.addEventListener("input", (event: Event) => {
+                    if ((event.target as Element).nodeName === "INPUT" && (event.target as HTMLInputElement).type !== "checkbox") {
+                        const input = (event.target as HTMLInputElement);
+                        const inputsFields: HTMLInputElement[] = Array.from(input.parentElement!.parentElement!.querySelectorAll("div:last-of-type>input"));
+                        // For all fields in the last group of the infinite field container
+                        for (let j = 0; j < inputsFields.length; j++) {
+                            if (inputsFields[j] === input) {
+                                input.parentElement!.parentElement!.appendChild(this.createInfiniteFieldsGroup(this.formElements[i].infinite, input.parentElement!.parentElement!.children.length, i));
+                            }
                         }
                     }
                 });
@@ -134,43 +155,59 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Makes the given element draggable.
+     * The **dragElement()** function makes the given {@link HTMLDivElement} draggable when `Ctrl` + `Double Click` is
+     * used.
      *
-     * @param htmlDivElement The HTML element that needs to be draggable.
+     * @param htmlDivElement The {@link HTMLDivElement} element that needs to be draggable.
      */
-    dragElement(htmlDivElement: HTMLDivElement) {
+    dragElement(htmlDivElement: HTMLDivElement): void {
         const translate: string[] = htmlDivElement.style.transform.substring(10, htmlDivElement.style.transform.length - 1).split("px").filter((c: string) => c !== "");
         let originalPos = new Point(parseInt(translate[0]), parseInt(translate.length === 1 ? translate[0] : translate[1].substring(2)));
         htmlDivElement.ondblclick = (e: MouseEvent) => {
-            e = e || window.event;
-            e.preventDefault();
-            originalPos = new Point(e.clientX - originalPos.x, e.clientY - originalPos.y);
-            htmlDivElement.ondblclick = () => {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                this.dragElement(document.querySelector(`#${this.action}DialogBoxFloor${this.floor}>div`)!);
-            };
-            document.onmousemove = (e: MouseEvent) => {
+            if (e.ctrlKey) {
                 e = e || window.event;
                 e.preventDefault();
+                originalPos = new Point(e.clientX - originalPos.x, e.clientY - originalPos.y);
+                htmlDivElement.ondblclick = () => {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                    this.dragElement(document.querySelector(`#${this.action}DialogBoxFloor${this.floor}>div`)!);
+                };
+                document.onmousemove = (e: MouseEvent) => {
+                    e = e || window.event;
+                    e.preventDefault();
 
-                htmlDivElement.style.transform = `translate(${e.clientX - originalPos.x}px,${e.clientY - originalPos.y}px)`;
-            };
+                    htmlDivElement.style.transform = `translate(${e.clientX - originalPos.x}px,${e.clientY - originalPos.y}px)`;
+                };
+            }
         };
     }
 
-    createInfiniteFieldsGroup(infiniteFormElements: any[], upperLevelPosition: number): HTMLDivElement {
+    /**
+     * The **createInfiniteFieldsGroup()** function creates a {@link HTMLDivElement} that will contain an infinite
+     * amount of {@link HTMLInputElement} and/or {@link HTMLSelectElement} of another {@link HTMLDivElement} containing
+     * infinite fields. These will be automatically generated when the last group of fields doesn't contain the
+     * defaultValue anymore.
+     *
+     * @param infiniteFormElements An {@link Array} containing the options to create the fields (see
+     *                             {@link this.createField} for more info about the properties used within elements of
+     *                             the {@link Array}).
+     * @param groupIndex The index of the group inside the infinite container.
+     * @param infiniteContainerIndex The index of the new container containing all the infinite fields.
+     * @return A {@link HTMLDivElement} containing the infinite fields.
+     */
+    createInfiniteFieldsGroup(infiniteFormElements: any[], groupIndex: number, infiniteContainerIndex: number): HTMLDivElement {
         const group = document.createElement("div");
         group.className = "infiniteFieldsGroup";
         for (let j = 0; j < infiniteFormElements.length; j++) {
-            const label = this.createLabel(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
-            const field = this.createField(infiniteFormElements[j], `${upperLevelPosition}SubInput${j}`);
+            const label = this.createLabel(infiniteFormElements[j], `${groupIndex}SubInput${j}`);
+            const field = this.createField(infiniteFormElements[j], `${groupIndex}SubInput${j}`);
 
             if (infiniteFormElements[j].inputType !== "checkbox") group.appendChild(label);
             group.appendChild(field);
             if (infiniteFormElements[j].inputType === "checkbox") group.appendChild(label);
             if (infiniteFormElements[j].tagType === "search-select") {
-                this.appendSearchSelectField(field as HTMLInputElement, this.formElements[j].infinite[j].values);
+                this.appendSearchSelectField(field as HTMLInputElement, this.formElements[infiniteContainerIndex].infinite[j].values);
             } else if (infiniteFormElements[j].required === true && document.getElementById(field.id + "Error") === null) {
                 field.after(this.createErrorField(field as HTMLInputElement));
             }
@@ -178,6 +215,19 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         return group;
     }
 
+    /**
+     * The **createLabel()** function creates an {@link HTMLLabelElement} with the given parameters.
+     *
+     * @param formElement The formElement is a map containing fields that you can specify to generate the desired field.
+     *                    All fields are optional if none are given an empty label will be generated.
+     * @param formElement.inputType Indicates the type of the {@link HTMLInputElement}. This will be used to know where
+     *                              to place the label (by default it is put above the {@link HTMLInputElement} but when
+     *                              the {@link HTMLInputElement.type} is oft type `checkbox` it will be placed next to it).
+     * @param formElement.name The text that should be displayed inside the label.
+     * @param forId The id of the {@link HTMLInputElement} that should be set in the {@link HTMLLabelElement.htmlFor}
+     *              attribute.
+     * @return A {@link HTMLLabelElement} with the given parameters.
+     */
     createLabel(formElement: any, forId: string): HTMLLabelElement {
         const label = document.createElement("label");
         if (formElement.name) {
@@ -188,8 +238,40 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         return label;
     }
 
+    /**
+     * The **createField()** function creates an {@link HTMLInputElement} or a {@link HTMLSelectElement} with the given
+     * parameters.
+     *
+     * @param formElement The formElement is a map containing some of the following fields that you want to specify to
+     *                    generate the desired field. All fields are optional if none are given an empty input box of
+     *                    type text will be generated.
+     * @param formElement.checked Used for {@link HTMLInputElement} of inputType `checkbox`.
+     * @param formElement.defaultValue The default value that should be filled in the input filed by default.
+     * @param formElement.infinite The list of fields that need to be automatically generated when the last field of the
+     *                             infinite inputs is not empty anymore. Those fields need to be in a {@link Array} and
+     *                             is of type {@link formElement}.
+     * @param formElement.inputType Indicates the type of the {@link HTMLInputElement}.
+     * @param formElement.max The maximum value for the {@link HTMLInputElement.max} attribute.
+     * @param formElement.min The minimum value for the {@link HTMLInputElement.min} attribute.
+     * @param formElement.name The name of the input field, this will be used for the {@link HTMLInputElement.placeholder}
+     *                         and for the {@link HTMLLabelElement}.
+     * @param formElement.pattern The pattern for the {@link HTMLInputElement.pattern} attribute. This will be used for
+     *                            field validation.
+     * @param formElement.required Indicates whether the field should be validated. By default, it only checks if the
+     *                             field contains a value by the type that was given or the default type (`text`), but
+     *                             if pattern, values, min or max are defined it will also check if those requirements
+     *                             are met. (see {@link checkField} for more information)
+     * @param formElement.step The {@link HTMLInputElement.step} of the {@link HTMLInputElement}.
+     * @param formElement.tagType The type for the {@link HTMLInputElement.type} attribute.
+     * @param formElement.values The values that need to be displayed in the select, they should be grouped.
+     * @param formElement.values.group The group name that should be displayed for each group of values (can be omitted
+     *                                 if there is only one group).
+     * @param formElement.values.values The values that should be displayed for each group.
+     * @param id The {@link HTMLElement.id} the field should have.
+     * @return A {@link HTMLInputElement} or a {@link HTMLSelectElement} with the given parameters.
+     */
     createField(formElement: any, id: string): Element {
-        let elem = document.createElement(formElement.tagType && formElement.tagType !== "search-select" ? formElement.tagType : "input");
+        let elem = document.createElement(formElement.tagType && !["search-select", "color-picker"].includes(formElement.tagType) ? formElement.tagType : "input");
         elem.id = `${this.action}Floor${this.floor}Input${id}`;
         elem.className = (formElement.inputType === "checkbox" ? "inline mr-1" : "block") + " bg-white text-gray-700 focus:outline-none focus:shadow-outline rounded-md shadow w-auto py-1.5 px-2 mb-4";
         elem.onkeyup = (event: KeyboardEvent) => {
@@ -235,13 +317,14 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Hides all the elements in the select that don't contain the string in the search box.
+     * The **filterSearchElements()** function hides all the elements in the select that don't contain the string in the
+     * search box.
      *
-     * @param input The input field that is used as a search box.
+     * @param input The {@link HTMLInputElement} that is used as a search box.
      */
     filterSearchElements(input: HTMLInputElement): void {
         for (const idElem of Array.from(document.querySelectorAll(`#${input.id}Values>li>ul>li`)) as HTMLLIElement[]) {
-            if (String(idElem.innerText).toLowerCase().includes(input.value.toLowerCase())) {
+            if (idElem.innerText.toLowerCase().includes(input.value.toLowerCase())) {
                 idElem.className = idElem.className.replace("hidden", "block");
             } else {
                 idElem.className = idElem.className.replace("block", "hidden");
@@ -258,10 +341,13 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Creates a select with possible values for the given input field.
+     * The **appendSearchSelectField()** function creates a select with possible values for the given input field.
      *
-     * @param input The input field for which the select needs to be generated.
-     * @param values The values that need to be displayed in the select.
+     * @param input The {@link HTMLInputElement} for which the select needs to be generated.
+     * @param values The values that need to be displayed in the select, they should be grouped.
+     * @param values.group The group name that should be displayed for each group of values (can be omitted if there is only
+     *                     one group).
+     * @param values.values The values that should be displayed for each group.
      */
     appendSearchSelectField(input: HTMLInputElement, values: { group: string, values: any[] }[]): void {
         input.addEventListener("focusin", () => {
@@ -273,7 +359,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
         input.addEventListener("input", () => this.filterSearchElements(input));
 
         const ul = document.createElement("ul");
-        ul.id = input.id + "Values"
+        ul.id = input.id + "Values";
         ul.className = "bg-white border-px absolute shadow-lg rounded-md hidden overflow-auto w-full max-h-fit my-px";
         ul.style.maxHeight = "25vh";
         ul.style.marginTop = "calc(-.9rem)";
@@ -318,10 +404,10 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Creates an error field for the given input.
+     * The **createErrorField()** function creates an error field for the given {@link HTMLInputElement}.
      *
-     * @param input The input for which an error fields needs to be created.
-     *              If none are provided the field will work like the normal input field validation.
+     * @param input The {@link HTMLInputElement} for which an error fields needs to be created.
+     * @return A {@link HTMLParagraphElement} in which the error message will be displayed.
      */
     createErrorField(input: HTMLInputElement): HTMLParagraphElement {
         const errorField = document.createElement("p");
@@ -332,7 +418,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Hides the dialog box and empties the input fields.
+     * The **hideDialog()** function hides the dialog box and empties the {@link HTMLInputElement}s.
      */
     hideDialog(): void {
         document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.classList.replace("flex", "hidden");
@@ -357,7 +443,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Checks if input field has a correct value and displays an error message if needed.
+     * Checks if {@link HTMLInputElement} has a correct value and displays an error message if needed, only the fields
+     * where the {@link HTMLInputElement.required} attribute is set to `true` will be checked.
      *
      * @param input The input field that needs to be checked.
      */
@@ -414,7 +501,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Trigger the onChange event for all input fields.
+     * The **checkAllFields()** function triggers the onChange event for all the {@link HTMLInputElement} and
+     * {@link HTMLSelectElement} fields.
      */
     checkAllFields(): void {
         for (const inputField of Array.from(document.getElementById(`${this.action}DialogBoxFloor${this.floor}`)!.getElementsByTagName("input"))) {
@@ -426,7 +514,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Closes the dialog box and executes the confirmAction function that is given to this component.
+     * The **successfullyCloseDialog()** function checks if all the fields contain valid content and closes the dialog
+     * box and executes the **confirmAction()** function that is given to this component.
      */
     successfullyCloseDialog(): void {
         this.checkAllFields();

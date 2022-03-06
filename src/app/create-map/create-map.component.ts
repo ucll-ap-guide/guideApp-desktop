@@ -17,6 +17,10 @@ declare var d3: any;
     templateUrl: 'create-map.component.html',
     styleUrls: ['create-map.component.css']
 })
+/**
+ * A component that can be used to create a {@link Map} using a {@link CreateFloorComponent} to represent each
+ * {@link Floor}.
+ */
 export class CreateMapComponent implements AfterViewInit {
     jsonData = new GuidoMap("UCLL", 0, 0);
     newMap: boolean = false;
@@ -61,26 +65,23 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Moves the file input field from the top of the page to the taskbar
+     * The **moveFileInputField()** function moves the file {@link HTMLInputElement} from the first page to the taskbar
+     * on the map editor screen (this way there is one {@link EventListener} less).
      */
-    moveFileInputField() {
+    moveFileInputField(): void {
         let toBeMoved = document.getElementById("uploadedMapFromComputer");
         let toMoveTo = document.getElementById("uploadedMapFromComputerTaskBarLocation");
         (toMoveTo as Element).insertBefore((toBeMoved as Element), (toMoveTo as Element).firstChild);
     }
 
     /**
-     * Displays the map editor screen.
+     * The **createMap()** function displays the map editor screen, the name in {@link jsonData} is automatically
+     * updated with two-way binding in th form.
      */
     createMap(): void {
-        document.getElementById("mapNameError")!.innerText =
-            this.jsonData.name === "" ? "No map name given." : "";
-        // document.getElementById("floorLengthError")!.innerText =
-        //     this.jsonData.length < 0 ? "The floor length can't be negative" : "";
-        // document.getElementById("floorWidthError")!.innerText =
-        //     this.jsonData.length < 0 ? "The floor width can't be negative" : "";
+        document.getElementById("mapNameError")!.innerText = this.jsonData.name === "" ? "No map name given." : "";
 
-        if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
+        if (!(Array.from(document.querySelectorAll("#addMapForm .error")) as HTMLParagraphElement[]).find((errorField: HTMLParagraphElement) => errorField.innerText !== "")) {
             this.newMap = true;
             this.initializedMap = true;
             this.moveFileInputField();
@@ -88,12 +89,12 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Adds a new floor to the existing map.
+     * The **addFloor()** function adds a new {@link Floor} to the existing {@link jsonData.floors}.
      *
-     * @param floor The floor number this can be negative or positive
-     * @param name The name of the floor
-     * @param height The height of the floor
-     * @param importFloorFrom The floor number of the floor plan you want to copy
+     * @param floor The floor number this is a `number` that can be negative or positive.
+     * @param name The name of the new floor.
+     * @param height The height of the new floor.
+     * @param importFloorFrom The floor number of the floor plan you want to copy (optional).
      */
     addFloor(
         floor: number = this.createFloorForm.floor,
@@ -123,7 +124,8 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Gets the names of all the maps and saves it in the variable mapNames.
+     * The **getMapNames()** function requests the names of all the {@link Map}s and saves it in the variable
+     * {@link mapNames}.
      */
     getMapNames(): void {
         this.mapService.getAllMapNames().subscribe((mapNames: string[]) => {
@@ -135,10 +137,18 @@ export class CreateMapComponent implements AfterViewInit {
         });
     }
 
-    hasAFixedFloor(): boolean {
-        return this.jsonData.floors.find((f: Floor) => f.overlays.polygons.length > 1) !== undefined;
+    /**
+     * The **hasAFloor()** function checks whether one {@link Floor} has a {@link Polygon} of type
+     * {@link PolygonType.FLOOR}.
+     */
+    hasAFloor(): boolean {
+        return this.jsonData.floors.find((f: Floor) => f.overlays.polygons.find((polygon: Polygon) => polygon.type === PolygonType.FLOOR)) !== undefined;
     }
 
+    /**
+     * The **saveMapLocally()** function downloads the current state of the {@link jsonData} by downloading it as a
+     * JSON file.
+     */
     saveMapLocally(): void {
         let downloadLink = document.createElement("a");
         this.setAllNodes();
@@ -153,7 +163,7 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Saves the map on the server
+     * The **saveMapRemotely()** function saves the {@link Map} {@link jsonData} on the server.
      */
     saveMapRemotely(): void {
         this.setAllNodes();
@@ -164,10 +174,11 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Displays a DialogBox with the given parameters for a certain action.
+     * The **displayDialogBox()** function displays a {@link DialogBoxComponent} with the given parameters for a certain
+     * action.
      *
-     * @param action The name of the DialogBox that needs to be displayed.
-     * @param params The params to give to the DialogBox.
+     * @param action The name of the {@link DialogBoxComponent} that needs to be displayed.
+     * @param params The parameters to give to the {@link DialogBoxComponent}.
      */
     displayDialogBox(action: string, params: {}): void {
         this.getMapNames();
@@ -177,10 +188,11 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Loads the map from the server with the given name.
+     * The **editMap()** function downloads the {@link Map} from the server with the given {@link name} and saves it in
+     * the {@link jsonData}.
      *
-     * @param name The name of the map on the server that needs to be loaded.
-     * @param self The instance of the CreateMapComponent.
+     * @param name The name of the {@link Map} on the server that needs to be loaded.
+     * @param self The instance of the {@link CreateMapComponent}.
      */
     editMap(name: string, self: CreateMapComponent): void {
         self.editMode = false;
@@ -199,6 +211,10 @@ export class CreateMapComponent implements AfterViewInit {
         self.moveFileInputField();
     }
 
+    /**
+     * The **toggleDeleteMode()** function switches the {@link deleteMode} to `true` when it was `false` and the other
+     * way around, and it displays a warning message.
+     */
     toggleDeleteMode(): void {
         this.deleteMode = !this.deleteMode;
         if (this.deleteMode) {
@@ -211,16 +227,20 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * Removes all the floors from the current map.
+     * The **clearMap()** function removes all the floors from the current map by emptying the whole {@link Array} of {@link Floor}s.
      */
     clearMap(displayMessage: boolean = true): void {
-        this.jsonData.floors = [];
+        this.jsonData.floors = [] as Floor[];
         this.jsonData.nodes = [];
         if (displayMessage) {
             this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});
         }
     }
 
+    /**
+     * The **enableSetNeighborMode()** function switches the {@link setNeighborMode} to `true`, displays the id's of all
+     * the {@link GuidoNode}s as a label and TODO displays the lines between the {@link GuidoNode}s.
+     */
     enableSetNeighborMode() {
         this.deleteMode = false;
         this.editMode = false;
@@ -229,7 +249,7 @@ export class CreateMapComponent implements AfterViewInit {
         let floors = document.querySelectorAll('.floor');
         let nodes = document.querySelectorAll('[node]');
 
-        //SET LABELS
+        // Set labels
         floors.forEach(elem => d3.select("#" + elem.getAttribute("id"))
             .select("svg")
             .append("g")
@@ -237,7 +257,7 @@ export class CreateMapComponent implements AfterViewInit {
             .attr("id", elem.getAttribute("id") + "textLabels"));
 
         nodes.forEach(elem => {
-            const node = d3.select("[id='" + elem.getAttribute("id") + "']");
+            const node = d3.select(`[id='${elem.getAttribute("id")}']`);
             const floorTextLabels = d3.select("#demo" + node.attr("floor") + "textLabels");
             const group = floorTextLabels.append("g");
             let textLabel;
@@ -287,27 +307,32 @@ export class CreateMapComponent implements AfterViewInit {
                 group.node().insertBefore(rect, textLabel.node());
             }
 
-            group.node().addEventListener('click', function (e: Event) {
-                // @ts-ignore
-                e.target.parentNode.parentNode.appendChild(e.target.parentNode)
+            group.node().addEventListener('click', function (e: any) {
+                e.target.parentNode.parentNode.appendChild(e.target.parentNode);
             });
-        })
+        });
     }
 
+    /**
+     * The **disableSetNeighborMode()** function disables the {@link setNeighborMode} and removes the labels for all the
+     * {@link GuidoNode} and all the lines between neighbors.
+     */
     disableSetNeighborMode() {
-        document.querySelectorAll("[setNeighborModeTextGroup]").forEach(elem => elem.remove());
-        document.querySelectorAll("[setNeighborModeLineGroup]").forEach(elem => elem.innerHTML = "");
+        document.querySelectorAll("[setNeighborModeTextGroup]").forEach((elem: Element) => elem.remove());
+        document.querySelectorAll("[setNeighborModeLineGroup]").forEach((elem: Element) => elem.innerHTML = "");
         this.setNeighborMode = false;
     }
 
-    changeEditMode() {
-        if (this.editMode) {
-            this.editMode = false;
-        } else {
-            this.editMode = true;
+    /**
+     * The **toggleEditMode()** function switches the {@link editMode} to `true` when it was `false` and the other way
+     * around, and it displays a warning message.
+     */
+    toggleEditMode() {
+        if (!this.editMode) {
             this.deleteMode = false;
-            this.disableSetNeighborMode()
+            this.disableSetNeighborMode();
         }
+        this.editMode = !this.editMode;
     }
 
     /**

@@ -241,7 +241,7 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     updatePolygon(id: number, name: string, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
         let polygons = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        let index = polygons.map(elem => elem.id).indexOf(id);
+        let index = polygons.map((polygon: Polygon) => polygon.id).indexOf(id);
         polygons[index].name = name;
         polygons[index].description = description;
         polygons[index].color = color;
@@ -282,7 +282,7 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
         let labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
-        let index = labels.map(elem => elem.id).indexOf(id);
+        let index = labels.map((label: Label) => label.id).indexOf(id);
         labels[index].description = description;
         labels[index].color = color;
 
@@ -506,7 +506,7 @@ export class CreateFloorComponent implements AfterViewInit {
             let floorNr: number = 0;
 
             for (let i = 0; i !== this.jsonData.floors.length; i++) {
-                const index = this.jsonData.floors[i].overlays.polygons.map(elem => elem.id).indexOf(clickedPolygonId);
+                const index = this.jsonData.floors[i].overlays.polygons.map((polygon: Polygon) => polygon.id).indexOf(clickedPolygonId);
                 if (index !== -1) {
                     this.jsonData.floors[i].overlays.polygons[index].points = vertices.map((elem: [number, number]) => Point.toPoint(elem));
                     floorNr = i;
@@ -1008,6 +1008,7 @@ export class CreateFloorComponent implements AfterViewInit {
      *                  {@link NodeType.EMERGENCY_EXIT}.
      * @param color The color of the {@link GuidoNode}, it is represented as an {@link Array} of `integers` between 0 and
      *              255.
+     * @param degreesRotated The amount of degrees the door is rotated.
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createDoor(previousId: number | null = null, length: number, width: number, previousPoints: string | null = null, name: string | null = "", neighbors: number[] = [], emergency: boolean = false, color: number[] = [139, 69, 19], degreesRotated: number = 0, self: CreateFloorComponent = this): void {

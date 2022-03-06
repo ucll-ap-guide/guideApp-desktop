@@ -22,11 +22,8 @@ declare var d3: any;
  * {@link Floor}.
  */
 export class CreateMapComponent implements AfterViewInit {
-    jsonData = new GuidoMap("UCLL", 0, 0);
+    jsonData = new GuidoMap(false, false, false,"UCLL", 0, 0);
     newMap: boolean = false;
-    deleteMode = false;
-    setNeighborMode = false;
-    editMode = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
@@ -51,9 +48,9 @@ export class CreateMapComponent implements AfterViewInit {
                 }
 
                 self.jsonData = parsed;
-                self.editMode = false;
-                self.deleteMode = false;
-                self.setNeighborMode = false;
+                self.jsonData.editMode = false;
+                self.jsonData.deleteMode = false;
+                self.jsonData.setNeighborMode = false;
             }
             if ((event.target as HTMLInputElement)!.files!.length > 0) {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
@@ -151,7 +148,12 @@ export class CreateMapComponent implements AfterViewInit {
      */
     saveMapLocally(): void {
         let downloadLink = document.createElement("a");
-        this.setAllNodes();
+        // @ts-ignore
+        delete this.jsonData.deleteMode;
+        // @ts-ignore
+        delete this.jsonData.editMode;
+        // @ts-ignore
+        delete this.jsonData.setNeighborMode;
         let blob = new Blob([(JSON.stringify(this.jsonData))]);
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.target = '_blank';
@@ -166,7 +168,12 @@ export class CreateMapComponent implements AfterViewInit {
      * The **saveMapRemotely()** function saves the {@link Map} {@link jsonData} on the server.
      */
     saveMapRemotely(): void {
-        this.setAllNodes();
+        // @ts-ignore
+        delete this.jsonData.deleteMode;
+        // @ts-ignore
+        delete this.jsonData.editMode;
+        // @ts-ignore
+        delete this.jsonData.setNeighborMode;
         let map = JSON.parse(JSON.stringify(this.jsonData));
         this.mapService.addMap(map).subscribe(() => {
             this.toastr.success('Successfully uploaded map!', "", {positionClass: "toast-bottom-right"});
@@ -195,9 +202,9 @@ export class CreateMapComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateMapComponent}.
      */
     editMap(name: string, self: CreateMapComponent): void {
-        self.editMode = false;
-        self.setNeighborMode = false;
-        self.deleteMode = false;
+        self.jsonData.editMode = false;
+        self.jsonData.setNeighborMode = false;
+        self.jsonData.deleteMode = false;
         document.getElementById("submitMap")!.innerText = "Update map";
         self.clearMap(false);
         self.mapService.getMap(name).subscribe((map: GuidoMap) => {
@@ -216,10 +223,10 @@ export class CreateMapComponent implements AfterViewInit {
      * way around, and it displays a warning message.
      */
     toggleDeleteMode(): void {
-        this.deleteMode = !this.deleteMode;
-        if (this.deleteMode) {
+        this.jsonData.deleteMode = !this.jsonData.deleteMode;
+        if (this.jsonData.deleteMode) {
             this.disableSetNeighborMode()
-            this.editMode = false;
+            this.jsonData.editMode = false;
             this.toastr.warning('Delete mode enabled!', '', {positionClass: 'toast-bottom-right'});
         } else {
             this.toastr.success('Delete mode disabled!', '', {positionClass: 'toast-bottom-right'});
@@ -242,10 +249,10 @@ export class CreateMapComponent implements AfterViewInit {
      * the {@link GuidoNode}s as a label and TODO displays the lines between the {@link GuidoNode}s.
      */
     enableSetNeighborMode() {
-        this.deleteMode = false;
-        this.editMode = false;
+        this.jsonData.deleteMode = false;
+        this.jsonData.editMode = false;
         document.querySelectorAll('.map-layers').forEach(elem => elem.setAttribute("transform", "translate(0,0)scale(1)"));
-        this.setNeighborMode = true;
+        this.jsonData.setNeighborMode = true;
         let floors = document.querySelectorAll('.floor');
         let nodes = document.querySelectorAll('[node]');
 
@@ -320,7 +327,7 @@ export class CreateMapComponent implements AfterViewInit {
     disableSetNeighborMode() {
         document.querySelectorAll("[setNeighborModeTextGroup]").forEach((elem: Element) => elem.remove());
         document.querySelectorAll("[setNeighborModeLineGroup]").forEach((elem: Element) => elem.innerHTML = "");
-        this.setNeighborMode = false;
+        this.jsonData.setNeighborMode = false;
     }
 
     /**
@@ -328,97 +335,10 @@ export class CreateMapComponent implements AfterViewInit {
      * around, and it displays a warning message.
      */
     toggleEditMode() {
-        if (!this.editMode) {
-            this.deleteMode = false;
-            this.disableSetNeighborMode();
+        if (!this.jsonData.editMode) {
+            this.jsonData.deleteMode = false;
+            this.disableSetNeighborMode()
         }
-        this.editMode = !this.editMode;
-    }
-
-    /**
-     * Gets all nodes and adds them to the JSON structure before saving
-     */
-    setAllNodes() {
-        this.jsonData.nodes = [];
-
-        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllDoors());
-        this.jsonData.nodes = this.jsonData.nodes.concat(this.getAllNodes());
-    }
-
-    getAllNodes(): GuidoNode[] {
-        let nodes = document.getElementsByClassName(NodeType.NODE);
-        let handledNodes: GuidoNode[] = [];
-
-        for (let i = 0; i != nodes.length; i++) {
-            let cx = parseFloat(nodes[i].getAttribute("cx")!);
-            let cy = parseFloat(nodes[i].getAttribute("cy")!);
-            let r = parseFloat(nodes[i].getAttribute("r")!);
-            let id = parseInt(nodes[i].getAttribute("id")!);
-            let neighbors = nodes[i].getAttribute("neighbors")!.split(",").filter((id: string) => id !== "").map((id: string) => parseInt(id));
-
-            let handledNode = new GuidoNode(
-                id,
-                nodes[i].getAttribute("name")!,
-                parseInt(nodes[i].getAttribute("floor")!),
-                new Point(cx, cy),
-                [new Point(cx + r, cy + r)],
-                neighbors === null ? [] : neighbors,
-                NodeType.NODE,
-                [],
-                0
-            );
-            handledNodes.push(handledNode);
-            this.jsonData.lastId++;
-        }
-
-        return handledNodes;
-    }
-
-    getAllDoors() {
-        const handledDoors: GuidoNode[] = [];
-
-        for (const nodeType of Object.values(NodeType).filter((nodeType: NodeType) => [NodeType.DOOR, NodeType.EMERGENCY_EXIT].includes(nodeType))) {
-            const doors = document.getElementsByClassName(nodeType);
-
-            function getDoorCoords(previousPoints: string) {
-                const splitUpPreviousPoints: string[] = previousPoints.split(" ");
-                const poppedPoints: Point[] = [];
-
-                while (splitUpPreviousPoints.length !== 0) {
-                    const elems = splitUpPreviousPoints.pop()!.split(",");
-                    poppedPoints.push(new Point(parseFloat(elems[0]), parseFloat(elems[1])));
-                }
-
-                const middleX = (poppedPoints[0].x + poppedPoints[2].x) / 2;
-                const middleY = (poppedPoints[0].y + poppedPoints[2].y) / 2;
-
-                return {"displayPoints": poppedPoints, "middle": new Point(middleX, middleY)};
-            }
-
-            for (let i = 0; i != doors.length; i++) {
-                const doorCoords = getDoorCoords(doors[i].getAttribute("points")!);
-                const neighborsStr = doors[i].getAttribute("neighbors")!.split(",");
-                const neighbors = neighborsStr.filter((e: string) => e !== "").map(elem => parseInt(elem));
-                const id = parseInt(doors[i].getAttribute("id")!);
-                const color = doors[i].getAttribute("fill")!.substring(4).slice(0, -1).split(",").map(elem => parseFloat(elem));
-                let degreesRotated = parseInt(String(doors[i].getAttribute("degreesRotated")));
-
-                let handledDoor = new GuidoNode(
-                    id,
-                    doors[i].getAttribute("name")!,
-                    parseInt(doors[i].getAttribute("floor")!),
-                    new Point(doorCoords.middle.x, doorCoords.middle.y),
-                    doorCoords.displayPoints,
-                    neighborsStr.length === 0 ? [] : neighbors,
-                    nodeType,
-                    color,
-                    degreesRotated
-                );
-                handledDoors.push(handledDoor);
-                this.jsonData.lastId++;
-            }
-        }
-
-        return handledDoors;
+        this.jsonData.editMode = !this.jsonData.editMode;
     }
 }

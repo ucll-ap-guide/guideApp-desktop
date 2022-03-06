@@ -71,19 +71,23 @@ export class Point {
      * The **calculateNewCoordinatesForRotation()** function calculates the center of the figure given the
      * {@link previousPoints} and rotates those points with {@link degreesRotated} from the center of the figure.
      *
-     * @param previousPoints The previous points (see {@link Point.arrayOfPointsFromPointString} for more information
-     *                       about how to format the points).
+     * @param previousPoints The previous points
      * @param degreesRotated The amount of degrees the {@link previousPoints} need to be rotated
-     * @return A {@link string} that represents the newly rotated points (see {@link Point.pointStringFromArrayOfPoints}
-     *         for more info about the formatting of the {@link string}).
+     * @return An {@link Array} of {@link Point}s that represents the newly rotated points.
      */
-    static calculateNewCoordinatesForRotation(previousPoints: string, degreesRotated: number): string {
-        let poppedPoints: Point[] = Point.arrayOfPointsFromPointString(previousPoints);
+    public static calculateNewCoordinatesForRotation(previousPoints: Point[], degreesRotated: number): Point[] {
+        function rotatePoint(pointX: number, pointY: number, originX: number, originY: number, angle: number) {
+            angle = angle * Math.PI / 180.0;
+            return new Point(
+                Math.cos(angle) * (pointX - originX) - Math.sin(angle) * (pointY - originY) + originX,
+                Math.sin(angle) * (pointX - originX) + Math.cos(angle) * (pointY - originY) + originY
+            );
+        }
 
-        let middle = new Point((poppedPoints[0].x + poppedPoints[2].x) / 2, (poppedPoints[0].y + poppedPoints[2].y) / 2);
+        let middleX = (previousPoints[0].x + previousPoints[2].x) / 2;
+        let middleY = (previousPoints[0].y + previousPoints[2].y) / 2;
 
-        let resultArray = poppedPoints.map((elem: Point) => Point.rotatePoint(elem, middle, degreesRotated));
-        return Point.pointStringFromArrayOfPoints(resultArray);
+        return previousPoints.map((elem: Point) => rotatePoint(elem.x, elem.y, middleX, middleY, degreesRotated));
     }
 
     /**

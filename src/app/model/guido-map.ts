@@ -16,6 +16,9 @@ export class GuidoMap {
      *              each {@link Floor}).
      */
     constructor(
+        public editMode: boolean = false,
+        public setNeighborMode: boolean = false,
+        public deleteMode: boolean = false,
         public name: string,
         public length: number,
         public width: number,
@@ -33,6 +36,9 @@ export class GuidoMap {
      */
     public static copy(guidoMap: GuidoMap): GuidoMap {
         return new GuidoMap(
+            guidoMap.editMode,
+            guidoMap.setNeighborMode,
+            guidoMap.deleteMode,
             guidoMap.name,
             guidoMap.length,
             guidoMap.width,

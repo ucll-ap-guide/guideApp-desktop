@@ -650,7 +650,20 @@ export class CreateFloorComponent implements AfterViewInit {
             if (neighborElement === null) {
                 console.error(`The neighbor with id ${neighbor[0]} does not exist.`);
             } else {
-                let neighborsNeighbors: number[] = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
+                let neighborFloor = parseInt(neighborElement.getAttribute("floor")!);
+                let ownFloor = parseInt(document.querySelector(`[id='${id}']`)!.getAttribute("floor")!);
+                let neighborsNeighbors: number[]
+
+                if (neighborFloor === ownFloor) {
+                    neighborsNeighbors = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
+                } else {
+                    if (neighborElement.getAttribute("type") === NodeType.STAIRS || neighborElement.getAttribute("type") === NodeType.LIFT) {
+                        neighborsNeighbors = self.jsonData.floors.find((f: Floor) => f.floor === neighborFloor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
+                    } else {
+                        neighborsNeighbors = [];
+                    }
+                }
+
                 if (neighbor[1] && !neighborsNeighbors.includes(id)) {
                     neighborsNeighbors.push(id);
                 } else if (!neighbor[1]) {
@@ -699,21 +712,25 @@ export class CreateFloorComponent implements AfterViewInit {
                 .map((neighborId: number) => {
                     const neighborElement = document.getElementById(String(neighborId))!;
                     const connectableNeighborPoint = self.getConnectablePoint(neighborId);
-                    let neighbor = floorNodes.find(elem => elem.id === neighborId)!;
+                    const neighborFloor = parseInt(neighborElement.getAttribute("floor")!);
+                    const ownFloor = parseInt(elem.getAttribute("floor")!);
+                    let neighbor = self.jsonData.floors.find((f: Floor) => f.floor === neighborFloor)!.overlays.nodes.find(elem => elem.id === neighborId)!;
 
                     let isReciprocal = false;
                     if (neighbor.neighbors.some(neighborIdEntry => neighborIdEntry === parseInt(elem.id))) {
                         isReciprocal = true;
                     }
 
-                    group.append("line")
-                        .attr("x1", origin.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("width")!.split("px")[0]) / 2))
-                        .attr("y1", origin.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("height")!.split("px")[0]) / 2))
-                        .attr("x2", connectableNeighborPoint.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("width")!.split("px")[0]) / 2))
-                        .attr("y2", connectableNeighborPoint.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("height")!.split("px")[0]) / 2))
-                        .attr("stroke", isReciprocal ? "green" : "orange")
-                        .attr("stroke-width", "5px")
-                        .attr("marker-end", isReciprocal ? "" : "url(#arrow)");
+                    if (ownFloor === neighborFloor) {
+                        group.append("line")
+                            .attr("x1", origin.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("width")!.split("px")[0]) / 2))
+                            .attr("y1", origin.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(elem.getAttribute("type") as NodeType) ? 0 : parseFloat(elem.getAttribute("height")!.split("px")[0]) / 2))
+                            .attr("x2", connectableNeighborPoint.x + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("width")!.split("px")[0]) / 2))
+                            .attr("y2", connectableNeighborPoint.y + ([NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(neighborElement.getAttribute("type") as NodeType) ? 0 : parseFloat(neighborElement.getAttribute("height")!.split("px")[0]) / 2))
+                            .attr("stroke", isReciprocal ? "green" : "orange")
+                            .attr("stroke-width", "5px")
+                            .attr("marker-end", isReciprocal ? "" : "url(#arrow)");
+                    }
                 });
         });
     }
@@ -896,7 +913,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     id: id,
                     defaultValues: [neighbors === null ? [] :
                         neighbors
-                            .map((neighbor: number) => [neighbor, self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === neighbor)!.neighbors])],
+                            .map((neighbor: number) => [neighbor, self.jsonData.floors.find((f: Floor) => f.floor === parseInt(document.querySelector(`[id='${neighbor}']`)!.getAttribute("floor")!))!.overlays.nodes.find(elem => elem.id === neighbor)!.neighbors])],
                     /*
                      * The List of values has 3 [] because the first one is to group all possible input type fields
                      * (in this case there is only one), the second is to group all the input fields for the infinite

@@ -148,13 +148,14 @@ export class CreateMapComponent implements AfterViewInit {
      */
     saveMapLocally(): void {
         let downloadLink = document.createElement("a");
+        let copy = GuidoMap.copy(this.jsonData);
         // @ts-ignore
-        delete this.jsonData.deleteMode;
+        delete copy.deleteMode;
         // @ts-ignore
-        delete this.jsonData.editMode;
+        delete copy.editMode;
         // @ts-ignore
-        delete this.jsonData.setNeighborMode;
-        let blob = new Blob([(JSON.stringify(this.jsonData))]);
+        delete copy.setNeighborMode;
+        let blob = new Blob([(JSON.stringify(copy))]);
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.target = '_blank';
         downloadLink.download = this.jsonData.name + ".json";
@@ -169,13 +170,14 @@ export class CreateMapComponent implements AfterViewInit {
      * The **saveMapRemotely()** function saves the {@link Map} {@link jsonData} on the server.
      */
     saveMapRemotely(): void {
+        let copy = GuidoMap.copy(this.jsonData);
         // @ts-ignore
-        delete this.jsonData.deleteMode;
+        delete copy.deleteMode;
         // @ts-ignore
-        delete this.jsonData.editMode;
+        delete copy.editMode;
         // @ts-ignore
-        delete this.jsonData.setNeighborMode;
-        let map = JSON.parse(JSON.stringify(this.jsonData));
+        delete copy.setNeighborMode;
+        let map = JSON.parse(JSON.stringify(copy));
         this.mapService.addMap(map).subscribe(() => {
             this.toastr.success('Successfully uploaded map!', "", {positionClass: "toast-bottom-right"});
         });

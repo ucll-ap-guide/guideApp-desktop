@@ -118,9 +118,9 @@ export class CreateFloorComponent implements AfterViewInit {
 
         this.floorplan.generateMap(svg);
 
-        // Place all figures on top layers of the svg
-        let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0];
-        orig.appendChild(document.getElementById("demo" + this.floor + "lineGroup")!);
+        // Place line group
+        let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0].querySelector(".map-layers")!;
+        orig.insertBefore(document.getElementById("demo" + this.floor + "lineGroup")!, orig.querySelector(".Objects"));
 
         svg.on("dblclick.zoom", null);
         this.setEventListeners(floor);
@@ -143,7 +143,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.getElementsByClassName("polygon"))
+        Array.from(document.getElementsByClassName("polygon")).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -157,7 +157,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.querySelectorAll("[type='Label']"))
+        Array.from(document.querySelectorAll("[type='Label']")).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -171,7 +171,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.querySelectorAll(`[type='${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`))
+        Array.from(document.querySelectorAll(`[type='${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -185,7 +185,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.getElementsByClassName(NodeType.NODE))
+        Array.from(document.getElementsByClassName(NodeType.NODE)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -203,7 +203,7 @@ export class CreateFloorComponent implements AfterViewInit {
             self.changeVerticeCountOfPolygon(this, !self.deleteMode, self);
         });
 
-        Array.from(document.querySelectorAll(`[node]`))
+        Array.from(document.querySelectorAll(`[node]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
             .filter((elem: Element) => parseInt(elem.getAttribute("floor")!) === floor.floor)
             .forEach((elem: Element) => {
                 elem.addEventListener("dblclick", (e: Event) => {
@@ -234,7 +234,9 @@ export class CreateFloorComponent implements AfterViewInit {
 
         svg.on("dblclick.zoom", null);
 
-        d3.select("#demo" + this.floor).select("svg").append("g").attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
+        let lineGroup = d3.select("#demo" + this.floor).select("svg").select(".map-layers").append("g").attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup").node();
+        let orig = svg.node().querySelector(".map-layers")!;
+        orig.insertBefore(lineGroup, orig.querySelector(".Objects"));
 
         d3.select("#demo" + this.floor).select("svg").select("defs")
             .append("marker")
@@ -413,8 +415,6 @@ export class CreateFloorComponent implements AfterViewInit {
             }
             // @ts-ignore
             d3.select("#demo" + this.floor + "textLabels").attr('transform', mutation.target.getAttribute("transform"));
-            // @ts-ignore
-            d3.select("#demo" + this.floor + "lineGroup").attr('transform', mutation.target.getAttribute("transform"));
         }
     }
 
@@ -684,8 +684,7 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     saveNeighborsInJson(id: number, neighbors: number[], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
-        self.jsonData.floors[parseInt(elem.attr("floor"))].overlays.nodes.forEach((node: GuidoNode) => {
-            if (node.id === id) {
+        self.jsonData.floors.find((floor: Floor) => parseInt(elem.attr("floor")) === floor.floor)!.overlays.nodes.forEach((node: GuidoNode) => {            if (node.id === id) {
                 node.neighbors = neighbors;
             }
         });

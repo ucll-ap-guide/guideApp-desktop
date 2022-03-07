@@ -1,7 +1,7 @@
 import {Polygon} from "./polygon";
 import {GuidoNode} from "./guido-node";
 import {Label} from "./label";
-import {Overlays} from "./overlays";
+import {GuidoOverlays} from "./guido-overlays";
 
 /**
  * Class representing a floor of the {@link GuidoMap}.
@@ -21,7 +21,7 @@ export class Floor {
         public floor: number,
         public name: string,
         public height: number,
-        public overlays: Overlays = new Overlays()
+        public overlays: GuidoOverlays = new GuidoOverlays()
     ) {
     }
 

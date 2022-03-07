@@ -25,7 +25,7 @@ declare var d3: any;
 export class CreateFloorComponent implements AfterViewInit {
 
     @Input() jsonData!: GuidoMap;
-    @Input() floor!: number;
+    @Input() floorNumber!: number;
     @Input() deleteMode: boolean = false;
 
     @Input()
@@ -80,12 +80,21 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **floorName()** getter gets the name of the {@link Floor} with id {@link floor}.
+     * The **floorPolygon()** getter gets the {@link Polygon} of type {@link PolygonType.FLOOR}.
      *
-     * @return The name of the {@link Floor}.
+     * @return The {@link Polygon} if it exists.
      */
-    get floorName(): string {
-        return this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.name;
+    get floorPolygon(): Polygon | undefined {
+        return this.floor.overlays.polygons.find((polygon: Polygon) => polygon.type === PolygonType.FLOOR);
+    }
+
+    /**
+     * The **floor()** getter gets the {@link Floor} using the {@link floorNumber}.
+     *
+     * @return The {@link Floor} object.
+     */
+    get floor(): Floor {
+        return this.jsonData.floors.find((floor: Floor) => floor.floor === this.floorNumber)!;
     }
 
     /**
@@ -106,7 +115,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param floor The {@link Floor} who needs to be reloaded.
      */
     loadData(floor: Floor): void {
-        let svg = d3.select("#demo" + this.floor).select("svg");
+        let svg = d3.select("#demo" + this.floorNumber).select("svg");
         this.mapData.set(this.overlays.getId(), floor.overlays);
 
         svg.select("g.map-layers").select(".Objects").remove();
@@ -119,8 +128,8 @@ export class CreateFloorComponent implements AfterViewInit {
         this.floorplan.generateMap(svg);
 
         // Place line group
-        let orig = document.getElementById("demo" + this.floor)!.getElementsByTagName("svg")[0].querySelector(".map-layers")!;
-        orig.insertBefore(document.getElementById("demo" + this.floor + "lineGroup")!, orig.querySelector(".Objects"));
+        let orig = document.getElementById("demo" + this.floorNumber)!.getElementsByTagName("svg")[0].querySelector(".map-layers")!;
+        orig.insertBefore(document.getElementById("demo" + this.floorNumber + "lineGroup")!, orig.querySelector(".Objects"));
 
         svg.on("dblclick.zoom", null);
         this.setEventListeners(floor);
@@ -134,7 +143,8 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     setEventListeners(floor: Floor): void {
         let self = this;
-        Array.from(document.querySelectorAll(`[removable], [type=${PolygonType.FLOOR}]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.querySelectorAll(`[removable], [type=${PolygonType.FLOOR}]`))
+            .filter(elem => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", (e: any) => {
                     if (self.deleteMode && !self.setNeighborMode && !e.ctrlKey) {
@@ -143,7 +153,8 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.getElementsByClassName("polygon")).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.getElementsByClassName("polygon"))
+            .filter(elem => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -157,7 +168,8 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.querySelectorAll("[type='Label']")).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.querySelectorAll("[type='Label']"))
+            .filter(elem => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -171,7 +183,8 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.querySelectorAll(`[type='${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.querySelectorAll(`[type='${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`))
+            .filter(elem => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -185,7 +198,8 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.getElementsByClassName(NodeType.NODE)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.getElementsByClassName(NodeType.NODE))
+            .filter(elem => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -198,12 +212,12 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        d3.select("#demo" + this.floor).selectAll(".polygon").on("dblclick", function () {
+        d3.select("#demo" + this.floorNumber).selectAll(".polygon").on("dblclick", function () {
             // @ts-ignore
             self.changeVerticeCountOfPolygon(this, !self.deleteMode, self);
         });
 
-        Array.from(document.querySelectorAll(`[node]`)).filter(elem => document.getElementById("demo" + this.floor)!.contains(elem))
+        Array.from(document.querySelectorAll(`[node]`)).filter((elem: Element) => document.getElementById("demo" + this.floorNumber)!.contains(elem))
             .filter((elem: Element) => parseInt(elem.getAttribute("floor")!) === floor.floor)
             .forEach((elem: Element) => {
                 elem.addEventListener("dblclick", (e: Event) => {
@@ -212,20 +226,19 @@ export class CreateFloorComponent implements AfterViewInit {
             });
 
         this.observer = new MutationObserver(this.setZoom);
-        this.observer.observe(document.querySelector('#demo' + this.floor)!.querySelector('.map-layers') as Node, {attributes: true});
+        this.observer.observe(document.querySelector('#demo' + this.floorNumber)!.querySelector('.map-layers') as Node, {attributes: true});
     }
 
     ngAfterViewInit(): void {
         this.floorplan = new Floorplan();
         this.mapData = new Map();
         this.imageLayer = new Imagelayer();
-        this.overlays = new Overlays(this.jsonData, this.floor);
+        this.overlays = new Overlays(this.jsonData, this.floorNumber);
 
         this.regenerateFloorMap(true);
-        let floor = this.jsonData.floors.find((f: Floor) => f.floor === this.floor) as Floor;
-        this.mapData.set(this.overlays.getId(), floor.overlays);
+        this.mapData.set(this.overlays.getId(), this.floor.overlays);
 
-        let svg = d3.select("#demo" + this.floor).append("svg")
+        let svg = d3.select("#demo" + this.floorNumber).append("svg")
             .attr("height", this.mapHeight)
             .attr("width", this.mapWidth)
             .datum(this.mapData);
@@ -234,11 +247,11 @@ export class CreateFloorComponent implements AfterViewInit {
 
         svg.on("dblclick.zoom", null);
 
-        let lineGroup = d3.select("#demo" + this.floor).select("svg").select(".map-layers").append("g").attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup").node();
+        let lineGroup = d3.select("#demo" + this.floorNumber).select("svg").select(".map-layers").append("g").attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floorNumber + "lineGroup").node();
         let orig = svg.node().querySelector(".map-layers")!;
         orig.insertBefore(lineGroup, orig.querySelector(".Objects"));
 
-        d3.select("#demo" + this.floor).select("svg").select("defs")
+        d3.select("#demo" + this.floorNumber).select("svg").select("defs")
             .append("marker")
             .attr("id", "arrow")
             .attr("refX", 3)
@@ -252,11 +265,11 @@ export class CreateFloorComponent implements AfterViewInit {
                 "L0,5 ")
             .attr("fill", "orange");
 
-        document.getElementById("lockFloor" + this.floor)!.parentElement!.addEventListener("click", () => {
-            this.loadData(this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!);
+        document.getElementById("lockFloor" + this.floorNumber)!.parentElement!.addEventListener("click", () => {
+            this.loadData(this.floor);
         });
 
-        this.setEventListeners(floor);
+        this.setEventListeners(this.floor);
     }
 
     /**
@@ -271,14 +284,14 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updatePolygon(id: number, name: string, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
-        let polygons = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
+        let polygons = self.floor.overlays.polygons;
         let index = polygons.map((polygon: Polygon) => polygon.id).indexOf(id);
         polygons[index].name = name;
         polygons[index].description = description;
         polygons[index].color = color;
 
-        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons = polygons;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.floor.overlays.polygons = polygons;
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -292,10 +305,9 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updateNode(id: number, name: string, self: CreateFloorComponent = this): void {
-        let node = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === id)!;
-        node.name = name;
+        self.floor.overlays.nodes.find(elem => elem.id === id)!.name = name;
 
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -310,13 +322,13 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updateLabel(id: number, description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
-        let labels = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels;
+        let labels = self.floor.overlays.labels;
         let index = labels.map((label: Label) => label.id).indexOf(id);
         labels[index].description = description;
         labels[index].color = color;
 
-        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels = labels;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.floor.overlays.labels = labels;
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -333,7 +345,7 @@ export class CreateFloorComponent implements AfterViewInit {
             let type: string = document.querySelector(`[id='${id}']`)!.getAttribute("type")!;
             switch (type) {
                 case PolygonType.ROOM:
-                    let array: Polygon[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.polygons;
+                    let array: Polygon[] = this.floor.overlays.polygons;
                     let index = array.map((polygon: Polygon) => polygon.id).indexOf(id);
                     if (index > -1) {
                         array.splice(index, 1);
@@ -341,7 +353,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     break;
 
                 case "Label":
-                    let labelsArray: Label[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.labels;
+                    let labelsArray: Label[] = this.floor.overlays.labels;
                     let j = labelsArray.map((label: Label) => label.id).indexOf(id);
                     if (j > -1) {
                         labelsArray.splice(j, 1);
@@ -354,7 +366,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
                 // For all the nodes
                 default:
-                    let nodesArray: GuidoNode[] = this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes;
+                    let nodesArray: GuidoNode[] = this.floor.overlays.nodes;
                     let i = nodesArray.map((guidoNode: GuidoNode) => guidoNode.id).indexOf(id);
                     if (i > -1) {
                         nodesArray.splice(i, 1);
@@ -364,7 +376,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
             if (type !== PolygonType.FLOOR) {
                 this.resetZoom(this);
-                this.loadData(this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!);
+                this.loadData(this.floor);
             }
         }
     }
@@ -377,9 +389,8 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param id The id of the node that needs to be removed in all his neighbors.
      */
     removeNodeFromNeighborData(id: number): void {
-        this.jsonData.floors
-            .find((floor: Floor) => floor.floor === this.floor)!.overlays.nodes
-            .forEach((node: GuidoNode) => {
+        this.jsonData.floors.forEach((floor: Floor) => {
+            floor.overlays.nodes.forEach((node: GuidoNode) => {
                 let neighbors = node.neighbors;
                 let removeIndex = neighbors.indexOf(id);
 
@@ -387,7 +398,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     neighbors.splice(removeIndex, 1);
                 }
             });
-
+        });
     }
 
     /**
@@ -400,7 +411,7 @@ export class CreateFloorComponent implements AfterViewInit {
     displayDialogBox(action: string, params: {}): void {
         this.paramsToGiveToDialogBoxes[action] = params;
         this.paramsToGiveToDialogBoxes[action].self = this;
-        document.getElementById(`${action}DialogBoxFloor${this.floor}`)!.classList.replace("hidden", "flex");
+        document.getElementById(`${action}DialogBoxFloor${this.floorNumber}`)!.classList.replace("hidden", "flex");
     }
 
     /**
@@ -414,7 +425,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 break;
             }
             // @ts-ignore
-            d3.select("#demo" + this.floor + "textLabels").attr('transform', mutation.target.getAttribute("transform"));
+            d3.select("#demo" + this.floorNumber + "textLabels").attr('transform', mutation.target.getAttribute("transform"));
         }
     }
 
@@ -425,7 +436,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     resetZoom(self: CreateFloorComponent = this): void {
-        d3.select("#demo" + self.floor).select("svg").select(".map-layers").attr("transform", "");
+        d3.select("#demo" + self.floorNumber).select("svg").select(".map-layers").attr("transform", "");
     }
 
     /**
@@ -441,11 +452,11 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     updateDoor(id: number, name: string, length: number, width: number, color: [number, number, number], self: CreateFloorComponent = this): void {
-        let door = self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === id)!;
+        let door = self.floor.overlays.nodes.find((elem: GuidoNode) => elem.id === id)!;
         door.name = name;
         door.color = color;
 
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
 
         let toBuildFrom = door.point;
@@ -466,7 +477,7 @@ export class CreateFloorComponent implements AfterViewInit {
         door.displayPoints = points;
         door.point = toBuildFrom;
 
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -526,18 +537,23 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **removeFloor()** function removes the {@link Floor} with the floor number {@link floor} from the {@link jsonData}.
+     * The **removeFloor()** function removes the {@link Floor} with the floor number {@link floorNumber} from the {@link jsonData}.
      */
     removeFloor(): void {
-        const newFloors = this.jsonData.floors.slice();
-        for (let i = 0; i < this.jsonData.floors.length; i++) {
-            if (newFloors[i].floor === this.floor) {
-                newFloors.splice(i, 1);
-                break;
+        const floorsIds = this.jsonData.floors.map((f: Floor) => f.floor);
+        if ([floorsIds[0], floorsIds[floorsIds.length - 1]].includes(this.floorNumber) && (this.floorNumber !== 0 || floorsIds.length === 1)) {
+            const newFloors = this.jsonData.floors.slice();
+            for (let i = 0; i < this.jsonData.floors.length; i++) {
+                if (newFloors[i].floor === this.floorNumber) {
+                    newFloors.splice(i, 1);
+                    break;
+                }
             }
+            this.toastr.success(`Removed ${this.floor.name}!`, "", {positionClass: "toast-bottom-right"});
+            this.jsonData.floors = newFloors;
+        } else {
+            this.toastr.error(`Please remove all the floors ${this.floorNumber < 0 ? "under" : "above"} this floor first.`, "", {positionClass: "toast-bottom-right"});
         }
-        this.toastr.success(`Removed ${this.floorName}!`, "", {positionClass: "toast-bottom-right"});
-        this.jsonData.floors = newFloors;
     }
 
     previousWindowWidth = 0;
@@ -585,7 +601,7 @@ export class CreateFloorComponent implements AfterViewInit {
             this.floorplan.addLayer(this.overlays, 1);
 
             if (!force)
-                this.loadData(this.jsonData.floors.find((f: any) => f.floor === this.floor)!);
+                this.loadData(this.jsonData.floors.find((f: any) => f.floor === this.floorNumber)!);
         }
     }
 
@@ -610,7 +626,7 @@ export class CreateFloorComponent implements AfterViewInit {
                     self.imageUrl = URL.createObjectURL(event.target!.files[event.target.files.length - 1]);
                     self.regenerateFloorMap(true);
                     self.resetZoom(self);
-                    self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+                    self.loadData(self.floor);
                 }
             }
         }
@@ -653,7 +669,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 let neighborsNeighbors: number[]
 
                 if (neighborFloor === ownFloor) {
-                    neighborsNeighbors = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
+                    neighborsNeighbors = self.floor.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
                 } else {
                     if (neighborElement.getAttribute("type") === NodeType.STAIRS || neighborElement.getAttribute("type") === NodeType.LIFT) {
                         neighborsNeighbors = self.jsonData.floors.find((f: Floor) => f.floor === neighborFloor)!.overlays.nodes.find(element => element.id === parseInt(neighbor[0]))!.neighbors;
@@ -684,7 +700,8 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     saveNeighborsInJson(id: number, neighbors: number[], self: CreateFloorComponent = this): void {
         const elem = d3.select(`[id='${id}']`);
-        self.jsonData.floors.find((floor: Floor) => parseInt(elem.attr("floor")) === floor.floor)!.overlays.nodes.forEach((node: GuidoNode) => {            if (node.id === id) {
+        self.jsonData.floors.find((floor: Floor) => parseInt(elem.attr("floor")) === floor.floor)!.overlays.nodes.forEach((node: GuidoNode) => {
+            if (node.id === id) {
                 node.neighbors = neighbors;
             }
         });
@@ -698,9 +715,9 @@ export class CreateFloorComponent implements AfterViewInit {
      */
     setConnectingNeighbors(self: CreateFloorComponent = this): void {
         this.removeConnectingNeighbors(self);
-        let group = d3.select("#demo" + self.floor + "lineGroup");
-        let floorNodes = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes;
-        let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floor);
+        let group = d3.select("#demo" + self.floorNumber + "lineGroup");
+        let floorNodes = self.floor.overlays.nodes;
+        let nodes: Element[] = Array.from(document.querySelectorAll("[node]")).filter(elem => parseInt(elem.getAttribute("floor")!) === self.floorNumber);
 
         nodes.forEach((elem: Element) => {
             const origin = self.getConnectablePoint(parseInt(elem.id));
@@ -738,7 +755,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     removeConnectingNeighbors(self: CreateFloorComponent = this): void {
-        let group = d3.select("#demo" + self.floor + "lineGroup");
+        let group = d3.select("#demo" + self.floorNumber + "lineGroup");
         group.selectAll("line").remove();
     }
 
@@ -765,8 +782,8 @@ export class CreateFloorComponent implements AfterViewInit {
             vertices[i] = new Point(x, y);
         }
 
-        const polygons = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.polygons;
-        polygons.push(new Polygon(id === null ? self.jsonData.lastId + 1 : id, name, self.floor, PolygonType.ROOM, description, vertices, color));
+        const polygons = self.floor.overlays.polygons;
+        polygons.push(new Polygon(id === null ? self.jsonData.lastId + 1 : id, name, self.floorNumber, PolygonType.ROOM, description, vertices, color));
         if (polygons.length > 1) {
             polygons[0].type = PolygonType.FLOOR;
         }
@@ -774,7 +791,7 @@ export class CreateFloorComponent implements AfterViewInit {
         if (id === null) {
             self.jsonData.lastId += 1;
         }
-        self.loadData(self.jsonData["floors"].find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -787,10 +804,10 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createPointOfInterest(nodeType: NodeType, neighbors: number[] = [], self: CreateFloorComponent = this): void {
-        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floor, new Point(25, 25), [], [], nodeType, [], 0));
+        self.floor.overlays.nodes.push(new GuidoNode(self.jsonData.lastId + 1, String(self.jsonData.lastId + 1), self.floorNumber, new Point(25, 25), [], [], nodeType, [], 0));
 
         self.jsonData.lastId += 1;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -804,11 +821,11 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createLabel(description: string, color: [number, number, number], self: CreateFloorComponent = this): void {
-        self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.labels.push(new Label(self.jsonData.lastId + 1, description, new Point(25, 25), color));
+        self.floor.overlays.labels.push(new Label(self.jsonData.lastId + 1, description, new Point(25, 25), color));
 
         self.jsonData.lastId += 1;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
-        self.resetZoom(self)
+        self.loadData(self.floor);
+        self.resetZoom(self);
     }
 
 
@@ -821,12 +838,11 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createNode(name: string, self: CreateFloorComponent): void {
-        self.jsonData.floors
-            .find((f: Floor) => f.floor === self.floor)!.overlays.nodes
-            .push(new GuidoNode(self.jsonData.lastId + 1, name, self.floor, new Point(25, 25), [], [], NodeType.NODE, [], 0));
+        self.floor.overlays.nodes
+            .push(new GuidoNode(self.jsonData.lastId + 1, name, self.floorNumber, new Point(25, 25), [], [], NodeType.NODE, [], 0));
 
         self.jsonData.lastId += 1;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -846,7 +862,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createDoor(name: string, length: number, width: number, color: number[], emergency: boolean, self: CreateFloorComponent) {
-        const doors = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes
+        const doors = self.floor.overlays.nodes
         const origin = new Point(25, 25)
 
         let points = [
@@ -856,9 +872,9 @@ export class CreateFloorComponent implements AfterViewInit {
             new Point(origin.x, origin.y + length)
         ];
 
-        doors.push(new GuidoNode(self.jsonData.lastId + 1, name, self.floor, origin, points, [], emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR, color, 0));
+        doors.push(new GuidoNode(self.jsonData.lastId + 1, name, self.floorNumber, origin, points, [], emergency ? NodeType.EMERGENCY_EXIT : NodeType.DOOR, color, 0));
         self.jsonData.lastId += 1;
-        self.loadData(self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!);
+        self.loadData(self.floor);
         self.resetZoom(self);
     }
 
@@ -904,7 +920,7 @@ export class CreateFloorComponent implements AfterViewInit {
         if (self.setNeighborMode) {
             const id = (event.target as Element).id === "" ? (event.target as Element).getAttribute("pointsOfInterestId") : (event.target as Element).id;
             if (id != null && id !== "") {
-                const elem = self.jsonData.floors.find((f: Floor) => f.floor === self.floor)!.overlays.nodes.find(elem => elem.id === parseInt(id))!;
+                const elem = self.floor.overlays.nodes.find(elem => elem.id === parseInt(id))!;
                 const neighbors = elem.neighbors;
                 self.displayDialogBox("setNeighbors", {
                     id: id,
@@ -919,36 +935,36 @@ export class CreateFloorComponent implements AfterViewInit {
                     values: [[[
                         {
                             group: "Stairs",
-                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.STAIRS) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
-                                .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.STAIRS) ? (f.floor === this.floorNumber - 1 || f.floor === this.floorNumber + 1) : (f.floor === this.floorNumber))
+                                .map((f: Floor) => f.overlays.nodes).flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.STAIRS)
                                 .map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Lifts",
-                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.LIFT) ? (f.floor === this.floor - 1 || f.floor === this.floor + 1) : (f.floor === this.floor))
-                                .map((f: Floor) => f.overlays.nodes)[0].flat(1)
+                            values: this.jsonData.floors.filter((f: Floor) => (elem.type === NodeType.LIFT) ? (f.floor === this.floorNumber - 1 || f.floor === this.floorNumber + 1) : (f.floor === this.floorNumber))
+                                .map((f: Floor) => f.overlays.nodes).flat(1)
                                 .filter((g: GuidoNode) => g.type === NodeType.LIFT)
                                 .map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Points of interest",
-                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                            values: this.floor.overlays.nodes
                                 .filter((p: GuidoNode) => ![NodeType.STAIRS, NodeType.LIFT, NodeType.DOOR, NodeType.EMERGENCY_EXIT, NodeType.NODE].includes(p.type)).map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Doors",
-                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                            values: this.floor.overlays.nodes
                                 .filter((g: GuidoNode) => g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)
                                 .map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Nodes",
-                            values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
+                            values: this.floor.overlays.nodes
                                 .filter((g: GuidoNode) => g.type === NodeType.NODE)
                                 .map((g: GuidoNode) => g.id)
                                 .filter((i: number) => i !== parseInt(id))

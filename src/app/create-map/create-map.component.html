@@ -150,7 +150,7 @@
             <div id="floors">
                 <app-create-floor *ngFor="let floor of jsonData.floors" [changeEditMode]="jsonData.editMode"
                                   [changeSetNeighborMode]="jsonData.setNeighborMode" [deleteMode]="jsonData.deleteMode"
-                                  [floor]="floor.floor" [jsonData]="jsonData">
+                                  [floorNumber]="floor.floor" [jsonData]="jsonData">
                 </app-create-floor>
             </div>
 

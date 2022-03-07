@@ -409,12 +409,6 @@ export class CreateFloorComponent implements AfterViewInit {
                 break;
             }
             // @ts-ignore
-            d3.select("#doors" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
-            // @ts-ignore
-            d3.select("#nodes" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
-            // @ts-ignore
-            d3.select("#pointsOfIntrest" + this.floor).attr('transform', mutation.target.getAttribute("transform"));
-            // @ts-ignore
             d3.select("#demo" + this.floor + "textLabels").attr('transform', mutation.target.getAttribute("transform"));
             // @ts-ignore
             d3.select("#demo" + this.floor + "lineGroup").attr('transform', mutation.target.getAttribute("transform"));
@@ -583,6 +577,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
             this.floorplan.getSetxScale(this.xScale);
             this.floorplan.getSetyScale(this.yScale);
+            this.floorplan.clearLayers();
             this.floorplan.addLayer(this.imageLayer, 0);
             this.floorplan.addLayer(this.overlays, 1);
 

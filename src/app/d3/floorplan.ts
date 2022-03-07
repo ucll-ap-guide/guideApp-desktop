@@ -175,6 +175,13 @@ export class Floorplan {
         return this;
     }
 
+    /**
+     * The **clearLayers()** function removes all the floorplan layers.
+     */
+    clearLayers(): void {
+        this.layers = [];
+    }
+
     __set_view(svg: any, scale: any, translation: any) {
         if (!svg) return;
         if (scale) svg.__scale__ = scale;

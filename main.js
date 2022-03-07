@@ -11,7 +11,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true
         },
-        icon: __dirname + "/src/assets/favicon.ico"
+        icon: __dirname + "/src/assets/img/guido-logo.png"
     });
 
     mainWindow.loadURL(

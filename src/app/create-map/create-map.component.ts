@@ -162,6 +162,7 @@ export class CreateMapComponent implements AfterViewInit {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+        this.disableSetNeighborMode();
     }
 
     /**
@@ -178,6 +179,7 @@ export class CreateMapComponent implements AfterViewInit {
         this.mapService.addMap(map).subscribe(() => {
             this.toastr.success('Successfully uploaded map!', "", {positionClass: "toast-bottom-right"});
         });
+        this.disableSetNeighborMode();
     }
 
     /**

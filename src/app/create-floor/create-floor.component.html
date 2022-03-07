@@ -19,7 +19,7 @@
             </svg>
             Remove floor
         </button>
-        <label *ngIf="!editMode && !deleteMode" [for]="'lockFloor' + floor">
+        <label [for]="'lockFloor' + floor">
             <input [defaultChecked]="true" [id]="'lockFloor' + floor" class="ml-1.5 mr-2" type="checkbox">
             Lock the floor
         </label>

@@ -146,7 +146,6 @@ export class CreateFloorComponent implements AfterViewInit {
         Array.from(document.getElementsByClassName("polygon"))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
-                    console.log(self.editMode)
                     if (self.editMode) {
                         let polygons = floor.overlays.polygons;
                         let index = polygons.map(elem => elem.id).indexOf(parseInt(elem.id));
@@ -172,7 +171,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 });
             });
 
-        Array.from(document.querySelectorAll(`[type='.${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`))
+        Array.from(document.querySelectorAll(`[type='${NodeType.DOOR}'], [type='${NodeType.EMERGENCY_EXIT}']`))
             .forEach((elem: Element) => {
                 elem.addEventListener("click", () => {
                     if (self.editMode) {
@@ -235,7 +234,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
         svg.on("dblclick.zoom", null);
 
-        d3.select("#demo" + this.floor).select("svg").insert("g", "#doors" + this.floor).attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
+        d3.select("#demo" + this.floor).select("svg").append("g").attr("setNeighborModeLineGroup", "").attr("id", "demo" + this.floor + "lineGroup");
 
         d3.select("#demo" + this.floor).select("svg").select("defs")
             .append("marker")
@@ -250,6 +249,10 @@ export class CreateFloorComponent implements AfterViewInit {
                 "L3,3 " +
                 "L0,5 ")
             .attr("fill", "orange");
+
+        document.getElementById("lockFloor" + this.floor)!.parentElement!.addEventListener("click", () => {
+            this.loadData(this.jsonData.floors.find((floor: Floor) => floor.floor === this.floor)!);
+        });
 
         this.setEventListeners(floor);
     }

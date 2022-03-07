@@ -6,6 +6,7 @@ import {Label} from "../model/label";
 import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
 import {NodeType} from "../model/node-type";
+import {PolygonType} from "../model/polygon-type";
 
 declare var d3: any;
 type OverlayData = {polygons: Polygon[], labels: Label[], nodes: GuidoNode[]}
@@ -140,7 +141,7 @@ export class Overlays {
      */
     __mousemove(event: any, self: any) {
         // @ts-ignore
-        if (self.dragged && (event.getAttribute("type") !== "Floor" || !document.getElementById("lockFloor" + event.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1])!.checked) && document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
+        if (self.dragged && (event.getAttribute("type") !== PolygonType.FLOOR || !document.getElementById("lockFloor" + event.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1])!.checked) && document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
             var dx = self.x.invert(d3.event.dx) - self.x.invert(0);
             var dy = self.y.invert(d3.event.dy) - self.y.invert(0);
 
@@ -238,7 +239,7 @@ function drawPolygons(data: OverlayData, g: any, self: Overlays) {
         const elem = document.querySelector("[id='" + data.polygons[i].id + "']")!;
         elem.setAttribute("id", String(data.polygons[i].id));
         elem.setAttribute("type", data.polygons[i].type);
-        if (data.polygons[i].type !== "Floor") {
+        if (data.polygons[i].type !== PolygonType.FLOOR) {
             elem.setAttribute("removable", "");
         }
         const index = data.polygons.map((elem: Polygon) => elem.id).indexOf(parseInt(polygons[0][i].id));
@@ -265,7 +266,7 @@ function drawPolygons(data: OverlayData, g: any, self: Overlays) {
         let pointData: PointData[] = [];
         if (data.polygons) {
             data.polygons.forEach(function (polygon: any) {
-                if (polygon.type !== "Floor") {
+                if (polygon.type !== PolygonType.FLOOR || !(document.getElementById("lockFloor" + self.floor) as HTMLInputElement).checked) {
                     polygon.points.forEach(function (pt: any, i: any) {
                         pointData.push({
                             "index": i,

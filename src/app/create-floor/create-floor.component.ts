@@ -946,12 +946,14 @@ export class CreateFloorComponent implements AfterViewInit {
                             values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
                                 .filter((g: GuidoNode) => g.type === NodeType.DOOR || g.type === NodeType.EMERGENCY_EXIT)
                                 .map((g: GuidoNode) => g.id)
+                                .filter((i: number) => i !== parseInt(id))
                         },
                         {
                             group: "Nodes",
                             values: this.jsonData.floors.find((f: Floor) => f.floor === this.floor)!.overlays.nodes
                                 .filter((g: GuidoNode) => g.type === NodeType.NODE)
                                 .map((g: GuidoNode) => g.id)
+                                .filter((i: number) => i !== parseInt(id))
                         }
                     ]]]
                 });

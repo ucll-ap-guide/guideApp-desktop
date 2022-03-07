@@ -7,9 +7,9 @@ import {GuidoNode} from "../model/guido-node";
 import {GuidoMap} from "../model/guido-map";
 import {NodeType} from "../model/node-type";
 import {PolygonType} from "../model/polygon-type";
+import {GuidoOverlays} from "../model/guido-overlays";
 
 declare var d3: any;
-type OverlayData = {polygons: Polygon[], labels: Label[], nodes: GuidoNode[]}
 
 export class Overlays {
     x = d3.scale.linear();
@@ -56,7 +56,7 @@ export class Overlays {
 
     createOverlays(groups: any) {
         let self = this;
-        groups.each(function (data: OverlayData) {
+        groups.each(function (data: GuidoOverlays) {
             if (!data) return;
             // @ts-ignore
             var g = d3.select(this);
@@ -216,7 +216,7 @@ function setupCanvas(g: any, self: Overlays) {
 }
 
 
-function drawPolygons(data: OverlayData, g: any, self: Overlays) {
+function drawPolygons(data: GuidoOverlays, g: any, self: Overlays) {
     var polygons = g.selectAll("path.polygon")
         .data(data.polygons || [], function (d: any) {
             return d.id;
@@ -261,7 +261,7 @@ function drawPolygons(data: OverlayData, g: any, self: Overlays) {
 
 
     //Set draggable points to change shape of polygon
-    type PointData = {index: number, parent: Polygon};
+    type PointData = { index: number, parent: Polygon };
     if (self.editMode) {
         let pointData: PointData[] = [];
         if (data.polygons) {
@@ -319,12 +319,12 @@ function drawPolygons(data: OverlayData, g: any, self: Overlays) {
     }
 }
 
-function drawNodes(g: any, data: OverlayData, self: Overlays) {
+function drawNodes(g: any, data: GuidoOverlays, self: Overlays) {
     let dataNodes = data.nodes.filter(elem => elem.type === NodeType.NODE)
     let nodes = g.selectAll("circle.node")
-    .data(dataNodes || [], function (d: any) {
-        return d.id;
-    });
+        .data(dataNodes || [], function (d: any) {
+            return d.id;
+        });
 
     nodes.enter()
         .append("circle")
@@ -358,7 +358,7 @@ function drawNodes(g: any, data: OverlayData, self: Overlays) {
         })
         .call(d3.behavior.drag().on("drag", function () {
             if (!self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode) {
-                let svg =  document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
+                let svg = document.getElementById("demo" + self.floor)!.getElementsByTagName("svg")[0];
                 let width = parseFloat(String(svg.getAttribute("width")));
                 let height = parseFloat(String(svg.getAttribute("height")));
                 let x = parseFloat(d3.event.x)
@@ -385,7 +385,7 @@ function drawNodes(g: any, data: OverlayData, self: Overlays) {
     }
 }
 
-function drawDoors(g: any, data: OverlayData, self: Overlays): void {
+function drawDoors(g: any, data: GuidoOverlays, self: Overlays): void {
     let dataDoors = data.nodes.filter(elem => elem.type === NodeType.DOOR).concat(data.nodes.filter(elem => elem.type === NodeType.EMERGENCY_EXIT))
     let doors = g.selectAll("polygon.door")
         .data(dataDoors || [], function (d: any) {
@@ -426,7 +426,7 @@ function drawDoors(g: any, data: OverlayData, self: Overlays): void {
  * @param door The d3 instance of the door.
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
  */
-function rotateDoor(door: any, data: OverlayData): void {
+function rotateDoor(door: any, data: GuidoOverlays): void {
     d3.event.preventDefault();
     let doorElem = d3.select(door);
     let doorData = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(doorElem.attr("id")))!;
@@ -444,7 +444,7 @@ function rotateDoor(door: any, data: OverlayData): void {
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
  * @param floorComp TODO
  */
-function moveDoorCoordinates(door: any, data: OverlayData, floorComp: Overlays): void {
+function moveDoorCoordinates(door: any, data: GuidoOverlays, floorComp: Overlays): void {
     if (d3.event.sourceEvent.which === 1) {
         let doorElem = d3.select(door);
         let doorData = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(doorElem.attr("id")))!;
@@ -497,7 +497,7 @@ function getDoorDimensions(doorCoords: Point[]): { length: number, width: number
     }
 }
 
-function drawPointsOfInterest(data: OverlayData, g: any, self: Overlays) {
+function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays) {
     let pointsOfInterestData = data.nodes.filter(elem => elem.type !== NodeType.NODE && elem.type !== NodeType.EMERGENCY_EXIT && elem.type !== NodeType.DOOR);
     var nodes = g.selectAll("svg.pointOfInterest")
         .data(pointsOfInterestData || [], function (d: any) {
@@ -563,7 +563,7 @@ function drawPointsOfInterest(data: OverlayData, g: any, self: Overlays) {
     }
 }
 
-function drawLabels(data: OverlayData, g: any, self: Overlays) {
+function drawLabels(data: GuidoOverlays, g: any, self: Overlays) {
     var labels = g.selectAll("svg.label")
         .data(data.labels || [], function (d: any) {
             return d.id;
@@ -621,18 +621,18 @@ function drawLabels(data: OverlayData, g: any, self: Overlays) {
     }
 }
 
-function generalDragBehavior(figure: any, data: OverlayData,self: Overlays) {
+function generalDragBehavior(figure: any, data: GuidoOverlays, self: Overlays) {
     if (!self.jsonData.deleteMode && !self.jsonData.setNeighborMode && !self.jsonData.editMode) {
         let d3node = d3.select(figure);
         let elem: GuidoNode | Label;
-        let floor: number ;
+        let floor: number;
 
         if (d3node.attr("type") !== "Label") {
             elem = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(d3node.attr("id")))!;
             floor = elem.floor;
         } else {
             elem = data.labels.find((elem: Label) => elem.id === parseInt(d3node.attr("id")))!;
-            floor = figure.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1];
+            floor = self.floor;
         }
 
         let svg = document.getElementById("demo" + floor)!.getElementsByTagName("svg")[0];

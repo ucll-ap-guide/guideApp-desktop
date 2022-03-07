@@ -22,7 +22,7 @@ declare var d3: any;
  * {@link Floor}.
  */
 export class CreateMapComponent implements AfterViewInit {
-    jsonData = new GuidoMap(false, false, false,"UCLL", 0, 0);
+    jsonData = new GuidoMap(false, false, false, "UCLL", 0, 0);
     newMap: boolean = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
@@ -99,8 +99,20 @@ export class CreateMapComponent implements AfterViewInit {
         height: number = this.createFloorForm.height,
         importFloorFrom: number | null = document.getElementById("useGroundFloor") === null ? null : Number((document.getElementById("useGroundFloor") as HTMLSelectElement).value)
     ): void {
-        document.getElementById("floorNumberError")!.innerText =
-            floor === null || isNaN(floor) ? "Not a valid floor number1;" : this.jsonData.floors.find((f: Floor) => f.floor === floor) ? "This floor already exists." : "";
+        const existingFloors = this.jsonData.floors.map((f: Floor) => f.floor).sort();
+        const floorNumberErrorField = document.getElementById("floorNumberError")!;
+
+        if (floor === null || isNaN(floor)) {
+            floorNumberErrorField.innerText = "Not a valid floor number";
+        } else if (this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
+            floorNumberErrorField.innerText = "This floor already exists.";
+        } else if (existingFloors.length === 0 && floor !== 0) {
+            floorNumberErrorField.innerText = "Please first add the ground floor first."
+        } else if (existingFloors.length !== 0 && ![existingFloors[0] - 1, existingFloors[existingFloors.length - 1] + 1].includes(floor)) {
+            floorNumberErrorField.innerText = `Please add floor ${floor < existingFloors[0] ? existingFloors[0] - 1 : existingFloors[existingFloors.length - 1] + 1} first.`;
+        } else {
+            floorNumberErrorField.innerText = "";
+        }
         document.getElementById("floorNameError")!.innerText =
             name === "" ? "The floor name cannot be empty." : "";
         document.getElementById("floorHeightError")!.innerText =
@@ -108,7 +120,8 @@ export class CreateMapComponent implements AfterViewInit {
 
         if (!(Array.from(document.querySelectorAll("#addFloorForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.jsonData.floors.push(new Floor(floor, name, height));
-            this.createFloorForm.floor++;
+            this.jsonData.floors.sort((a: Floor, b: Floor) => a.floor - b.floor);
+            this.createFloorForm.floor = existingFloors.length === 0 ? 1 : this.jsonData.floors.map((f: Floor) => f.floor).sort()[this.jsonData.floors.length - 1] + 1;
             this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
             if (importFloorFrom !== null) {
                 const groundFloor = Polygon.copy(this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons.find((p: Polygon) => p.type === PolygonType.FLOOR)!);

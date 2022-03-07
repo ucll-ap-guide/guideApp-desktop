@@ -5,7 +5,7 @@ import {Label} from "./label";
 /**
  * Class grouping the different objects on a {@link Floor}.
  */
-export class Overlays {
+export class GuidoOverlays {
     /**
      * @constructor
      * @param polygons The collection of all the {@link Polygon}s on a {@link Floor}.

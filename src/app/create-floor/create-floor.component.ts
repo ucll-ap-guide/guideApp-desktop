@@ -910,8 +910,7 @@ export class CreateFloorComponent implements AfterViewInit {
                 self.displayDialogBox("setNeighbors", {
                     id: id,
                     defaultValues: [neighbors === null ? [] :
-                        neighbors
-                            .map((neighbor: number) => [neighbor, self.jsonData.floors.find((f: Floor) => f.floor === parseInt(document.querySelector(`[id='${neighbor}']`)!.getAttribute("floor")!))!.overlays.nodes.find(elem => elem.id === neighbor)!.neighbors])],
+                        neighbors.map((neighbor: number) => [neighbor, self.jsonData.floors.map((floor: Floor) => floor.overlays.nodes).flat(1).find((node: GuidoNode) => node.id === neighbor)!.neighbors.includes(Number(id))])],
                     /*
                      * The List of values has 3 [] because the first one is to group all possible input type fields
                      * (in this case there is only one), the second is to group all the input fields for the infinite

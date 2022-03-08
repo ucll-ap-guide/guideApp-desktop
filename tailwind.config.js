@@ -5,6 +5,9 @@ module.exports = {
         extend: {
             borderWidth: {
                 '3': '3px'
+            },
+            maxHeight: {
+                '128': "32rem"
             }
         },
     },

@@ -19,7 +19,7 @@
             </svg>
             Remove floor
         </button>
-        <label [for]="'lockFloor' + floorNumber" [hidden]="floorPolygon === undefined">
+        <label (click)="loadData(floor)" [for]="'lockFloor' + floorNumber" [hidden]="floorPolygon === undefined">
             <input [defaultChecked]="true" [id]="'lockFloor' + floorNumber" class="ml-1.5 mr-2" type="checkbox">
             Lock the floor
         </label>

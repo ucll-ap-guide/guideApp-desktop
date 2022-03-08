@@ -11,7 +11,8 @@ import {DialogBoxComponent} from './dialog-box/dialog-box.component';
 import {ToastrModule} from "ngx-toastr";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {LandingPageComponent} from './landing-page/landing-page.component';
-import {GuideComponent} from './guide/guide.component';
+import {GuideDesktopComponent} from './guide-desktop/guide-desktop.component';
+import {GuideMobileComponent} from './guide-mobile/guide-mobile.component';
 
 @NgModule({
     declarations: [
@@ -20,7 +21,8 @@ import {GuideComponent} from './guide/guide.component';
         CreateFloorComponent,
         DialogBoxComponent,
         LandingPageComponent,
-        GuideComponent
+        GuideDesktopComponent,
+        GuideMobileComponent
     ],
     imports: [
         BrowserModule,

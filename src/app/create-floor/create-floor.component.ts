@@ -265,10 +265,6 @@ export class CreateFloorComponent implements AfterViewInit {
                 "L0,5 ")
             .attr("fill", "orange");
 
-        document.getElementById("lockFloor" + this.floorNumber)!.parentElement!.addEventListener("click", () => {
-            this.loadData(this.floor);
-        });
-
         this.setEventListeners(this.floor);
     }
 

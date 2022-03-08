@@ -1,0 +1,12 @@
+@media (max-width: 1065px) {
+    .double-pictures-container > div {
+        width: 100%;
+
+    }
+}
+
+@media (min-width: 1066px) {
+    .double-pictures-container > div {
+        width: 50%;
+    }
+}

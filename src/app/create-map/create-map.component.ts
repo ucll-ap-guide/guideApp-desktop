@@ -51,6 +51,7 @@ export class CreateMapComponent implements AfterViewInit {
                 self.jsonData.editMode = false;
                 self.jsonData.deleteMode = false;
                 self.jsonData.setNeighborMode = false;
+                self.updateAddFloorForm(self);
             }
             if ((event.target as HTMLInputElement)!.files!.length > 0) {
                 reader.readAsText((event.target as HTMLInputElement)!.files![0]);
@@ -83,6 +84,17 @@ export class CreateMapComponent implements AfterViewInit {
             this.initializedMap = true;
             this.moveFileInputField();
         }
+    }
+
+    /**
+     * The **updateAddFloorForm()** function update the default values inside the {@link createFloorForm} and suggests
+     * the next floor number.
+     *
+     * @param self The instance of the {@link CreateMapComponent}.
+     */
+    updateAddFloorForm(self: CreateMapComponent): void {
+        self.createFloorForm.floor = self.jsonData.floors.length === 0 ? 0 : self.jsonData.floors.map((f: Floor) => f.floor).sort()[self.jsonData.floors.length - 1] + 1;
+        self.createFloorForm.name = "Verdieping " + self.createFloorForm.floor;
     }
 
     /**
@@ -121,8 +133,7 @@ export class CreateMapComponent implements AfterViewInit {
         if (!(Array.from(document.querySelectorAll("#addFloorForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.jsonData.floors.push(new Floor(floor, name, height));
             this.jsonData.floors.sort((a: Floor, b: Floor) => a.floor - b.floor);
-            this.createFloorForm.floor = existingFloors.length === 0 ? 1 : this.jsonData.floors.map((f: Floor) => f.floor).sort()[this.jsonData.floors.length - 1] + 1;
-            this.createFloorForm.name = "Verdieping " + this.createFloorForm.floor;
+            this.updateAddFloorForm(this);
             if (importFloorFrom !== null) {
                 const groundFloor = Polygon.copy(this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons.find((p: Polygon) => p.type === PolygonType.FLOOR)!);
                 groundFloor.id = this.jsonData.lastId + 1;
@@ -229,6 +240,7 @@ export class CreateMapComponent implements AfterViewInit {
                 self.toastr.error('No map with the given name found.', '', {positionClass: 'toast-bottom-right'});
             } else {
                 self.jsonData = map;
+                self.updateAddFloorForm(self);
             }
         });
         self.initializedMap = true;
@@ -256,6 +268,7 @@ export class CreateMapComponent implements AfterViewInit {
     clearMap(displayMessage: boolean = true): void {
         this.jsonData.lastId = 0;
         this.jsonData.floors = [] as Floor[];
+        this.updateAddFloorForm(this);
 
         if (displayMessage) {
             this.toastr.success('Cleared map!', "", {positionClass: "toast-bottom-right"});

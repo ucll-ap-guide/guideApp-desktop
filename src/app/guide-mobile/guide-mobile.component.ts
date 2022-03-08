@@ -2,11 +2,11 @@ import {Component, OnInit} from '@angular/core';
 import {Router} from "@angular/router";
 
 @Component({
-    selector: 'guide',
-    templateUrl: 'guide.component.html',
-    styles: []
+    selector: 'app-guide-mobile',
+    templateUrl: 'guide-mobile.component.html',
+    styleUrls: ['guide-mobile.component.css']
 })
-export class GuideComponent implements OnInit {
+export class GuideMobileComponent implements OnInit {
 
     constructor(public router: Router) {
     }

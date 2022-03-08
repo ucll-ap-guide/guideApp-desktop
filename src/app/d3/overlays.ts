@@ -141,7 +141,7 @@ export class Overlays {
      */
     __mousemove(event: any, self: any) {
         // @ts-ignore
-        if (self.dragged && (event.getAttribute("type") !== PolygonType.FLOOR || !document.getElementById("lockFloor" + event.parentElement.parentElement.parentElement.parentElement.parentElement.id.split("demo")[1])!.checked) && document.getElementById("setNeighborModeButton")!.className.includes("text-white") && document.getElementById("editModeButton")!.className.includes("text-white") && document.getElementById("deleteModeButton")!.className.includes("text-white")) {
+        if (self.dragged && !self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode && (event.getAttribute("type") !== PolygonType.FLOOR || !document.getElementById("lockFloor" + self.floor)!.checked)) {
             var dx = self.x.invert(d3.event.dx) - self.x.invert(0);
             var dy = self.y.invert(d3.event.dy) - self.y.invert(0);
 

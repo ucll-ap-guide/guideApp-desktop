@@ -107,6 +107,9 @@
           "options": {
             "browserTarget": "guideApp-desktop:build"
           }
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy"
         }
       }
     }

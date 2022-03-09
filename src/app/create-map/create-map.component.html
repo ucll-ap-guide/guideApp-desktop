@@ -39,6 +39,16 @@
                 Get map from server
             </button>
 
+            <button (click)="displayDialogBox('deleteMap', {values: [[{group: '', values: mapNames}]]})"
+                    class="bg-white dark:bg-[#000] flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg p-5 font-semibold my-auto">
+                <svg class="h-6 w-6 pr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="2"/>
+                </svg>
+                Remove map from server
+            </button>
+
             <label class="bg-white dark:bg-[#000] cursor-pointer flex shadow rounded-lg transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg p-5 font-semibold my-auto">
                 <input accept="application/json" class="hidden" id="uploadedMapFromComputer" type="file"/>
                 <span class="flex gap-2">
@@ -116,7 +126,8 @@
                                   stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
                         </svg>
                     </button>
-                    <button (click)="toggleDeleteMode()" [class]="(jsonData.deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
+                    <button (click)="toggleDeleteMode()"
+                            [class]="(jsonData.deleteMode ? 'text-red-500' : 'text-white')+ ' p-4'"
                             id="deleteModeButton">
                         <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 299.289 299.289"
                              xmlns="http://www.w3.org/2000/svg">
@@ -154,7 +165,8 @@
                 </app-create-floor>
             </div>
 
-            <div *ngIf="!jsonData.setNeighborMode" class="shadow bg-blue-100 dark:bg-[#37373b] rounded-lg p-2 mt-5 mb-2">
+            <div *ngIf="!jsonData.setNeighborMode"
+                 class="shadow bg-blue-100 dark:bg-[#37373b] rounded-lg p-2 mt-5 mb-2">
                 <h2 class="text-black dark:text-white text-xl">Add floor</h2>
                 <div class="max-w-md text-black dark:text-white m-2" id="addFloorForm">
                     <label class="block text-sm font-bold mb-2" for="floorNumber">Floor number:</label>
@@ -204,6 +216,12 @@
                     [formElements]="[{name: 'Map', required: true, tagType: 'search-select', values: []}]"
                     [params]="paramsToGiveToDialogBoxes.updateMap" action="updateMap" confirmButtonText="OK"
                     dialogText="Which of the following maps do you want to edit?" title="Edit map">
+    </app-dialog-box>
+
+    <app-dialog-box [confirmAction]="deleteMap" [floor]="0"
+                    [formElements]="[{name: 'Map', required: true, tagType: 'search-select', values: []}]"
+                    [params]="paramsToGiveToDialogBoxes.deleteMap" action="deleteMap" confirmButtonText="OK"
+                    dialogText="Which of the following maps do you want to delete?" title="Delete map">
     </app-dialog-box>
 
     <button (click)="router.navigate(['..'])"

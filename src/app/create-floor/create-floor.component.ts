@@ -413,7 +413,7 @@ export class CreateFloorComponent implements AfterViewInit {
     /**
      * The **setZoom()** function is used to zoom non floorplan objects to the same level as floor plan objects.
      *
-     * @param mutationsList TODO
+     * @param mutationsList The changed attributes of the {@link Element}.
      */
     setZoom = (mutationsList: MutationRecord[]): void => {
         for (const mutation of mutationsList) {
@@ -759,7 +759,8 @@ export class CreateFloorComponent implements AfterViewInit {
      * The **createPolygon()** function creates a {@link Polygon} with the given properties and saves it in the
      * {@link jsonData} which will automatically reload the floorplan.
      *
-     * @param id The unique identifier of the {@link Polygon}. TODO can he still be null?
+     * @param id The unique identifier of the {@link Polygon}. If none is given it will be automatically take the next
+     *           id based on {@link jsonData.lastId}.
      * @param name The name of the {@link Polygon}.
      * @param amountOfVertices The amount of vertices of the {@link Polygon}.
      * @param description The description of {@link Polygon}s purpose.

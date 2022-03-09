@@ -28,7 +28,8 @@ export class CreateMapComponent implements AfterViewInit {
     initializedMap: boolean = false;
     createFloorForm = new Floor(0, "Verdieping 0", 2.5);
     paramsToGiveToDialogBoxes: any = {
-        updateMap: {}
+        updateMap: {},
+        deleteMap: {}
     };
 
     constructor(public router: Router, private mapService: MapService, private toastr: ToastrService) {
@@ -223,28 +224,50 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * The **editMap()** function downloads the {@link Map} from the server with the given {@link name} and saves it in
-     * the {@link jsonData}.
+     * The **editMap()** function downloads the {@link GuidoMap} from the server with the given {@link name} and saves
+     * it in the {@link jsonData}.
      *
-     * @param name The name of the {@link Map} on the server that needs to be loaded.
+     * @param name The name of the {@link GuidoMap} on the server that needs to be loaded.
      * @param self The instance of the {@link CreateMapComponent}.
      */
     editMap(name: string, self: CreateMapComponent): void {
-        self.jsonData.editMode = false;
-        self.jsonData.setNeighborMode = false;
-        self.jsonData.deleteMode = false;
-        document.getElementById("submitMap")!.innerText = "Update map";
-        self.clearMap(false);
         self.mapService.getMap(name).subscribe((map: GuidoMap) => {
             if (map === null) {
                 self.toastr.error('No map with the given name found.', '', {positionClass: 'toast-bottom-right'});
             } else {
+                self.jsonData.editMode = false;
+                self.jsonData.setNeighborMode = false;
+                self.jsonData.deleteMode = false;
+                document.getElementById("submitMap")!.innerText = "Update map";
+                self.clearMap(false);
                 self.jsonData = map;
                 self.updateAddFloorForm(self);
+                self.initializedMap = true;
+                self.moveFileInputField();
             }
         });
-        self.initializedMap = true;
-        self.moveFileInputField();
+    }
+
+    /**
+     * The **deleteMap()** function deletes the {@link GuidoMap} with the given.
+     *
+     * @param name The name of the {@link GuidoMap} on the server that needs to be deleted.
+     * @param self The instance of the {@link CreateMapComponent}.
+     */
+    deleteMap(name: string, self: CreateMapComponent): void {
+        self.mapService.deleteMap(name).subscribe((response) => {
+            if (response === null) {
+                self.toastr.success(`Successfully deleted the map "${name}".`, '', {positionClass: 'toast-bottom-right'});
+            } else {
+                self.toastr.error(`Couldn't remove the map with name "${name}". ${response}`, '', {positionClass: 'toast-bottom-right'});
+            }
+            self.mapNames.forEach((n: string, index: number) => {
+                if (n === name) {
+                    self.mapNames.splice(index, 1);
+                }
+            });
+            self.mapService.getAllMapNames();
+        });
     }
 
     /**
@@ -277,7 +300,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     /**
      * The **enableSetNeighborMode()** function switches the {@link setNeighborMode} to `true`, displays the id's of all
-     * the {@link GuidoNode}s as a label and TODO displays the lines between the {@link GuidoNode}s.
+     * the {@link GuidoNode}s as a label and displays the lines between the {@link GuidoNode}s.
      */
     enableSetNeighborMode() {
         this.jsonData.deleteMode = false;

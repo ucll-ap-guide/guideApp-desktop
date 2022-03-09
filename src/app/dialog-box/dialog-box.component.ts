@@ -542,6 +542,9 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 case "createNode":
                     this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
+                case "updateNode":
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, this.params.self);
+                    break;
                 case "createPointOfInterest":
                     this.confirmAction(this.formElements[0].values[(topLevelChildren[0] as HTMLSelectElement).selectedIndex], [], this.params.self);
                     break;
@@ -549,7 +552,7 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                     this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
                     break;
                 case "updateLabel":
-                    this.confirmAction(parseInt(this.params.id),(topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
+                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, (topLevelChildren[1] as HTMLInputElement).value.split(",").map(elem => parseInt(elem)), this.params.self);
                     break;
                 case "setNeighbors":
                     this.confirmAction(parseInt(this.params.id),
@@ -560,8 +563,8 @@ export class DialogBoxComponent implements AfterViewInit, OnChanges {
                 case "updateMap":
                     this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
-                case "updateNode":
-                    this.confirmAction(parseInt(this.params.id), (topLevelChildren[0] as HTMLInputElement).value, this.params.self);
+                case "deleteMap":
+                    this.confirmAction((topLevelChildren[0] as HTMLInputElement).value, this.params.self);
                     break;
                 default:
                     console.error(`The dialog action ${this.action} is currently not supported`);

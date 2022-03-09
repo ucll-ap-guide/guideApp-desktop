@@ -1,5 +1,5 @@
 import {Point} from "../model/point";
-import {pointsOfInterest} from "./point-of-interest";
+import {nodeIcons} from "./node-icons";
 import * as select from "ajv-keywords";
 import {Polygon} from "../model/polygon";
 import {Label} from "../model/label";
@@ -54,7 +54,7 @@ export class Overlays {
         this.floor = floor;
     }
 
-    createOverlays(groups: any) {
+    createOverlays(groups: any): void {
         let self = this;
         groups.each(function (data: GuidoOverlays) {
             if (!data) return;
@@ -139,7 +139,7 @@ export class Overlays {
      * Drag rooms and floor (polygon) except if in editMode deleteMode or setNeighborMode.
      * Floors can also only be dragged if the attribute "draggable" is set to true
      */
-    __mousemove(event: any, self: any) {
+    __mousemove(event: any, self: any): void {
         // @ts-ignore
         if (self.dragged && !self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode && (event.getAttribute("type") !== PolygonType.FLOOR || !document.getElementById("lockFloor" + self.floor)!.checked)) {
             var dx = self.x.invert(d3.event.dx) - self.x.invert(0);
@@ -172,7 +172,7 @@ export class Overlays {
         }
     }
 
-    __mouseup(event: any, self: any) {
+    __mouseup(event: any, self: any): void {
         if (self.dragged) {
             self.moveCallbacks.forEach(function (cb: any) {
                 self.dragged.parent ? cb(self.dragged.parent.id, self.dragged.parent.points, self.dragged.index) :
@@ -183,7 +183,7 @@ export class Overlays {
     }
 }
 
-function setupCanvas(g: any, self: Overlays) {
+function setupCanvas(g: any, self: Overlays): void {
     var canvas = g.selectAll("rect.overlay-canvas").data([0]);
 
     canvas.enter().append("rect")
@@ -216,7 +216,7 @@ function setupCanvas(g: any, self: Overlays) {
 }
 
 
-function drawPolygons(data: GuidoOverlays, g: any, self: Overlays) {
+function drawPolygons(data: GuidoOverlays, g: any, self: Overlays): void {
     var polygons = g.selectAll("path.polygon")
         .data(data.polygons || [], function (d: any) {
             return d.id;
@@ -319,7 +319,7 @@ function drawPolygons(data: GuidoOverlays, g: any, self: Overlays) {
     }
 }
 
-function drawNodes(g: any, data: GuidoOverlays, self: Overlays) {
+function drawNodes(g: any, data: GuidoOverlays, self: Overlays): void {
     let dataNodes = data.nodes.filter(elem => elem.type === NodeType.NODE)
     let nodes = g.selectAll("circle.node")
         .data(dataNodes || [], function (d: any) {
@@ -442,7 +442,7 @@ function rotateDoor(door: any, data: GuidoOverlays): void {
  *
  * @param door The d3 instance of the door element.
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
- * @param floorComp TODO
+ * @param floorComp The instance of the {@link Overlays} class.
  */
 function moveDoorCoordinates(door: any, data: GuidoOverlays, floorComp: Overlays): void {
     if (d3.event.sourceEvent.which === 1) {
@@ -497,7 +497,7 @@ function getDoorDimensions(doorCoords: Point[]): { length: number, width: number
     }
 }
 
-function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays) {
+function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays): void {
     let pointsOfInterestData = data.nodes.filter(elem => elem.type !== NodeType.NODE && elem.type !== NodeType.EMERGENCY_EXIT && elem.type !== NodeType.DOOR);
     var nodes = g.selectAll("svg.pointOfInterest")
         .data(pointsOfInterestData || [], function (d: any) {
@@ -550,7 +550,7 @@ function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays) {
         pointOfInterest.setAttribute("floor", String(pointsOfInterestData[i].floor));
         pointOfInterest.setAttribute("neighbors", pointsOfInterestData[i].neighbors.join(","));
         // @ts-ignore
-        const logo = pointsOfInterest[pointsOfInterestData[i].type];
+        const logo = nodeIcons[pointsOfInterestData[i].type];
         if (logo.backgroundColor !== undefined) {
             pointOfInterest.setAttribute("fill", logo.backgroundColor);
         }
@@ -563,7 +563,7 @@ function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays) {
     }
 }
 
-function drawLabels(data: GuidoOverlays, g: any, self: Overlays) {
+function drawLabels(data: GuidoOverlays, g: any, self: Overlays): void {
     var labels = g.selectAll("svg.label")
         .data(data.labels || [], function (d: any) {
             return d.id;
@@ -611,7 +611,7 @@ function drawLabels(data: GuidoOverlays, g: any, self: Overlays) {
 
     for (let i = 0; i < labels[0].length; i++) {
         const pointOfInterest = document.querySelector("[id='" + data.labels[i].id + "']")!;
-        const logo = pointsOfInterest["Info"];
+        const logo = nodeIcons["Info"];
         pointOfInterest.getElementsByTagName("svg")[0].setAttribute("viewBox", `${logo.viewBox[0] + (logo.viewBox[2] * -.1)} ${logo.viewBox[1] + (logo.viewBox[3] * -.1)} ${logo.viewBox[2] * 1.2} ${logo.viewBox[3] * 1.2}`);
         pointOfInterest.getElementsByTagName("path")[0].setAttribute("d", logo.d);
         // Needed for when user selects child instead of parent for remove element
@@ -621,7 +621,7 @@ function drawLabels(data: GuidoOverlays, g: any, self: Overlays) {
     }
 }
 
-function generalDragBehavior(figure: any, data: GuidoOverlays, self: Overlays) {
+function generalDragBehavior(figure: any, data: GuidoOverlays, self: Overlays): void {
     if (!self.jsonData.deleteMode && !self.jsonData.setNeighborMode && !self.jsonData.editMode) {
         let d3node = d3.select(figure);
         let elem: GuidoNode | Label;

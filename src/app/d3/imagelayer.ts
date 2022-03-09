@@ -66,4 +66,4 @@ export class Imagelayer {
         this.name = n;
         return this.name;
     };
-};
+}

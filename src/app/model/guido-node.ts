@@ -16,7 +16,8 @@ export class GuidoNode {
      * @param neighbors A list of id's (`integer`) of the neighbor nodes.
      * @param type The {@link NodeType} of the node.
      * @param color The color of the node, this is either an empty list or a list of `integers` consisting of 3 numbers that are
-     *              between 0-255.
+     *              between `0-255`.
+     * @param degreesRotated The amount of degrees the {@link GuidoNode} is rotated.
      */
     constructor(
         public id: number,

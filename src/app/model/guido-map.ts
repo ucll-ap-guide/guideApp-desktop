@@ -1,5 +1,4 @@
 import {Floor} from "./floor";
-import {GuidoNode} from "./guido-node";
 
 /**
  * Class containing all the information about the building.
@@ -7,13 +6,14 @@ import {GuidoNode} from "./guido-node";
 export class GuidoMap {
     /**
      * @constructor
+     * @param editMode Is set to `true` when the Edit Mode is enabled.
+     * @param setNeighborMode Is set to `true` when the Neighbor Mode is enabled.
+     * @param deleteMode Is set to `true` when the Delete Mode is enabled.
      * @param name The name of the building.
      * @param length The length of the building (the width of the screen).
      * @param width The width of the map (the height of the screen).
      * @param lastId The id of the last object that has been added to the map.
      * @param floors A list of all the {@link Floor}s of the map.
-     * @param nodes A list of all the {@link GuidoNode}s of the map (excluded points of interest, those are saved on
-     *              each {@link Floor}).
      */
     constructor(
         public editMode: boolean = false,

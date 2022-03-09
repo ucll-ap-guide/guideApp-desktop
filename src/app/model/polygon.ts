@@ -14,7 +14,7 @@ export class Polygon {
      * @param description The description of the {@link Polygon}.
      * @param points The vertices of the {@link Polygon}.
      * @param color The color of the node, this is either an empty list or a list of `integers` consisting of 3 numbers
-     *              that are between 0-255.
+     *              that are between `0-255`.
      */
     constructor(
         public id: number,

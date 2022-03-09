@@ -9,7 +9,7 @@ export class Label {
      * @param id The unique identifier of the label.
      * @param description The description of something that will help the user to locate himself.
      * @param point The place where label should be rendered.
-     * @param color The color is a list of `integers` consisting of 3 numbers that are between 0-255.
+     * @param color The color is a list of `integers` consisting of 3 numbers that are between `0-255`.
      */
     constructor(
         public id: number,

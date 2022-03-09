@@ -22,11 +22,11 @@ declare var d3: any;
  * {@link Floor}.
  */
 export class CreateMapComponent implements AfterViewInit {
-    jsonData = new GuidoMap(false, false, false, "UCLL", 0, 0);
+    jsonData = new GuidoMap(false, false, false, "", 0, 0);
     newMap: boolean = false;
     mapNames: string[] = [];
     initializedMap: boolean = false;
-    createFloorForm = new Floor(0, "Verdieping 0", 2.5);
+    createFloorForm = new Floor(0, "Gelijkvloers", 3);
     paramsToGiveToDialogBoxes: any = {
         updateMap: {},
         deleteMap: {}
@@ -120,7 +120,7 @@ export class CreateMapComponent implements AfterViewInit {
         } else if (this.jsonData.floors.find((f: Floor) => f.floor === floor)) {
             floorNumberErrorField.innerText = "This floor already exists.";
         } else if (existingFloors.length === 0 && floor !== 0) {
-            floorNumberErrorField.innerText = "Please first add the ground floor first."
+            floorNumberErrorField.innerText = "Please add the ground floor first."
         } else if (existingFloors.length !== 0 && ![existingFloors[0] - 1, existingFloors[existingFloors.length - 1] + 1].includes(floor)) {
             floorNumberErrorField.innerText = `Please add floor ${floor < existingFloors[0] ? existingFloors[0] - 1 : existingFloors[existingFloors.length - 1] + 1} first.`;
         } else {
@@ -133,7 +133,6 @@ export class CreateMapComponent implements AfterViewInit {
 
         if (!(Array.from(document.querySelectorAll("#addFloorForm .error")) as HTMLParagraphElement[]).find((element: HTMLParagraphElement) => element.innerText !== "")) {
             this.jsonData.floors.push(new Floor(floor, name, height));
-            this.jsonData.floors.sort((a: Floor, b: Floor) => a.floor - b.floor);
             this.updateAddFloorForm(this);
             if (importFloorFrom !== null) {
                 const groundFloor = Polygon.copy(this.jsonData.floors.find((f: Floor) => f.floor === importFloorFrom)!.overlays.polygons.find((p: Polygon) => p.type === PolygonType.FLOOR)!);
@@ -142,6 +141,7 @@ export class CreateMapComponent implements AfterViewInit {
                 this.jsonData.floors[this.jsonData.floors.length - 1].overlays.polygons.push(groundFloor);
                 this.jsonData.lastId++;
             }
+            this.jsonData.floors.sort((a: Floor, b: Floor) => a.floor - b.floor);
         }
     }
 

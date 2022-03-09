@@ -11,6 +11,9 @@ import {GuidoOverlays} from "../model/guido-overlays";
 
 declare var d3: any;
 
+/**
+ * A class that generates all the {@link Polygon}s and {@link GuidoNode}s on the workspace.
+ */
 export class Overlays {
     x = d3.scale.linear();
     y = d3.scale.linear();
@@ -136,8 +139,9 @@ export class Overlays {
     }
 
     /**
-     * Drag rooms and floor (polygon) except if in editMode deleteMode or setNeighborMode.
-     * Floors can also only be dragged if the attribute "draggable" is set to true
+     * The **__mousemove()** function drags the {@link PolygonType.ROOM}s and the {@link PolygonType.FLOOR} except if
+     * the editMode, deleteMode or setNeighborMode is disabled. The {@link PolygonType.FLOOR} also requires that the
+     * "Lock floor" checkbox is disabled.
      */
     __mousemove(event: any, self: any): void {
         // @ts-ignore
@@ -215,7 +219,13 @@ function setupCanvas(g: any, self: Overlays): void {
 
 }
 
-
+/**
+ * The **drawPolygons()** function draws the {@link Polygon}s on the d3 floorplan.
+ *
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param g The parent element of the overlay in which the {@link Polygon}s need to be rendered.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function drawPolygons(data: GuidoOverlays, g: any, self: Overlays): void {
     var polygons = g.selectAll("path.polygon")
         .data(data.polygons || [], function (d: any) {
@@ -319,6 +329,13 @@ function drawPolygons(data: GuidoOverlays, g: any, self: Overlays): void {
     }
 }
 
+/**
+ * The **drawNodes()** function draws the {@link GuidoNode}s of type {@link NodeType.NODE} on the d3 floorplan.
+ *
+ * @param g The parent element of the overlay in which the {@link GuidoNode}s need to be rendered.
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function drawNodes(g: any, data: GuidoOverlays, self: Overlays): void {
     let dataNodes = data.nodes.filter(elem => elem.type === NodeType.NODE)
     let nodes = g.selectAll("circle.node")
@@ -385,6 +402,14 @@ function drawNodes(g: any, data: GuidoOverlays, self: Overlays): void {
     }
 }
 
+/**
+ * The **drawDoors()** function draws the {@link GuidoNode}s of type {@link NodeType.DOOR} and
+ * {@link NodeType.EMERGENCY_EXIT} on the d3 floorplan.
+ *
+ * @param g The parent element of the overlay in which the {@link GuidoNode}s need to be rendered.
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function drawDoors(g: any, data: GuidoOverlays, self: Overlays): void {
     let dataDoors = data.nodes.filter(elem => elem.type === NodeType.DOOR).concat(data.nodes.filter(elem => elem.type === NodeType.EMERGENCY_EXIT))
     let doors = g.selectAll("polygon.door")
@@ -399,7 +424,7 @@ function drawDoors(g: any, data: GuidoOverlays, self: Overlays): void {
         .attr("floor", self.floor)
         .on("contextmenu", function () {
             // @ts-ignore
-            rotateDoor(this, data);
+            rotateDoor(this, data, self);
         })
         .call(d3.behavior.drag().on("drag", function () {
             if (!self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode) {
@@ -425,16 +450,19 @@ function drawDoors(g: any, data: GuidoOverlays, self: Overlays): void {
  *
  * @param door The d3 instance of the door.
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
+ * @param self The instance of the {@link Overlays} class.
  */
-function rotateDoor(door: any, data: GuidoOverlays): void {
-    d3.event.preventDefault();
-    let doorElem = d3.select(door);
-    let doorData = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(doorElem.attr("id")))!;
+function rotateDoor(door: any, data: GuidoOverlays, self: Overlays): void {
+    if (!self.jsonData.setNeighborMode && !self.jsonData.editMode && !self.jsonData.deleteMode) {
+        d3.event.preventDefault();
+        let doorElem = d3.select(door);
+        let doorData = data.nodes.find((elem: GuidoNode) => elem.id === parseInt(doorElem.attr("id")))!;
 
-    let result = Point.calculateNewCoordinatesForRotation(doorData.displayPoints, 15);
-    doorData.degreesRotated += 15;
-    doorData.displayPoints = result;
-    d3.select(door).attr("points", Point.pointStringFromArrayOfPoints(result));
+        let result = Point.calculateNewCoordinatesForRotation(doorData.displayPoints, 15);
+        doorData.degreesRotated += 15;
+        doorData.displayPoints = result;
+        d3.select(door).attr("points", Point.pointStringFromArrayOfPoints(result));
+    }
 }
 
 /**
@@ -483,7 +511,7 @@ function moveDoorCoordinates(door: any, data: GuidoOverlays, floorComp: Overlays
 }
 
 /**
- * The **getDoorDimensions()** function returns the door dimensions given his corners.
+ * The **getDoorDimensions()** function returns the door dimensions given its corners.
  *
  * @param doorCoords The {@link Array} containing the {@link Point}s of the door.
  * @return A map containing the length and width of the door.
@@ -497,6 +525,13 @@ function getDoorDimensions(doorCoords: Point[]): { length: number, width: number
     }
 }
 
+/**
+ * The **drawPointsOfInterest()** function draws the point of interest {@link GuidoNode}s on the d3 floorplan.
+ *
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param g The parent element of the overlay in which the point of interest {@link GuidoNode}s need to be rendered.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays): void {
     let pointsOfInterestData = data.nodes.filter(elem => elem.type !== NodeType.NODE && elem.type !== NodeType.EMERGENCY_EXIT && elem.type !== NodeType.DOOR);
     var nodes = g.selectAll("svg.pointOfInterest")
@@ -563,6 +598,13 @@ function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays): void
     }
 }
 
+/**
+ * The **drawLabels()** function draws the {@link GuidoNode}s of type Label on the d3 floorplan.
+ *
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param g The parent element of the overlay in which the point of interest {@link GuidoNode}s need to be rendered.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function drawLabels(data: GuidoOverlays, g: any, self: Overlays): void {
     var labels = g.selectAll("svg.label")
         .data(data.labels || [], function (d: any) {
@@ -621,6 +663,14 @@ function drawLabels(data: GuidoOverlays, g: any, self: Overlays): void {
     }
 }
 
+/**
+ * The **generalDragBehavior()** function manages the drag behavior for all the {@link GuidoNode}s except for the types
+ * {@link NodeType.DOOR} and {@link NodeType.EMERGENCY_EXIT} on the workspace.
+ *
+ * @param figure The {@link GuidoNode} {@link Element} that is being dragged.
+ * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function generalDragBehavior(figure: any, data: GuidoOverlays, self: Overlays): void {
     if (!self.jsonData.deleteMode && !self.jsonData.setNeighborMode && !self.jsonData.editMode) {
         let d3node = d3.select(figure);

@@ -231,6 +231,7 @@ export class CreateMapComponent implements AfterViewInit {
      * @param self The instance of the {@link CreateMapComponent}.
      */
     editMap(name: string, self: CreateMapComponent): void {
+        self.clearMap(false);
         self.mapService.getMap(name).subscribe((map: GuidoMap) => {
             if (map === null) {
                 self.toastr.error('No map with the given name found.', '', {positionClass: 'toast-bottom-right'});
@@ -239,7 +240,6 @@ export class CreateMapComponent implements AfterViewInit {
                 self.jsonData.setNeighborMode = false;
                 self.jsonData.deleteMode = false;
                 document.getElementById("submitMap")!.innerText = "Update map";
-                self.clearMap(false);
                 self.jsonData = map;
                 self.updateAddFloorForm(self);
                 self.initializedMap = true;

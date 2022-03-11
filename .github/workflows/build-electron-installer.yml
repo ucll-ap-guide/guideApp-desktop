@@ -3,7 +3,7 @@ name: Build/release
 on:
   push:
     branches:
-      - main
+      - documentation-automatically-build-electron-app
 jobs:
   release:
     name: Create new release

@@ -18,7 +18,7 @@ declare var d3: any;
     styleUrls: ['create-map.component.css']
 })
 /**
- * A component that can be used to create a {@link Map} using a {@link CreateFloorComponent} to represent each
+ * A component that can be used to create a {@link Map} using {@link CreateFloorComponent}s to represent each
  * {@link Floor}.
  */
 export class CreateMapComponent implements AfterViewInit {
@@ -65,7 +65,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     /**
      * The **moveFileInputField()** function moves the file {@link HTMLInputElement} from the first page to the taskbar
-     * on the map editor screen (this way there is one {@link EventListener} less).
+     * on the map editor screen (this way there is one less {@link EventListener}).
      */
     moveFileInputField(): void {
         let toBeMoved = document.getElementById("uploadedMapFromComputer");
@@ -169,7 +169,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     /**
      * The **saveMapLocally()** function downloads the current state of the {@link jsonData} by downloading it as a
-     * JSON file.
+     * {@link JSON} file.
      */
     saveMapLocally(): void {
         let downloadLink = document.createElement("a");
@@ -192,7 +192,7 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * The **saveMapRemotely()** function saves the {@link Map} {@link jsonData} on the server.
+     * The **saveMapRemotely()** function saves the {@link GuidoMap}'s {@link jsonData} on the server.
      */
     saveMapRemotely(): void {
         let copy = GuidoMap.copy(this.jsonData);
@@ -249,7 +249,7 @@ export class CreateMapComponent implements AfterViewInit {
     }
 
     /**
-     * The **deleteMap()** function deletes the {@link GuidoMap} with the given.
+     * The **deleteMap()** function deletes the {@link GuidoMap} with the given {@link name}.
      *
      * @param name The name of the {@link GuidoMap} on the server that needs to be deleted.
      * @param self The instance of the {@link CreateMapComponent}.
@@ -272,7 +272,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     /**
      * The **toggleDeleteMode()** function switches the {@link deleteMode} to `true` when it was `false` and the other
-     * way around, and it displays a warning message.
+     * way around, and it also displays the necessary warning messages for the users.
      */
     toggleDeleteMode(): void {
         this.jsonData.deleteMode = !this.jsonData.deleteMode;
@@ -386,7 +386,7 @@ export class CreateMapComponent implements AfterViewInit {
 
     /**
      * The **toggleEditMode()** function switches the {@link editMode} to `true` when it was `false` and the other way
-     * around, and it displays a warning message.
+     * around, and it also displays the necessary warning messages for the users.
      */
     toggleEditMode() {
         if (!this.jsonData.editMode) {

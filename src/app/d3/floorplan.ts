@@ -3,6 +3,12 @@ import {Overlays} from "./overlays";
 
 declare var d3: any
 
+/**
+ * A class that manages and scales the different layers.
+ *
+ * Code partially from {@link https://dciarletta.github.io/d3-floorplan/}, completely refactored to TypeScript and
+ * fitted to project.
+ */
 export class Floorplan {
     layers: any = [];
     panZoomEnabled = true;
@@ -18,7 +24,7 @@ export class Floorplan {
         groups.each(function(data: any){
             if(!data) return;
 
-           // @ts-ignore
+            // @ts-ignore
             let svg = d3.select(this);
 
             // define common graphical elements
@@ -54,25 +60,25 @@ export class Floorplan {
 
             // render and reorder layer controls
             let layerControls = controls.select("g.layer-controls").selectAll("g").data(self.layers, function (l: any) {
-                    return l.getId();
-                });
+                return l.getId();
+            });
             let layerControlsEnter = layerControls.enter()
-                    .append("g").attr("class", "ui-active")
-                    .style("cursor", "pointer")
-                    .on("click", function (l: any) {
-                        // @ts-ignore
-                        let button = d3.select(this);
-                        let layer = svg.selectAll("g." + l.getId());
-                        if (button.classed("ui-active")) {
-                            layer.style("display", "none");
-                            button.classed("ui-active", false)
-                                .classed("ui-default", true);
-                        } else {
-                            layer.style("display", "inherit");
-                            button.classed("ui-active", true)
-                                .classed("ui-default", false);
-                        }
-                    });
+                .append("g").attr("class", "ui-active")
+                .style("cursor", "pointer")
+                .on("click", function (l: any) {
+                    // @ts-ignore
+                    let button = d3.select(this);
+                    let layer = svg.selectAll("g." + l.getId());
+                    if (button.classed("ui-active")) {
+                        layer.style("display", "none");
+                        button.classed("ui-active", false)
+                            .classed("ui-default", true);
+                    } else {
+                        layer.style("display", "inherit");
+                        button.classed("ui-active", true)
+                            .classed("ui-default", false);
+                    }
+                });
 
             layerControlsEnter.append("rect")
                 .attr("x", 0)

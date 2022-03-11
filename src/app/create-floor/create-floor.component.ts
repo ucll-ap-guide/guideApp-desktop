@@ -109,10 +109,9 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **loadData()** function resets the whole map layer by removing all the D3 elements inside the
-     * {@link SVGElement} and then reloading all the elements with D3 floorplan.
+     * The **loadData()** function resets the object layer of the {@link GuidoMap} and then redraws them accordingly.
      *
-     * @param floor The {@link Floor} who needs to be reloaded.
+     * @param floor The {@link Floor} which needs to be redrawn.
      */
     loadData(floor: Floor): void {
         let svg = d3.select("#demo" + this.floorNumber).select("svg");
@@ -137,7 +136,7 @@ export class CreateFloorComponent implements AfterViewInit {
 
     /**
      * The **setEventListeners()** function adds {@link EventListener}s to update and remove {@link Polygon}s and
-     * {@link GuidoNode}s.
+     * {@link GuidoNode}s. The {@link MutationObserver} is also setup here.
      *
      * @param floor The {@link Floor} for which the {@link EventListener}s need to be added.
      */
@@ -329,8 +328,8 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **removeElement()** function removes the {@link Polygon}, {@link GuidoNode} or {@link Label} from the
-     * {@link jsonData} and then reloads the floorplan again with the new {@link Overlays}.
+     * The **removeElement()** function removes the {@link Polygon}, {@link GuidoNode} (points of interests, doors and
+     * nodes) or {@link Label} from the {@link jsonData} and then reloads the floorplan again with the new {@link Overlays}.
      *
      * @param event The {@link Event} that triggered the delete action.
      */
@@ -479,7 +478,8 @@ export class CreateFloorComponent implements AfterViewInit {
 
     /**
      * The **changeVerticeCountOfPolygon()** function adds an extra vertice between the nearest {@link Polygon} point
-     * and the neighboring point that is the closest to the {@link MouseEvent} click OR removes the clicked vertice.
+     * and the neighboring point that is the closest to the {@link MouseEvent} click OR removes the nearest vertice of
+     * the {@link Polygon} that has been clicked.
      *
      * @param event The {@link MouseEvent} that triggered this function.
      * @param isAdding The `boolean` indicating if a vertice needs to be added or removed.
@@ -629,7 +629,7 @@ export class CreateFloorComponent implements AfterViewInit {
     }
 
     /**
-     * The **getDoorDimensions()** function returns the door dimensions given his corners.
+     * The **getDoorDimensions()** function returns the door dimensions given its corners.
      *
      * @param doorCoords The {@link Array} containing the {@link Point}s of the door.
      * @return A map containing the length and width of the door.
@@ -651,7 +651,6 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param neighbors The {@link Array} of id's of all the neighbors.
      * @param self The instance of the {@link CreateFloorComponent}.
      */
-
     setNeighbors(id: number, neighbors: [string, boolean][], self: CreateFloorComponent = this): void {
         let newNeighbors: number[] = [];
         for (const neighbor of neighbors) {
@@ -764,8 +763,8 @@ export class CreateFloorComponent implements AfterViewInit {
      * @param name The name of the {@link Polygon}.
      * @param amountOfVertices The amount of vertices of the {@link Polygon}.
      * @param description The description of {@link Polygon}s purpose.
-     * @param color The color of the {@link Polygon}, it is represented as an {@link Array} of `integers` between 0 and
-     *              255.
+     * @param color The color of the {@link Polygon}, it is represented as an {@link Array} of `integers` between
+     *              `0-255`.
      * @param self The instance of the {@link CreateFloorComponent}.
      */
     createPolygon(id: number | null = null, name: string, amountOfVertices: number, description: string, color: [number, number, number] = [204, 204, 204], self: CreateFloorComponent = this): void {
@@ -880,7 +879,7 @@ export class CreateFloorComponent implements AfterViewInit {
      * {@link setNeighborMode}.
      *
      * @param id The unique identifier of the {@link Point} that needs to be found.
-     * @return The point to which the line needs to be connected.
+     * @return The {@link Point} to which the line needs to be connected.
      */
     getConnectablePoint(id: number): Point {
         let elem = d3.select(`[id='${id}']`);

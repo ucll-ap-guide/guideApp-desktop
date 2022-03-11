@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  website:
+    image: alexandrevryghem/guido-desktop:latest
+    container_name: guido-desktop
+    networks:
+      - guido
+    ports:
+      - PORT:80
+    restart: always
+
+networks:
+  guido:
+    name: guido

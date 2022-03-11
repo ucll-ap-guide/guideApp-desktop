@@ -1,5 +1,11 @@
 declare var d3: any;
 
+/**
+ * A class that is used to display the background images of the {@link Floor}s.
+ *
+ * Code partially from {@link https://dciarletta.github.io/d3-floorplan/}, completely refactored to TypeScript and
+ * fitted to project.
+ */
 export class Imagelayer {
     x = d3.scale.linear()
     y = d3.scale.linear();
@@ -13,7 +19,7 @@ export class Imagelayer {
             // @ts-ignore
             let g = d3.select(this);
 
-            let imgs = g.selectAll("image").data(data, function(img: any) {
+            let imgs = g.selectAll("image").data(data, function (img: any) {
                 return img.url;
             })
 

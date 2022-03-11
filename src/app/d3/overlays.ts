@@ -13,6 +13,9 @@ declare var d3: any;
 
 /**
  * A class that generates all the {@link Polygon}s and {@link GuidoNode}s on the workspace.
+ *
+ * Code partially from {@link https://dciarletta.github.io/d3-floorplan/}, completely refactored to TypeScript and
+ * fitted to project.
  */
 export class Overlays {
     x = d3.scale.linear();
@@ -187,6 +190,12 @@ export class Overlays {
     }
 }
 
+/**
+ * Teh **setUpCanvas()** function creates the background layer to the {@link GuidoMap}.
+ *
+ * @param g The parent element of the overlay in which the objects need to be rendered.
+ * @param self The instance of the {@link Overlays} class.
+ */
 function setupCanvas(g: any, self: Overlays): void {
     var canvas = g.selectAll("rect.overlay-canvas").data([0]);
 
@@ -220,7 +229,7 @@ function setupCanvas(g: any, self: Overlays): void {
 }
 
 /**
- * The **drawPolygons()** function draws the {@link Polygon}s on the d3 floorplan.
+ * The **drawPolygons()** function draws the {@link Polygon}s on the D3 floorplan.
  *
  * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
  * @param g The parent element of the overlay in which the {@link Polygon}s need to be rendered.
@@ -330,7 +339,7 @@ function drawPolygons(data: GuidoOverlays, g: any, self: Overlays): void {
 }
 
 /**
- * The **drawNodes()** function draws the {@link GuidoNode}s of type {@link NodeType.NODE} on the d3 floorplan.
+ * The **drawNodes()** function draws the {@link GuidoNode}s of type {@link NodeType.NODE} on the D3 floorplan.
  *
  * @param g The parent element of the overlay in which the {@link GuidoNode}s need to be rendered.
  * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
@@ -404,7 +413,7 @@ function drawNodes(g: any, data: GuidoOverlays, self: Overlays): void {
 
 /**
  * The **drawDoors()** function draws the {@link GuidoNode}s of type {@link NodeType.DOOR} and
- * {@link NodeType.EMERGENCY_EXIT} on the d3 floorplan.
+ * {@link NodeType.EMERGENCY_EXIT} on the D3 floorplan.
  *
  * @param g The parent element of the overlay in which the {@link GuidoNode}s need to be rendered.
  * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
@@ -448,7 +457,7 @@ function drawDoors(g: any, data: GuidoOverlays, self: Overlays): void {
  * The **rotateDoor()** function rotates {@link GuidoNode}s of type {@link NodeType.DOOR} and
  * {@link NodeType.EMERGENCY_EXIT} with an angle of `15°`.
  *
- * @param door The d3 instance of the door.
+ * @param door The D3 instance of the door.
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
  * @param self The instance of the {@link Overlays} class.
  */
@@ -468,7 +477,7 @@ function rotateDoor(door: any, data: GuidoOverlays, self: Overlays): void {
 /**
  * The **moveDoorCoordinates()** function moves the door coordinates when they are being dragged by the user.
  *
- * @param door The d3 instance of the door element.
+ * @param door The D3 instance of the door element.
  * @param data The {@link Map} containing the {@link Polygon}s and {@link GuidoNode}s of the overlay.
  * @param floorComp The instance of the {@link Overlays} class.
  */
@@ -526,7 +535,7 @@ function getDoorDimensions(doorCoords: Point[]): { length: number, width: number
 }
 
 /**
- * The **drawPointsOfInterest()** function draws the point of interest {@link GuidoNode}s on the d3 floorplan.
+ * The **drawPointsOfInterest()** function draws the point of interest {@link GuidoNode}s on the D3 floorplan.
  *
  * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
  * @param g The parent element of the overlay in which the point of interest {@link GuidoNode}s need to be rendered.
@@ -599,7 +608,7 @@ function drawPointsOfInterest(data: GuidoOverlays, g: any, self: Overlays): void
 }
 
 /**
- * The **drawLabels()** function draws the {@link GuidoNode}s of type Label on the d3 floorplan.
+ * The **drawLabels()** function draws the {@link GuidoNode}s of type Label on the D3 floorplan.
  *
  * @param data All the objects inside the {@link GuidoOverlays} that need to be rendered on the workspace.
  * @param g The parent element of the overlay in which the point of interest {@link GuidoNode}s need to be rendered.

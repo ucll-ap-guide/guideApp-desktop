@@ -1,0 +1,9 @@
+/.git
+/.github
+/.idea
+/dist
+/node_modules
+/out
+/.gitignore
+/main.js
+*.md

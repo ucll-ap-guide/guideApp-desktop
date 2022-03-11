@@ -1,15 +1,18 @@
 {
   "name": "guide-app-desktop",
-  "authors": "Alexandre Vryghem & Mathias Van den Cruijce",
+  "author": "Alexandre Vryghem & Mathias Van den Cruijce",
   "description": "D3 based floorplan builder",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "start:electron": "ng build --base-href ./ && electron ."
+    "start:electron": "ng build --base-href ./ && electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "build-electron": "electron-builder --windows",
+    "release": "electron-builder --windows --publish always"
   },
   "private": true,
   "dependencies": {
@@ -34,8 +37,20 @@
     "angular-cli-ghpages": "^1.0.0",
     "autoprefixer": "^10.4.2",
     "electron": "^17.1.0",
+    "electron-builder": "^22.14.13",
     "postcss": "^8.4.8",
     "tailwindcss": "^3.0.23",
     "typescript": "~4.5.5"
+  },
+  "build": {
+    "appId": "be.ucll.guido",
+    "productName": "GuidO",
+    "dmg": {
+      "icon": false
+    },
+    "files": [
+      "main.js",
+      "dist{,/**/*}"
+    ]
   }
 }

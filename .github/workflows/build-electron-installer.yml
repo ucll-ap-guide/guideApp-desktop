@@ -1,0 +1,45 @@
+---
+name: Build/release
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release:
+    name: Create new release
+    runs-on: windows-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: Cache dependencies 💾
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies 📥
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci --ignore-scripts
+
+      - name: Build Angular app
+        run: npm run build
+
+      - name: Move the build files to the build folder
+        run: mv dist build
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/*.exe
+          asset_name: mything
+          tag: "latest"
+          overwrite: true
+          body: "The latest release of the GuidO desktop app."

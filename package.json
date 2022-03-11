@@ -1,8 +1,8 @@
 {
   "name": "guide-app-desktop",
-  "authors": "Alexandre Vryghem & Mathias Van den Cruijce",
+  "author": "Alexandre Vryghem & Mathias Van den Cruijce",
   "description": "D3 based floorplan builder",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "main.js",
   "scripts": {
     "ng": "ng",

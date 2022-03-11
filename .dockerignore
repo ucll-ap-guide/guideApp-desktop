@@ -1,9 +1,10 @@
-/.git
-/.github
-/.idea
-/dist
-/node_modules
-/out
+/.git/
+/.github/
+/.idea/
+/build/
+/dist/
+/node_modules/
+/out/
 /.gitignore
 /main.js
 *.md

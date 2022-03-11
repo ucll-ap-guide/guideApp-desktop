@@ -2,6 +2,7 @@
 
 [![Deploy on GitHub pages](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/deploy-to-github-pages.yml/badge.svg?branch=main)](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/deploy-to-github-pages.yml)
 [![Build Docker image](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/build-docker-image.yml/badge.svg?branch=main)](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/build-docker-image.yml)
+[![Deploy on Server](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/deploy-on-server.yml/badge.svg?branch=main)](https://github.com/ucll-ap-guide/guideApp-desktop/actions/workflows/deploy-on-server.yml)
 
 ## Requirements
 
@@ -45,10 +46,20 @@ inside the `docker-compose.yml` file.
 This action is automatically triggered when new code is pushed on `main` and will update the GitHub page, this doesn't
 require any additional setup.
 
-### Build Docker image
+### Build & push Docker image
 
 This action is automatically triggered when new code is pushed on `main`, this will automatically build a Docker image
 and push it to your DockerHub repository. This image can be used to run the project on a production server.
 
 ⚠ Don't forget to create the `DOCKER_USERNAME` and `DOCKER_PASSWORD` secrets in the repository
-`Settings>Secrets>Actions`. The `DOCKER_PASSWORD` can also be an Access Token from DockerHub
+`Settings>Secrets>Actions`. The `DOCKER_PASSWORD` can also be an Access Token from DockerHub.
+
+### Deploy on production server
+
+This action is automatically triggered when the `Build Docker image` action is completed. Before using it make sure that
+you copy the docker-compose.yml on your server and edit it see [above](#build-docker-image).
+
+⚠ This action requires you to also create the `HOST`, `PORT`, `USERNAME` and `PRIVATE_KEY` secrets in
+`Settings>Secrets>Actions`. Otherwise, the GitHub action won't be able to sign in on your server (Make sure your user
+has the right permissions to execute the `docker` and `docker-compose` command). The last secret you need to create is
+`DOCKER_COMPOSE_PATH` with the location of you docker-compose file on your server (without tailing `/`).

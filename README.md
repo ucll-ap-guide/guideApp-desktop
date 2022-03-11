@@ -23,7 +23,8 @@ change any of the source files.
 ### Build electron installer
 
 To build the electron installer you first need to run the `ng build` command. Afterwards you need to put the GuidO icon
-inside the `dist/` directory and name it `icon.png`.
+inside the `dist/` directory and name it `icon.png`. Rename the directory build and run `electron-builder --windows` and
+then you will find the `.exe` file in `dist` folder.
 
 ### Build Docker image
 

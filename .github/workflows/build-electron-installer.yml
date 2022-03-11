@@ -34,6 +34,11 @@ jobs:
       - name: Move the build files to the build folder
         run: mv dist build
 
+      - name: ls
+        run: dir dist
+
+
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:

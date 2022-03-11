@@ -1,5 +1,5 @@
 ---
-name: Build/release
+name: Build Electron release
 on:
   push:
     branches:
@@ -31,20 +31,28 @@ jobs:
       - name: Build Angular app
         run: npm run build
 
-      - name: Move the build files to the build folder
-        run: mv dist build
-
-      - name: ls
+      - name: Dir folder
         run: dir
 
-      - name: Set icon for installer
-        run: move ./src/assets/img/guido-logo.png ./dist/icon.png
+      - name: Dir dist
+        run: dir .\dist
+
+
+
+      - name: Run
+        run: npm run build-electron
+
+      - name: Dir build
+        run: dir .\build
+
+      - name: Move the build files to the build folder
+        run: mv dist build
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.exe
+          file: '.\build\GuidO Setup 1.0.0.exe'
           asset_name: mything
           tag: "latest"
           overwrite: true
